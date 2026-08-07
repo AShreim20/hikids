@@ -23,8 +23,8 @@ export default function Recommendations() {
   useEffect(() => {
     Promise.all([
       base44.entities.Product.list('-updated_date', 50),
-      base44.asServiceRole.entities.Review.list(),
-      base44.asServiceRole.entities.Order.list(),
+      base44.entities.Review.list(),
+      base44.entities.Order.list(),
     ])
       .then(([products, reviews, orders]) => {
         const purchases = {};
