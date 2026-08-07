@@ -5,7 +5,7 @@ import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import ProductCard from '@/components/ProductCard';
+import ProductExplorer from '@/components/ProductExplorer';
 
 const categories = [
   { name: 'Build & Create', desc: 'Engineers of tomorrow' },
@@ -29,9 +29,6 @@ export default function Home() {
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
   }, []);
-
-  const featured = products.filter((p) => p.featured).slice(0, 2);
-  const rest = products;
 
   return (
     <div className="min-h-screen bg-background">
@@ -138,31 +135,7 @@ export default function Home() {
       </section>
 
       {/* Product grid */}
-      <section id="explore" className="max-w-7xl mx-auto px-5 sm:px-8 py-8 md:py-12">
-        <div className="flex items-end justify-between flex-wrap gap-4 mb-12">
-          <div>
-            <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">The collection</p>
-            <h2 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl">Curated Discovery</h2>
-          </div>
-          <Link to="/cart" className="text-cosmic font-heading font-bold hover:underline">
-            View cart →
-          </Link>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="aspect-[4/5] rounded-[2rem] bg-mist animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-            {rest.map((p, i) => (
-              <ProductCard key={p.id} product={p} large={i < 2} />
-            ))}
-          </div>
-        )}
-      </section>
+      <ProductExplorer products={products} loading={loading} />
 
       {/* About */}
       <section id="about" className="max-w-7xl mx-auto px-5 sm:px-8 py-24 md:py-32">
