@@ -1,0 +1,62 @@
+{
+  "name": "Product",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Name"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description"
+    },
+    "price": {
+      "type": "number",
+      "title": "Price"
+    },
+    "category": {
+      "type": "string",
+      "title": "Category",
+      "enum": [
+        "Build & Create",
+        "Plush & Soft",
+        "Vehicles & Motion",
+        "Early Years",
+        "Pretend Play",
+        "Arts & Crafts"
+      ]
+    },
+    "age_range": {
+      "type": "string",
+      "title": "Age Range"
+    },
+    "image_url": {
+      "type": "string",
+      "title": "Image URL",
+      "format": "uri"
+    },
+    "material": {
+      "type": "string",
+      "title": "Material"
+    },
+    "rating": {
+      "type": "number",
+      "title": "Rating"
+    },
+    "stock": {
+      "type": "integer",
+      "title": "Stock"
+    },
+    "featured": {
+      "type": "boolean",
+      "title": "Featured",
+      "default": false
+    }
+  },
+  "required": [
+    "name",
+    "price",
+    "category",
+    "image_url"
+  ]
+}

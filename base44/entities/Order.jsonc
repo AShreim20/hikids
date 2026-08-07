@@ -1,0 +1,60 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "items": {
+      "type": "array",
+      "title": "Items",
+      "items": {
+        "type": "object"
+      }
+    },
+    "total": {
+      "type": "number",
+      "title": "Total"
+    },
+    "customer_name": {
+      "type": "string",
+      "title": "Customer Name"
+    },
+    "customer_email": {
+      "type": "string",
+      "title": "Customer Email"
+    },
+    "address": {
+      "type": "string",
+      "title": "Address"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Phone"
+    },
+    "payment_method": {
+      "type": "string",
+      "title": "Payment Method",
+      "enum": [
+        "card",
+        "cod"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "title": "Status",
+      "default": "pending",
+      "enum": [
+        "pending",
+        "paid",
+        "shipped",
+        "delivered",
+        "cancelled"
+      ]
+    }
+  },
+  "required": [
+    "customer_name",
+    "customer_email",
+    "address",
+    "phone",
+    "payment_method"
+  ]
+}
