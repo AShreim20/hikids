@@ -1,17 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Minus, Plus, ShoppingBag, ShieldCheck, Leaf, Star } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, ShoppingBag, ShieldCheck, Leaf, Star, Heart } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import Reviews from '@/components/Reviews';
+import { useWishlist } from '@/context/WishlistContext';
 
 export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem } = useCart();
+  const { toggle, isSaved } = useWishlist();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
@@ -81,7 +83,7 @@ export default function ProductDetail() {
           <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
             {product.category}
           </p>
-          <h1 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl leading-tight">
+          <h1 className="mt-2 font-display font-semibold text-4xl md:text-5xl leading-tight">
             {product.name}
           </h1>
 
@@ -101,7 +103,16 @@ export default function ProductDetail() {
             {product.description}
           </p>
 
-          <p className="mt-8 font-heading font-extrabold text-4xl">${product.price.toFixed(2)}</p>
+          <div className="mt-8 flex items-center gap-4">
+            <p className="font-heading font-extrabold text-4xl">${product.price.toFixed(2)}</p>
+            <button
+              onClick={() => toggle(product)}
+              className={`squish grid place-items-center w-12 h-12 rounded-full border transition-all ${isSaved(product.id) ? 'bg-accent text-white border-accent' : 'border-border text-foreground hover:bg-mist'}`}
+              aria-label="Save to wishlist"
+            >
+              <Heart className={`w-5 h-5 ${isSaved(product.id) ? 'fill-current' : ''}`} />
+            </button>
+          </div>
 
           {/* Materiality bar */}
           <div className="mt-8 rounded-3xl bg-mist p-6">

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Tag, Flame, ThumbsUp, ArrowRight, Plus, Check } from 'lucide-react';
+import { Star, Tag, Flame, ThumbsUp, ArrowRight, Plus, Check, Heart } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 
 function badgeFor(p) {
   if (p.onSale) return { label: 'On Sale', icon: Tag, cls: 'bg-accent text-white' };
@@ -14,6 +15,7 @@ function badgeFor(p) {
 
 export default function Recommendations() {
   const { addItem } = useCart();
+  const { toggle, isSaved } = useWishlist();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [added, setAdded] = useState({});
@@ -103,19 +105,26 @@ export default function Recommendations() {
             return (
               <div
                 key={p.id}
-                className="group relative rounded-[2rem] bg-card border border-border/60 overflow-hidden flex flex-col squish"
+                className="group relative rounded-[2rem] bg-card border border-border/60 overflow-hidden flex flex-col transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_-28px_rgba(26,26,30,0.35)]"
               >
                 {b && (
                   <span className={`absolute top-4 left-4 z-10 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-heading font-bold ${b.cls}`}>
                     <b.icon className="w-3.5 h-3.5" /> {b.label}
                   </span>
                 )}
+                <button
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(p); }}
+                  className={`absolute top-4 right-4 z-10 squish grid place-items-center w-10 h-10 rounded-full backdrop-blur-md transition-all duration-300 ${isSaved(p.id) ? 'bg-accent text-white' : 'bg-white/85 text-foreground hover:bg-white'}`}
+                  aria-label="Toggle wishlist"
+                >
+                  <Heart className={`w-5 h-5 ${isSaved(p.id) ? 'fill-current' : ''}`} />
+                </button>
                 <Link to={`/product/${p.id}`} className="relative aspect-square overflow-hidden bg-mist">
-                  <Image src={p.image_url} alt={p.name} fittingType="fill" className="w-full h-full" />
+                  <Image src={p.image_url} alt={p.name} fittingType="fill" className="w-full h-full transition-transform duration-700 group-hover:scale-105" />
                 </Link>
                 <div className="p-5 flex flex-col flex-1">
                   <p className="text-xs text-muted-foreground">{p.category}</p>
-                  <Link to={`/product/${p.id}`} className="mt-1 font-heading font-bold text-lg leading-tight hover:text-cosmic line-clamp-2">
+                  <Link to={`/product/${p.id}`} className="mt-1 font-display font-semibold text-xl leading-tight hover:text-cosmic line-clamp-2">
                     {p.name}
                   </Link>
                   <div className="mt-2 flex items-center gap-1.5">

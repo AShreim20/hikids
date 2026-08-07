@@ -12,7 +12,9 @@ import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
 import Analytics from './pages/Analytics';
+import Wishlist from './pages/Wishlist';
 import { CartProvider } from '@/context/CartContext';
+import { WishlistProvider } from '@/context/WishlistContext';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -40,15 +42,18 @@ const AuthenticatedApp = () => {
   // Render the main app
   return (
     <CartProvider>
+      <WishlistProvider>
       <Routes>
         {/* Add your page Route elements here */}
         <Route path="/" element={<Home />} />
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
+        <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/analytics" element={<Analytics />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
+      </WishlistProvider>
     </CartProvider>
   );
 };

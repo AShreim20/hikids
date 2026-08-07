@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Menu, X, BarChart3 } from 'lucide-react';
+import { ShoppingBag, Menu, X, BarChart3, Heart } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 
 const links = [
   { label: 'Explore', to: '/#explore' },
@@ -12,6 +13,7 @@ const links = [
 
 export default function Navbar() {
   const { count } = useCart();
+  const { count: wishCount } = useWishlist();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -43,6 +45,18 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => navigate('/wishlist')}
+            className="relative squish grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+            aria-label="Wishlist"
+          >
+            <Heart className="w-5 h-5" />
+            {wishCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 grid place-items-center rounded-full bg-accent text-white text-[11px] font-bold">
+                {wishCount}
+              </span>
+            )}
+          </button>
           <button
             onClick={() => navigate('/cart')}
             className="relative squish grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
