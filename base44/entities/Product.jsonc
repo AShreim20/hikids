@@ -14,6 +14,10 @@
       "type": "number",
       "title": "Price"
     },
+    "sale_price": {
+      "type": "number",
+      "title": "Sale Price"
+    },
     "category": {
       "type": "string",
       "title": "Category",

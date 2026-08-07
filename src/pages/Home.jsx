@@ -6,6 +6,7 @@ import { Image } from '@/components/ui/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductExplorer from '@/components/ProductExplorer';
+import Recommendations from '@/components/Recommendations';
 
 const categories = [
   { name: 'Build & Create', desc: 'Engineers of tomorrow' },
@@ -133,6 +134,9 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* Recommendations */}
+      <Recommendations />
 
       {/* Product grid */}
       <ProductExplorer products={products} loading={loading} />
