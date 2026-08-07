@@ -11,6 +11,7 @@ import Home from './pages/Home';
 import ProductDetail from './pages/ProductDetail';
 import Cart from './pages/Cart';
 import Checkout from './pages/Checkout';
+import Analytics from './pages/Analytics';
 import { CartProvider } from '@/context/CartContext';
 
 const AuthenticatedApp = () => {
@@ -45,6 +46,7 @@ const AuthenticatedApp = () => {
         <Route path="/product/:id" element={<ProductDetail />} />
         <Route path="/cart" element={<Cart />} />
         <Route path="/checkout" element={<Checkout />} />
+        <Route path="/analytics" element={<Analytics />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
     </CartProvider>

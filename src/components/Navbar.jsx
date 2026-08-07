@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Menu, X } from 'lucide-react';
+import { ShoppingBag, Menu, X, BarChart3 } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 
 const links = [
@@ -37,6 +37,9 @@ export default function Navbar() {
               {l.label}
             </a>
           ))}
+          <Link to="/analytics" className="text-sm font-medium text-cosmic hover:text-primary transition-colors flex items-center gap-1.5">
+            <BarChart3 className="w-4 h-4" /> Insights
+          </Link>
         </div>
 
         <div className="flex items-center gap-2">
@@ -75,6 +78,13 @@ export default function Navbar() {
                 {l.label}
               </a>
             ))}
+            <Link
+              to="/analytics"
+              onClick={() => setOpen(false)}
+              className="px-4 py-3 rounded-2xl hover:bg-mist font-medium text-cosmic flex items-center gap-2"
+            >
+              <BarChart3 className="w-4 h-4" /> Insights
+            </Link>
           </div>
         </div>
       )}
