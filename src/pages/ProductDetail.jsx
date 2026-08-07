@@ -6,6 +6,7 @@ import { Image } from '@/components/ui/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
+import Reviews from '@/components/Reviews';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -19,7 +20,15 @@ export default function ProductDetail() {
   useEffect(() => {
     setLoading(true);
     base44.entities.Product.get(id)
-      .then(setProduct)
+      .then((p) => {
+        setProduct(p);
+        if (p) {
+          base44.analytics.track({
+            eventName: 'product_view',
+            properties: { product_id: p.id, product_name: p.name, category: p.category, price: p.price },
+          });
+        }
+      })
       .catch(() => setProduct(null))
       .finally(() => setLoading(false));
   }, [id]);
@@ -124,6 +133,8 @@ export default function ProductDetail() {
           </div>
         </div>
       </div>
+
+      <Reviews productId={product.id} />
 
       {/* Sticky add-to-cart bar */}
       <div className="sticky bottom-0 z-40 border-t border-border/60 bg-background/90 backdrop-blur-xl">
