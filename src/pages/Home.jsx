@@ -83,7 +83,7 @@ export default function Home() {
             { icon: Truck, title: 'Careful delivery', desc: 'Wrapped like a gift, every time' },
           ].map((p) => (
             <div key={p.title} className="flex items-center gap-4">
-              <div className="grid place-items-center w-12 h-12 rounded-2xl bg-white shadow-sm">
+              <div className="grid place-items-center w-12 h-12 rounded-2xl bg-card shadow-sm">
                 <p.icon className="w-6 h-6 text-cosmic" />
               </div>
               <div>

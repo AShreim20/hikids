@@ -71,11 +71,11 @@ export default function Cart() {
                   </div>
                   <div className="mt-auto flex items-center justify-between">
                     <div className="flex items-center rounded-full bg-mist">
-                      <button onClick={() => updateQty(i.id, i.qty - 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-white" aria-label="Decrease">
+                      <button onClick={() => updateQty(i.id, i.qty - 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card" aria-label="Decrease">
                         <Minus className="w-4 h-4" />
                       </button>
                       <span className="w-8 text-center font-heading font-bold text-sm">{i.qty}</span>
-                      <button onClick={() => updateQty(i.id, i.qty + 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-white" aria-label="Increase">
+                      <button onClick={() => updateQty(i.id, i.qty + 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card" aria-label="Increase">
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>

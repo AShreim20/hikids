@@ -41,7 +41,7 @@ export default function ProductCard({ product, large = false }) {
         <button
           onClick={handleWish}
           className={`absolute top-4 left-4 squish grid place-items-center w-11 h-11 rounded-full backdrop-blur-md transition-all duration-300 ${
-            saved ? 'bg-accent text-white' : 'bg-white/85 text-foreground hover:bg-white'
+            saved ? 'bg-accent text-white' : 'bg-card/85 text-foreground hover:bg-card'
           }`}
           aria-label="Toggle wishlist"
         >
@@ -52,7 +52,7 @@ export default function ProductCard({ product, large = false }) {
           className={`absolute bottom-4 right-4 squish grid place-items-center gap-2 rounded-full shadow-lg transition-all duration-300 ${
             added
               ? 'bg-accent text-white w-auto px-5'
-              : 'bg-white text-foreground w-12 h-12 hover:bg-cosmic hover:text-white'
+              : 'bg-card text-foreground w-12 h-12 hover:bg-cosmic hover:text-white'
           }`}
         >
           {added ? (

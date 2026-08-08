@@ -53,7 +53,7 @@ export default function HeroGallery() {
         </Link>
       ))}
 
-      <div className="absolute -bottom-6 -left-6 hidden sm:block bg-white rounded-3xl px-6 py-4 shadow-xl">
+      <div className="absolute -bottom-6 -left-6 hidden sm:block bg-card rounded-3xl px-6 py-4 shadow-xl">
         <p className="text-xs uppercase tracking-widest text-muted-foreground">{onSale ? 'On Sale' : 'Featured'}</p>
         <p className="font-heading font-bold text-lg line-clamp-1 max-w-[10rem]">{current.name}</p>
         <p className="text-cosmic font-extrabold">${(onSale ? current.sale_price : current.price).toFixed(2)}</p>
@@ -63,14 +63,14 @@ export default function HeroGallery() {
         <>
           <button
             onClick={prev}
-            className="absolute left-3 top-1/2 -translate-y-1/2 grid place-items-center w-10 h-10 rounded-full bg-white/80 backdrop-blur text-foreground hover:bg-white transition squish"
+            className="absolute left-3 top-1/2 -translate-y-1/2 grid place-items-center w-10 h-10 rounded-full bg-card/80 backdrop-blur text-foreground hover:bg-card transition squish"
             aria-label="Previous slide"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           <button
             onClick={next}
-            className="absolute right-3 top-1/2 -translate-y-1/2 grid place-items-center w-10 h-10 rounded-full bg-white/80 backdrop-blur text-foreground hover:bg-white transition squish"
+            className="absolute right-3 top-1/2 -translate-y-1/2 grid place-items-center w-10 h-10 rounded-full bg-card/80 backdrop-blur text-foreground hover:bg-card transition squish"
             aria-label="Next slide"
           >
             <ChevronRight className="w-5 h-5" />

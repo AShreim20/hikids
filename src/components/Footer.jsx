@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, Facebook, Twitter } from 'lucide-react';
+import Logo from '@/components/Logo';
 
 export default function Footer() {
   return (
@@ -8,11 +9,10 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-16 md:py-20">
         <div className="grid md:grid-cols-4 gap-10">
           <div>
-            <Link to="/" className="flex items-center gap-2">
-              <span className="grid place-items-center w-10 h-10 rounded-2xl bg-white text-cosmic font-heading font-extrabold text-lg">
-                H
-              </span>
-              <span className="font-heading font-extrabold text-xl">HiKids</span>
+            <Link to="/" className="inline-block">
+              <div className="rounded-2xl bg-white p-1.5 shadow-lg inline-block">
+                <Logo className="h-12 w-auto" />
+              </div>
             </Link>
             <p className="mt-4 text-white/60 text-sm max-w-xs">
               A gallery of wonder. Premium toys for sophisticated play, made to be treasured.

@@ -114,7 +114,7 @@ export default function Recommendations() {
                 )}
                 <button
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(p); }}
-                  className={`absolute top-4 right-4 z-10 squish grid place-items-center w-10 h-10 rounded-full backdrop-blur-md transition-all duration-300 ${isSaved(p.id) ? 'bg-accent text-white' : 'bg-white/85 text-foreground hover:bg-white'}`}
+                  className={`absolute top-4 right-4 z-10 squish grid place-items-center w-10 h-10 rounded-full backdrop-blur-md transition-all duration-300 ${isSaved(p.id) ? 'bg-accent text-white' : 'bg-card/85 text-foreground hover:bg-card'}`}
                   aria-label="Toggle wishlist"
                 >
                   <Heart className={`w-5 h-5 ${isSaved(p.id) ? 'fill-current' : ''}`} />

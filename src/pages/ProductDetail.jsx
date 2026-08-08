@@ -126,7 +126,7 @@ export default function ProductDetail() {
             <div className="flex items-center rounded-full bg-mist">
               <button
                 onClick={() => setQty((q) => Math.max(1, q - 1))}
-                className="grid place-items-center w-12 h-12 rounded-full hover:bg-white"
+                className="grid place-items-center w-12 h-12 rounded-full hover:bg-card"
                 aria-label="Decrease"
               >
                 <Minus className="w-4 h-4" />
@@ -134,7 +134,7 @@ export default function ProductDetail() {
               <span className="w-10 text-center font-heading font-bold">{qty}</span>
               <button
                 onClick={() => setQty((q) => q + 1)}
-                className="grid place-items-center w-12 h-12 rounded-full hover:bg-white"
+                className="grid place-items-center w-12 h-12 rounded-full hover:bg-card"
                 aria-label="Increase"
               >
                 <Plus className="w-4 h-4" />

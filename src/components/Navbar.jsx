@@ -4,6 +4,7 @@ import { ShoppingBag, BarChart3, Heart, Settings as SettingsIcon } from 'lucide-
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import SettingsDialog from '@/components/SettingsDialog';
+import Logo from '@/components/Logo';
 
 const links = [
   { label: 'Explore', to: '/#explore' },
@@ -21,13 +22,8 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/60 safe-top">
       <nav className="max-w-7xl mx-auto px-5 sm:px-8 h-16 md:h-20 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
-          <span className="grid place-items-center w-10 h-10 rounded-2xl bg-cosmic text-white font-heading font-extrabold text-lg shadow-lg shadow-cosmic/30 group-hover:scale-95 transition-transform">
-            H
-          </span>
-          <span className="font-heading font-extrabold text-xl md:text-2xl tracking-tight">
-            HiKids
-          </span>
+        <Link to="/" className="flex items-center group">
+          <Logo className="h-10 md:h-12 w-auto rounded-xl group-hover:scale-95 transition-transform" />
         </Link>
 
         <div className="hidden md:flex items-center gap-9">

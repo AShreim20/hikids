@@ -23,7 +23,7 @@ export default function Wishlist() {
 
         {items.length === 0 ? (
           <div className="mt-16 rounded-[2.5rem] border border-dashed border-border bg-mist/50 p-12 md:p-20 text-center">
-            <div className="mx-auto grid place-items-center w-16 h-16 rounded-full bg-white shadow-sm">
+            <div className="mx-auto grid place-items-center w-16 h-16 rounded-full bg-card shadow-sm">
               <Heart className="w-7 h-7 text-accent" />
             </div>
             <h2 className="mt-6 font-heading font-extrabold text-2xl">No favorites yet</h2>
