@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import ProductExplorer from '@/components/ProductExplorer';
 import Recommendations from '@/components/Recommendations';
 import HeroGallery from '@/components/HeroGallery';
+import SaleBanner from '@/components/SaleBanner';
 import Newsletter from '@/components/Newsletter';
 
 const categories = [
@@ -93,6 +94,8 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      <SaleBanner />
 
       {/* Categories */}
       <section id="categories" className="max-w-7xl mx-auto px-5 sm:px-8 py-24 md:py-32">

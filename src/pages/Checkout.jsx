@@ -44,6 +44,7 @@ export default function Checkout() {
       setOrderId(order.id);
       clear();
       setDone(true);
+      base44.functions.invoke('onOrderPlaced', { orderId: order.id }).catch(() => {});
       toast({ title: payment === 'card' ? 'Payment received' : 'Order reserved', description: 'We’ll be in touch shortly.' });
     } catch (err) {
       toast({ title: 'Something went wrong', description: 'Please try again.', variant: 'destructive' });
