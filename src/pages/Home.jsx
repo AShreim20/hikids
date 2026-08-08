@@ -7,6 +7,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductExplorer from '@/components/ProductExplorer';
 import Recommendations from '@/components/Recommendations';
+import HeroGallery from '@/components/HeroGallery';
+import Newsletter from '@/components/Newsletter';
 
 const categories = [
   { name: 'Build & Create', desc: 'Engineers of tomorrow' },
@@ -16,9 +18,6 @@ const categories = [
   { name: 'Pretend Play', desc: 'Stories unfold' },
   { name: 'Arts & Crafts', desc: 'Invitations to make' },
 ];
-
-const HERO_IMG =
-  'https://media.base44.com/images/public/6a75c91fa5dfe02359c5f127/894c29025_generated_0c6a0938.png';
 
 export default function Home() {
   const [products, setProducts] = useState([]);
@@ -68,19 +67,7 @@ export default function Home() {
             </div>
 
             <div className="relative float-in">
-              <div className="relative aspect-square rounded-[3rem] overflow-hidden bg-mist shadow-[0_40px_80px_-30px_rgba(26,26,30,0.35)]">
-                <Image
-                  src={HERO_IMG}
-                  alt="Modular wooden rocket"
-                  fittingType="fill"
-                  className="w-full h-full object-cover"
-                />
-              </div>
-              <div className="absolute -bottom-6 -left-6 hidden sm:block bg-white rounded-3xl px-6 py-4 shadow-xl">
-                <p className="text-xs uppercase tracking-widest text-muted-foreground">Featured</p>
-                <p className="font-heading font-bold text-lg">Modular Rocket</p>
-                <p className="text-cosmic font-extrabold">$64.00</p>
-              </div>
+              <HeroGallery />
             </div>
           </div>
         </div>
@@ -177,6 +164,7 @@ export default function Home() {
         </div>
       </section>
 
+      <Newsletter />
       <Footer />
     </div>
   );

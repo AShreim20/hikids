@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Menu, X, BarChart3, Heart } from 'lucide-react';
+import { ShoppingBag, BarChart3, Heart, Settings as SettingsIcon } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import SettingsDialog from '@/components/SettingsDialog';
 
 const links = [
   { label: 'Explore', to: '/#explore' },
@@ -14,11 +15,11 @@ const links = [
 export default function Navbar() {
   const { count } = useCart();
   const { count: wishCount } = useWishlist();
-  const [open, setOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const navigate = useNavigate();
 
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/60">
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/60 safe-top">
       <nav className="max-w-7xl mx-auto px-5 sm:px-8 h-16 md:h-20 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
           <span className="grid place-items-center w-10 h-10 rounded-2xl bg-cosmic text-white font-heading font-extrabold text-lg shadow-lg shadow-cosmic/30 group-hover:scale-95 transition-transform">
@@ -46,8 +47,15 @@ export default function Navbar() {
 
         <div className="flex items-center gap-2">
           <button
+            onClick={() => setSettingsOpen(true)}
+            className="grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+            aria-label="Settings"
+          >
+            <SettingsIcon className="w-5 h-5" />
+          </button>
+          <button
             onClick={() => navigate('/wishlist')}
-            className="relative squish grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+            className="hidden md:grid relative squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
             aria-label="Wishlist"
           >
             <Heart className="w-5 h-5" />
@@ -59,7 +67,7 @@ export default function Navbar() {
           </button>
           <button
             onClick={() => navigate('/cart')}
-            className="relative squish grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+            className="hidden md:grid relative squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
             aria-label="Cart"
           >
             <ShoppingBag className="w-5 h-5" />
@@ -69,39 +77,9 @@ export default function Navbar() {
               </span>
             )}
           </button>
-          <button
-            onClick={() => setOpen((v) => !v)}
-            className="md:hidden grid place-items-center w-11 h-11 rounded-2xl bg-mist"
-            aria-label="Menu"
-          >
-            {open ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-          </button>
         </div>
       </nav>
-
-      {open && (
-        <div className="md:hidden px-5 pb-6 border-t border-border/60 bg-background">
-          <div className="flex flex-col gap-1 pt-4">
-            {links.map((l) => (
-              <a
-                key={l.label}
-                href={l.to}
-                onClick={() => setOpen(false)}
-                className="px-4 py-3 rounded-2xl hover:bg-mist font-medium text-foreground/80"
-              >
-                {l.label}
-              </a>
-            ))}
-            <Link
-              to="/analytics"
-              onClick={() => setOpen(false)}
-              className="px-4 py-3 rounded-2xl hover:bg-mist font-medium text-cosmic flex items-center gap-2"
-            >
-              <BarChart3 className="w-4 h-4" /> Insights
-            </Link>
-          </div>
-        </div>
-      )}
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </header>
   );
 }

@@ -5,6 +5,7 @@ import { BarChart3, Eye, Users, ArrowLeft, ExternalLink } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Image } from '@/components/ui/image';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 export default function Analytics() {
   const [data, setData] = useState(null);
@@ -51,15 +52,16 @@ export default function Analytics() {
             <p className="mt-2 text-muted-foreground">Top viewed toys and where your visitors come from — last 30 days.</p>
           </div>
           {data?.properties?.length > 1 && (
-            <select
-              value={propertyId}
-              onChange={(e) => load(e.target.value)}
-              className="h-12 px-4 rounded-2xl bg-card border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40"
-            >
-              {data.properties.map((p) => (
-                <option key={p.id} value={p.id}>{p.displayName}</option>
-              ))}
-            </select>
+            <Select value={propertyId} onValueChange={(v) => load(v)}>
+              <SelectTrigger className="h-12 w-64 rounded-2xl bg-card border-border">
+                <SelectValue placeholder="Select property" />
+              </SelectTrigger>
+              <SelectContent className="rounded-2xl">
+                {data.properties.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.displayName}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           )}
         </div>
 

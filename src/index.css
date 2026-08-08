@@ -63,11 +63,21 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html, body {
+    overscroll-behavior-y: none;
+  }
   body {
     @apply bg-background text-foreground font-body;
   }
+  @media (max-width: 767px) {
+    body { padding-bottom: 4.5rem; }
+  }
   h1, h2, h3, h4, h5 {
     @apply font-heading tracking-tight;
+  }
+  button, a, [role="button"], .no-select {
+    -webkit-user-select: none;
+    user-select: none;
   }
 }
 
@@ -87,4 +97,6 @@
   }
   .squish:hover { transform: scale(0.96); }
   .squish:active { transform: scale(0.9); }
+  .safe-top { padding-top: env(safe-area-inset-top); }
+  .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 }
