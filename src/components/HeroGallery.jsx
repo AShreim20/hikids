@@ -53,7 +53,7 @@ export default function HeroGallery() {
         </Link>
       )}
 
-      <div className="absolute hidden sm:block bg-card rounded-3xl px-6 py-4 shadow-xl -bottom-1 -left-5">
+      <div className="absolute hidden sm:block bg-card rounded-3xl px-6 py-4 shadow-xl -bottom-1 -left-2">
         <p className="text-xs uppercase tracking-widest text-muted-foreground">{onSale ? 'On Sale' : 'Featured'}</p>
         <p className="font-heading font-bold text-lg line-clamp-1 max-w-[10rem]">{current.name}</p>
         <p className="text-cosmic font-extrabold">${(onSale ? current.sale_price : current.price).toFixed(2)}</p>
