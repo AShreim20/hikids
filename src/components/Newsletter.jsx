@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Mail, Check } from 'lucide-react';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Newsletter() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const { t } = useLanguage();
 
   const submit = (e) => {
     e.preventDefault();
@@ -20,10 +22,10 @@ export default function Newsletter() {
           <Mail className="w-7 h-7 text-cosmic" />
         </div>
         <h2 className="mt-6 font-heading font-extrabold text-3xl md:text-5xl text-balance">
-          New arrivals, straight to your inbox.
+          {t('nl.title')}
         </h2>
         <p className="mt-4 text-muted-foreground max-w-xl mx-auto text-lg">
-          Be the first to hear about fresh toys, seasonal drops, and members-only offers.
+          {t('nl.subtitle')}
         </p>
         <form onSubmit={submit} className="mt-8 max-w-md mx-auto flex flex-col sm:flex-row gap-3">
           <input
@@ -38,10 +40,10 @@ export default function Newsletter() {
             type="submit"
             className="squish h-14 px-8 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-primary transition-colors"
           >
-            {sent ? <><Check className="w-5 h-5" /> Subscribed</> : 'Subscribe'}
+            {sent ? <><Check className="w-5 h-5" /> {t('nl.subscribed')}</> : t('nl.subscribe')}
           </button>
         </form>
-        <p className="mt-4 text-xs text-muted-foreground">No spam — just wonder, occasionally.</p>
+        <p className="mt-4 text-xs text-muted-foreground">{t('nl.spam')}</p>
       </div>
     </section>
   );

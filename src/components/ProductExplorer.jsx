@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SlidersHorizontal } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
+import { useLanguage } from '@/context/LanguageContext';
 
 const TOY_TYPES = [
   'All',
@@ -13,11 +14,20 @@ const TOY_TYPES = [
   'Arts & Crafts',
 ];
 
+const CAT_KEYS = {
+  'Build & Create': 'build',
+  'Plush & Soft': 'plush',
+  'Vehicles & Motion': 'vehicles',
+  'Early Years': 'early',
+  'Pretend Play': 'pretend',
+  'Arts & Crafts': 'arts',
+};
+
 const AGE_GROUPS = [
-  { label: 'All ages', min: 0, max: Infinity },
-  { label: '0-2 years', min: 0, max: 2 },
-  { label: '3-5 years', min: 3, max: 5 },
-  { label: '6+ years', min: 6, max: Infinity },
+  { id: 'all', min: 0, max: Infinity },
+  { id: '0_2', min: 0, max: 2 },
+  { id: '3_5', min: 3, max: 5 },
+  { id: '6', min: 6, max: Infinity },
 ];
 
 function ageRange(a) {
@@ -32,10 +42,12 @@ function overlaps(a, b) {
 }
 
 export default function ProductExplorer({ products, loading }) {
+  const { t } = useLanguage();
   const [toyType, setToyType] = useState('All');
-  const [age, setAge] = useState('All ages');
+  const [age, setAge] = useState('all');
 
-  const activeAge = AGE_GROUPS.find((g) => g.label === age);
+  const activeAge = AGE_GROUPS.find((g) => g.id === age);
+  const typeLabel = (v) => (v === 'All' ? t('explore.all') : t(`cat.${CAT_KEYS[v]}`));
 
   const filtered = useMemo(() => {
     return products.filter((p) => {
@@ -48,7 +60,7 @@ export default function ProductExplorer({ products, loading }) {
 
   const reset = () => {
     setToyType('All');
-    setAge('All ages');
+    setAge('all');
   };
 
   return (
@@ -56,59 +68,48 @@ export default function ProductExplorer({ products, loading }) {
       <div className="flex items-end justify-between flex-wrap gap-4 mb-8">
         <div>
           <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">
-            The collection
+            {t('explore.label')}
           </p>
-          <h2 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl">
-            Curated Discovery
-          </h2>
+          <h2 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl">{t('explore.title')}</h2>
         </div>
-        <Link to="/cart" className="text-cosmic font-heading font-bold hover:underline">
-          View cart →
-        </Link>
+        <Link to="/cart" className="text-cosmic font-heading font-bold hover:underline">{t('common.viewCart')}</Link>
       </div>
 
-      {/* Filter bar */}
       <div className="rounded-3xl bg-mist/60 p-5 md:p-6 mb-10">
         <div className="flex items-center gap-2 text-xs uppercase tracking-widest text-muted-foreground font-medium mb-4">
-          <SlidersHorizontal className="w-3.5 h-3.5" /> Filter
+          <SlidersHorizontal className="w-3.5 h-3.5" /> {t('explore.filter')}
         </div>
 
         <div className="space-y-4">
-          {/* Toy type */}
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-heading font-bold w-20 shrink-0">Type</span>
+            <span className="text-sm font-heading font-bold w-20 shrink-0">{t('explore.type')}</span>
             <div className="flex gap-2 flex-wrap">
-              {TOY_TYPES.map((t) => (
+              {TOY_TYPES.map((ty) => (
                 <button
-                  key={t}
-                  onClick={() => setToyType(t)}
+                  key={ty}
+                  onClick={() => setToyType(ty)}
                   className={`squish h-10 px-4 rounded-full text-sm font-medium transition-colors ${
-                    toyType === t
-                      ? 'bg-cosmic text-white'
-                      : 'bg-background text-foreground/70 hover:bg-accent/20'
+                    toyType === ty ? 'bg-cosmic text-white' : 'bg-background text-foreground/70 hover:bg-accent/20'
                   }`}
                 >
-                  {t}
+                  {typeLabel(ty)}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Age group */}
           <div className="flex items-center gap-3 flex-wrap">
-            <span className="text-sm font-heading font-bold w-20 shrink-0">Age</span>
+            <span className="text-sm font-heading font-bold w-20 shrink-0">{t('explore.age')}</span>
             <div className="flex gap-2 flex-wrap">
               {AGE_GROUPS.map((g) => (
                 <button
-                  key={g.label}
-                  onClick={() => setAge(g.label)}
+                  key={g.id}
+                  onClick={() => setAge(g.id)}
                   className={`squish h-10 px-4 rounded-full text-sm font-medium transition-colors ${
-                    age === g.label
-                      ? 'bg-cosmic text-white'
-                      : 'bg-background text-foreground/70 hover:bg-accent/20'
+                    age === g.id ? 'bg-cosmic text-white' : 'bg-background text-foreground/70 hover:bg-accent/20'
                   }`}
                 >
-                  {g.label}
+                  {t(`age.${g.id}`)}
                 </button>
               ))}
             </div>
@@ -117,20 +118,18 @@ export default function ProductExplorer({ products, loading }) {
 
         <div className="mt-4 flex items-center justify-between flex-wrap gap-3">
           <p className="text-sm text-muted-foreground">
-            {loading ? 'Loading…' : `${filtered.length} product${filtered.length === 1 ? '' : 's'} found`}
+            {loading
+              ? t('common.loading')
+              : `${filtered.length} ${filtered.length === 1 ? t('common.foundOne') : t('common.found')}`}
           </p>
-          {(toyType !== 'All' || age !== 'All ages') && (
-            <button
-              onClick={reset}
-              className="text-sm text-cosmic font-heading font-bold hover:underline"
-            >
-              Clear filters
+          {(toyType !== 'All' || age !== 'all') && (
+            <button onClick={reset} className="text-sm text-cosmic font-heading font-bold hover:underline">
+              {t('common.clear')}
             </button>
           )}
         </div>
       </div>
 
-      {/* Grid */}
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
           {Array.from({ length: 8 }).map((_, i) => (
@@ -139,10 +138,10 @@ export default function ProductExplorer({ products, loading }) {
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-20">
-          <p className="font-heading font-bold text-2xl">No toys match those filters</p>
-          <p className="mt-2 text-muted-foreground">Try widening your search.</p>
+          <p className="font-heading font-bold text-2xl">{t('common.noMatch')}</p>
+          <p className="mt-2 text-muted-foreground">{t('common.tryWiden')}</p>
           <button onClick={reset} className="mt-5 text-cosmic font-heading font-bold hover:underline">
-            Clear filters
+            {t('common.clear')}
           </button>
         </div>
       ) : (

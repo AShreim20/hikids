@@ -5,11 +5,12 @@ import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { useLanguage } from '@/context/LanguageContext';
 
-function badgeFor(p) {
-  if (p.onSale) return { label: 'On Sale', icon: Tag, cls: 'bg-accent text-white' };
-  if (p.purchaseCount >= 3) return { label: 'Best Seller', icon: Flame, cls: 'bg-cosmic text-white' };
-  if (p.avgRating >= 4.5 && p.reviewCount >= 2) return { label: 'Top Rated', icon: ThumbsUp, cls: 'bg-emerald-500 text-white' };
+function badgeFor(p, t) {
+  if (p.onSale) return { label: t('rec.onSale'), icon: Tag, cls: 'bg-accent text-white' };
+  if (p.purchaseCount >= 3) return { label: t('rec.bestSeller'), icon: Flame, cls: 'bg-cosmic text-white' };
+  if (p.avgRating >= 4.5 && p.reviewCount >= 2) return { label: t('rec.topRated'), icon: ThumbsUp, cls: 'bg-emerald-500 text-white' };
   return null;
 }
 
@@ -19,6 +20,7 @@ export default function Recommendations() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [added, setAdded] = useState({});
+  const { t, formatPrice } = useLanguage();
 
   useEffect(() => {
     Promise.all([
@@ -78,17 +80,17 @@ export default function Recommendations() {
       <div className="flex items-end justify-between flex-wrap gap-4 mb-10">
         <div>
           <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">
-            Recommended for you
+            {t('rec.label')}
           </p>
           <h2 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl">
-            Loved by families
+            {t('rec.title')}
           </h2>
           <p className="mt-3 text-muted-foreground max-w-lg">
-            On-sale treasures and best sellers with glowing reviews — picked just for you.
+            {t('rec.subtitle')}
           </p>
         </div>
         <a href="#explore" className="text-cosmic font-heading font-bold hover:underline hidden sm:inline-flex items-center gap-1">
-          Browse all <ArrowRight className="w-4 h-4" />
+          {t('rec.browse')} <ArrowRight className="w-4 h-4" />
         </a>
       </div>
 
@@ -101,7 +103,7 @@ export default function Recommendations() {
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
           {items.map((p) => {
-            const b = badgeFor(p);
+            const b = badgeFor(p, t);
             return (
               <div
                 key={p.id}
@@ -137,23 +139,23 @@ export default function Recommendations() {
                       ))}
                     </div>
                     <span className="text-xs text-muted-foreground">
-                      {p.avgRating ? p.avgRating.toFixed(1) : 'New'}
+                      {p.avgRating ? p.avgRating.toFixed(1) : t('rec.new')}
                       {p.reviewCount > 0 && ` (${p.reviewCount})`}
                     </span>
                   </div>
                   <div className="mt-auto pt-4 flex items-center justify-between gap-3">
                     <div className="flex items-baseline gap-2">
                       <span className="font-heading font-extrabold text-xl text-cosmic">
-                        ${(p.onSale ? p.sale_price : p.price).toFixed(2)}
+                        {formatPrice(p.onSale ? p.sale_price : p.price)}
                       </span>
                       {p.onSale && (
-                        <span className="text-sm text-muted-foreground line-through">${p.price.toFixed(2)}</span>
+                        <span className="text-sm text-muted-foreground line-through">{formatPrice(p.price)}</span>
                       )}
                     </div>
                     <button
                       onClick={() => quickAdd(p)}
                       className="squish grid place-items-center w-10 h-10 rounded-full bg-cosmic text-white hover:bg-primary transition-colors"
-                      aria-label="Add to cart"
+                      aria-label={t('common.addToCart')}
                     >
                       {added[p.id] ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
                     </button>

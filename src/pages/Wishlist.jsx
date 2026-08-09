@@ -6,19 +6,21 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Wishlist() {
   const { items, remove } = useWishlist();
   const { addItem } = useCart();
+  const { t, formatPrice } = useLanguage();
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-12 md:py-20">
-        <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">Saved for later</p>
-        <h1 className="mt-2 font-display font-semibold text-4xl md:text-6xl leading-tight">Your wishlist</h1>
+        <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">{t('wl.label')}</p>
+        <h1 className="mt-2 font-display font-semibold text-4xl md:text-6xl leading-tight">{t('wl.title')}</h1>
         <p className="mt-3 text-muted-foreground max-w-lg">
-          {items.length} item(s) you've set your heart on.
+          {items.length} {t('cart.items')}
         </p>
 
         {items.length === 0 ? (
@@ -26,13 +28,13 @@ export default function Wishlist() {
             <div className="mx-auto grid place-items-center w-16 h-16 rounded-full bg-card shadow-sm">
               <Heart className="w-7 h-7 text-accent" />
             </div>
-            <h2 className="mt-6 font-heading font-extrabold text-2xl">No favorites yet</h2>
-            <p className="mt-2 text-muted-foreground">Tap the heart on any toy to save it here for later.</p>
+            <h2 className="mt-6 font-heading font-extrabold text-2xl">{t('wl.empty')}</h2>
+            <p className="mt-2 text-muted-foreground">{t('wl.emptyDesc')}</p>
             <Link
               to="/"
               className="mt-6 inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold hover:bg-primary transition-colors"
             >
-              Explore the collection <ArrowRight className="w-4 h-4" />
+              {t('hero.exploreCta')} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         ) : (
@@ -59,19 +61,19 @@ export default function Wishlist() {
                     {p.name}
                   </Link>
                   <p className="mt-2 font-heading font-extrabold text-xl text-cosmic">
-                    ${(p.price || 0).toFixed(2)}
+                    {formatPrice(p.price || 0)}
                   </p>
                   <div className="mt-auto pt-4 flex items-center gap-2">
                     <button
                       onClick={() => addItem(p, 1)}
                       className="squish flex-1 h-11 rounded-full bg-cosmic text-white font-heading font-bold text-sm inline-flex items-center justify-center gap-1.5 hover:bg-primary transition-colors"
                     >
-                      <ShoppingBag className="w-4 h-4" /> Add
+                      <ShoppingBag className="w-4 h-4" /> {t('common.add')}
                     </button>
                     <button
                       onClick={() => remove(p.id)}
                       className="squish grid place-items-center w-11 h-11 rounded-full bg-mist text-foreground hover:bg-destructive hover:text-white transition-colors"
-                      aria-label="Remove from wishlist"
+                      aria-label={t('admin.delete')}
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>

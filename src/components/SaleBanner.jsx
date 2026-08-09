@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { Tag, ArrowRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
+import { useLanguage } from '@/context/LanguageContext';
 
 const SLIDE_MS = 3500;
 
 export default function SaleBanner() {
   const [items, setItems] = useState([]);
   const [index, setIndex] = useState(0);
+  const { t, formatPrice, lang } = useLanguage();
 
   useEffect(() => {
     base44.entities.Product.list('-updated_date', 50)
@@ -46,19 +48,19 @@ export default function SaleBanner() {
         <div className="relative grid sm:grid-cols-[1fr_auto] items-center gap-6 p-6 sm:p-10">
           <div>
             <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/20 text-xs font-heading font-bold uppercase tracking-wider">
-              <Tag className="w-3.5 h-3.5" /> On Sale · up to {off}% off
+              <Tag className="w-3.5 h-3.5" /> {t('sb.onSale')} · {off}%
             </span>
             <h2 className="mt-4 font-heading font-extrabold text-3xl sm:text-4xl md:text-5xl text-balance">{current.name}</h2>
-            <p className="mt-2 text-white/90">A seasonal favourite, now treasured for less.</p>
+            <p className="mt-2 text-white/90">{lang === 'ar' ? 'مفضّل موسمي، الآن بأقل.' : 'A seasonal favourite, now treasured for less.'}</p>
             <div className="mt-4 flex items-center gap-3">
-              <span className="font-heading font-extrabold text-3xl">${current.sale_price.toFixed(2)}</span>
-              <span className="text-lg line-through text-white/70">${current.price.toFixed(2)}</span>
+              <span className="font-heading font-extrabold text-3xl">{formatPrice(current.sale_price)}</span>
+              <span className="text-lg line-through text-white/70">{formatPrice(current.price)}</span>
             </div>
             <Link
               to={`/product/${current.id}`}
               className="mt-6 squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-white text-accent font-heading font-bold hover:bg-cosmic hover:text-white transition-colors"
             >
-              Shop this deal <ArrowRight className="w-4 h-4" />
+              {t('sb.shop')} <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           {items.length > 1 && (

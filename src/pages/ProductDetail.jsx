@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import Reviews from '@/components/Reviews';
 import { useWishlist } from '@/context/WishlistContext';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -18,6 +19,7 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const { t, formatPrice } = useLanguage();
 
   useEffect(() => {
     setLoading(true);
@@ -48,10 +50,10 @@ export default function ProductDetail() {
       <div className="min-h-screen bg-background">
         <Navbar />
         <div className="max-w-3xl mx-auto px-5 py-32 text-center">
-          <h1 className="font-heading font-extrabold text-3xl">Toy not found</h1>
-          <p className="mt-3 text-muted-foreground">This piece may have wandered off.</p>
+          <h1 className="font-heading font-extrabold text-3xl">{t('pd.notFound')}</h1>
+          <p className="mt-3 text-muted-foreground">{t('pd.notFoundDesc')}</p>
           <Link to="/" className="mt-6 inline-flex items-center gap-2 text-cosmic font-heading font-bold">
-            <ArrowLeft className="w-4 h-4" /> Back to collection
+            <ArrowLeft className="w-4 h-4 ltr:rotate-180 rtl:rotate-0" /> {t('pd.back')}
           </Link>
         </div>
       </div>
@@ -70,7 +72,7 @@ export default function ProductDetail() {
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 pt-8">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
-          <ArrowLeft className="w-4 h-4" /> Back
+          <ArrowLeft className="w-4 h-4 ltr:rotate-180 rtl:rotate-0" /> {t('common.back')}
         </Link>
       </div>
 
@@ -96,7 +98,7 @@ export default function ProductDetail() {
                 />
               ))}
             </div>
-            <span className="text-sm text-muted-foreground">{product.rating?.toFixed(1)} · Ages {product.age_range}</span>
+            <span className="text-sm text-muted-foreground">{product.rating?.toFixed(1)} · {t('pd.ages')} {product.age_range}</span>
           </div>
 
           <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
@@ -104,11 +106,11 @@ export default function ProductDetail() {
           </p>
 
           <div className="mt-8 flex items-center gap-4">
-            <p className="font-heading font-extrabold text-4xl">${product.price.toFixed(2)}</p>
+            <p className="font-heading font-extrabold text-4xl">{formatPrice(product.price)}</p>
             <button
               onClick={() => toggle(product)}
               className={`squish grid place-items-center w-12 h-12 rounded-full border transition-all ${isSaved(product.id) ? 'bg-accent text-white border-accent' : 'border-border text-foreground hover:bg-mist'}`}
-              aria-label="Save to wishlist"
+              aria-label={t('pd.saveWishlist')}
             >
               <Heart className={`w-5 h-5 ${isSaved(product.id) ? 'fill-current' : ''}`} />
             </button>
@@ -117,7 +119,7 @@ export default function ProductDetail() {
           {/* Materiality bar */}
           <div className="mt-8 rounded-3xl bg-mist p-6">
             <div className="flex items-center gap-2 text-sm font-heading font-bold">
-              <Leaf className="w-4 h-4 text-cosmic" /> The Feel
+              <Leaf className="w-4 h-4 text-cosmic" /> {t('pd.material')}
             </div>
             <p className="mt-2 text-sm text-muted-foreground">{product.material}</p>
           </div>
@@ -140,7 +142,7 @@ export default function ProductDetail() {
                 <Plus className="w-4 h-4" />
               </button>
             </div>
-            <span className="text-sm text-muted-foreground">{product.stock} in stock</span>
+            <span className="text-sm text-muted-foreground">{product.stock} {t('pd.inStock')}</span>
           </div>
         </div>
       </div>
@@ -152,20 +154,20 @@ export default function ProductDetail() {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
           <div className="hidden sm:block">
             <p className="font-heading font-bold">{product.name}</p>
-            <p className="text-sm text-muted-foreground">${product.price.toFixed(2)} · {qty} item(s)</p>
+            <p className="text-sm text-muted-foreground">{formatPrice(product.price)} · {qty}</p>
           </div>
           <div className="flex flex-1 sm:flex-initial gap-3">
             <button
               onClick={addToCart}
               className="squish flex-1 sm:w-auto h-14 px-6 rounded-full bg-mist text-foreground font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-white transition-colors"
             >
-              <ShoppingBag className="w-5 h-5" /> {added ? 'Added to cart' : 'Add to cart'}
+              <ShoppingBag className="w-5 h-5" /> {added ? t('common.added') : t('common.addToCart')}
             </button>
             <button
               onClick={() => { addItem(product, qty); navigate('/checkout'); }}
               className="squish flex-1 sm:w-auto h-14 px-6 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-primary transition-colors"
             >
-              Buy now
+              {t('common.buyNow')}
             </button>
           </div>
         </div>

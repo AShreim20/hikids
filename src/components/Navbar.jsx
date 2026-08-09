@@ -5,19 +5,28 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import SettingsDialog from '@/components/SettingsDialog';
 import Logo from '@/components/Logo';
+import LanguageToggle from '@/components/LanguageToggle';
+import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/lib/AuthContext';
 
-const links = [
-  { label: 'Explore', to: '/#explore' },
-  { label: 'Worlds of Play', to: '/#categories' },
-  { label: 'Our Promise', to: '/#promise' },
-  { label: 'About', to: '/#about' },
-];
+
 
 export default function Navbar() {
   const { count } = useCart();
   const { count: wishCount } = useWishlist();
   const [settingsOpen, setSettingsOpen] = useState(false);
   const navigate = useNavigate();
+  const { t } = useLanguage();
+  const { user } = useAuth();
+
+  const links = [
+    { label: t('nav.explore'), to: '/#explore' },
+    { label: t('nav.worlds'), to: '/#categories' },
+    { label: t('nav.about'), to: '/about' },
+    { label: t('nav.faq'), to: '/faq' },
+    { label: t('nav.track'), to: '/track-order' },
+  ];
+  if (user?.role === 'admin') links.push({ label: t('nav.admin'), to: '/admin' });
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/60 safe-top">
@@ -37,15 +46,16 @@ export default function Navbar() {
             </a>
           ))}
           <Link to="/analytics" className="text-sm font-medium text-cosmic hover:text-primary transition-colors flex items-center gap-1.5">
-            <BarChart3 className="w-4 h-4" /> Insights
+            <BarChart3 className="w-4 h-4" /> {t('nav.insights')}
           </Link>
         </div>
 
         <div className="flex items-center gap-2">
+          <LanguageToggle />
           <button
             onClick={() => setSettingsOpen(true)}
             className="grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
-            aria-label="Settings"
+            aria-label={t('nav.settings')}
           >
             <SettingsIcon className="w-5 h-5" />
           </button>

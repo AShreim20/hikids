@@ -4,10 +4,21 @@ import { ShoppingBag, Heart } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { useLanguage } from '@/context/LanguageContext';
+
+const CAT_LABEL = {
+  'Build & Create': 'cat.build',
+  'Plush & Soft': 'cat.plush',
+  'Vehicles & Motion': 'cat.vehicles',
+  'Early Years': 'cat.early',
+  'Pretend Play': 'cat.pretend',
+  'Arts & Crafts': 'cat.arts',
+};
 
 export default function ProductCard({ product, large = false }) {
   const { addItem } = useCart();
   const { toggle, isSaved } = useWishlist();
+  const { t, formatPrice } = useLanguage();
   const [added, setAdded] = useState(false);
   const saved = isSaved(product.id);
 
@@ -43,7 +54,7 @@ export default function ProductCard({ product, large = false }) {
           className={`absolute top-4 left-4 squish grid place-items-center w-11 h-11 rounded-full backdrop-blur-md transition-all duration-300 ${
             saved ? 'bg-accent text-white' : 'bg-card/85 text-foreground hover:bg-card'
           }`}
-          aria-label="Toggle wishlist"
+          aria-label={t('pd.saveWishlist')}
         >
           <Heart className={`w-5 h-5 ${saved ? 'fill-current' : ''}`} />
         </button>
@@ -56,7 +67,7 @@ export default function ProductCard({ product, large = false }) {
           }`}
         >
           {added ? (
-            <span className="text-xs font-bold whitespace-nowrap px-1">Added!</span>
+            <span className="text-xs font-bold whitespace-nowrap px-1">{t('common.added')}</span>
           ) : (
             <ShoppingBag className="w-5 h-5" />
           )}
@@ -65,13 +76,13 @@ export default function ProductCard({ product, large = false }) {
 
       <div className="px-1 pt-4">
         <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
-          {product.category}
+          {t(CAT_LABEL[product.category] || product.category)}
         </p>
         <h3 className="mt-1 font-display font-semibold text-xl leading-tight tracking-tight">
           {product.name}
         </h3>
-        <p className="mt-1 text-sm text-muted-foreground">Ages {product.age_range}</p>
-        <p className="mt-2 font-heading font-extrabold text-xl">${product.price.toFixed(2)}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('pd.ages')} {product.age_range}</p>
+        <p className="mt-2 font-heading font-extrabold text-xl">{formatPrice(product.price)}</p>
       </div>
     </Link>
   );

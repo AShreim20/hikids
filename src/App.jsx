@@ -1,4 +1,4 @@
-import { lazy, Suspense, useEffect } from 'react';
+import { lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
@@ -15,8 +15,14 @@ const Cart = lazy(() => import('./pages/Cart'));
 const Checkout = lazy(() => import('./pages/Checkout'));
 const Analytics = lazy(() => import('./pages/Analytics'));
 const Wishlist = lazy(() => import('./pages/Wishlist'));
+const About = lazy(() => import('./pages/About'));
+const FAQ = lazy(() => import('./pages/FAQ'));
+const TrackOrder = lazy(() => import('./pages/TrackOrder'));
+const Admin = lazy(() => import('./pages/Admin'));
 import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
+import { ThemeProvider } from '@/context/ThemeContext';
+import { LanguageProvider } from '@/context/LanguageContext';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -54,6 +60,10 @@ const AuthenticatedApp = () => {
         <Route path="/wishlist" element={<Wishlist />} />
         <Route path="/checkout" element={<Checkout />} />
         <Route path="/analytics" element={<Analytics />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/faq" element={<FAQ />} />
+        <Route path="/track-order" element={<TrackOrder />} />
+        <Route path="/admin" element={<Admin />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
       </Suspense>
@@ -65,21 +75,17 @@ const AuthenticatedApp = () => {
 
 
 function App() {
-  useEffect(() => {
-    const mq = window.matchMedia('(prefers-color-scheme: dark)');
-    const apply = (e) => document.documentElement.classList.toggle('dark', e.matches);
-    apply(mq);
-    mq.addEventListener('change', apply);
-    return () => mq.removeEventListener('change', apply);
-  }, []);
-
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClientInstance}>
+        <ThemeProvider>
+        <LanguageProvider>
         <Router>
           <ScrollToTop />
           <AuthenticatedApp />
         </Router>
+        </LanguageProvider>
+        </ThemeProvider>
         <Toaster />
       </QueryClientProvider>
     </AuthProvider>
