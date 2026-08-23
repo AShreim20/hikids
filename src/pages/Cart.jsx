@@ -92,7 +92,7 @@ export default function Cart() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('common.delivery')}</span>
-                <span className="font-heading font-bold text-cosmic">{t('common.free')}</span>
+                <span className="font-heading font-bold text-cosmic">{t('common.calculatedAtCheckout')}</span>
               </div>
             </div>
             <div className="mt-5 pt-5 border-t border-border/60 flex justify-between items-center">

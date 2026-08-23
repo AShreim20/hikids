@@ -1,0 +1,47 @@
+{
+  "name": "DeliveryCity",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "City name"
+    },
+    "price": {
+      "type": "number",
+      "title": "Delivery price",
+      "default": 0
+    },
+    "estimated_days": {
+      "type": "integer",
+      "title": "Estimated days",
+      "default": 1
+    },
+    "active": {
+      "type": "boolean",
+      "title": "Active",
+      "default": true
+    }
+  },
+  "required": [
+    "name",
+    "price"
+  ],
+  "rls": {
+    "read": {},
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

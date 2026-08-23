@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Banknote, ShieldCheck, Check, Lock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -7,6 +7,9 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/lib/AuthContext';
+import CitySelect from '@/components/checkout/CitySelect';
+import SavedAddressPicker from '@/components/checkout/SavedAddressPicker';
 
 const CARD_TYPES = [
   { key: 'visa', label: 'Visa', badge: 'bg-[#1A1F71] text-white' },
@@ -20,6 +23,7 @@ export default function Checkout() {
   const { toast } = useToast();
   const { t, lang, formatPrice } = useLanguage();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [form, setForm] = useState({ name: '', email: '', address: '', phone: '' });
   const [giftMessage, setGiftMessage] = useState('');
@@ -29,25 +33,65 @@ export default function Checkout() {
   const [placing, setPlacing] = useState(false);
   const [done, setDone] = useState(false);
   const [orderId, setOrderId] = useState(null);
+  const [cities, setCities] = useState([]);
+  const [addresses, setAddresses] = useState([]);
+  const [cityId, setCityId] = useState('');
+  const [savedId, setSavedId] = useState('');
+  const [saveAddr, setSaveAddr] = useState(false);
+
+  const selectedCity = cities.find((c) => c.id === cityId);
+  const deliveryCost = selectedCity ? selectedCity.price : 0;
+  const grandTotal = total + deliveryCost;
+
+  useEffect(() => {
+    base44.entities.DeliveryCity.filter({ active: true }).then(setCities).catch(() => {});
+    if (user) base44.entities.Address.list('-created_date', 50).then(setAddresses).catch(() => {});
+  }, [user]);
+
+  const applySavedAddress = (id) => {
+    setSavedId(id);
+    const a = addresses.find((x) => x.id === id);
+    if (!a) return;
+    setForm((f) => ({ ...f, name: a.recipient_name, phone: a.phone, address: a.street }));
+    const match = cities.find((c) => c.name === a.city);
+    if (match) setCityId(match.id);
+  };
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const placeOrder = async (e) => {
     e.preventDefault();
     if (items.length === 0) return;
+    if (!selectedCity) {
+      toast({ title: lang === 'ar' ? 'اختر المدينة' : 'Please select a city', variant: 'destructive' });
+      return;
+    }
     setPlacing(true);
     try {
       const order = await base44.entities.Order.create({
         items: items.map((i) => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
-        total,
+        subtotal: total,
+        delivery_cost: deliveryCost,
+        total: grandTotal,
+        city: selectedCity.name,
         customer_name: form.name,
         customer_email: form.email,
-        address: form.address,
+        address: `${form.address}, ${selectedCity.name}`,
         phone: form.phone,
         payment_method: payment,
         status: payment === 'card' ? 'paid' : 'pending',
         gift_message: giftMessage.trim() || undefined,
       });
+      if (saveAddr && user && form.address) {
+        base44.entities.Address.create({
+          label: 'Home',
+          recipient_name: form.name,
+          phone: form.phone,
+          city: selectedCity.name,
+          street: form.address,
+          is_default: addresses.length === 0,
+        }).catch(() => {});
+      }
       setOrderId(order.id);
       clear();
       setDone(true);
@@ -116,12 +160,26 @@ export default function Checkout() {
             {/* Contact & delivery */}
             <div className="rounded-3xl bg-card border border-border/60 p-6 md:p-8">
               <h2 className="font-heading font-extrabold text-2xl">{t('checkout.contact')}</h2>
-              <div className="mt-6 grid sm:grid-cols-2 gap-4">
+              {user && addresses.length > 0 && (
+                <div className="mt-5">
+                  <SavedAddressPicker addresses={addresses} value={savedId} onChange={applySavedAddress} />
+                </div>
+              )}
+              <div className="mt-5 grid sm:grid-cols-2 gap-4">
                 <Field label={t('checkout.name')} required value={form.name} onChange={set('name')} />
                 <Field label={t('checkout.email')} type="email" required value={form.email} onChange={set('email')} />
                 <Field label={t('checkout.phone')} required value={form.phone} onChange={set('phone')} />
-                <Field label={t('checkout.address')} required value={form.address} onChange={set('address')} />
+                <CitySelect cities={cities} value={cityId} onChange={setCityId} />
+                <div className="sm:col-span-2">
+                  <Field label={t('checkout.address')} required value={form.address} onChange={set('address')} placeholder={t('checkout.addressPlaceholder')} />
+                </div>
               </div>
+              {user && (
+                <label className="mt-4 flex items-center gap-2 text-sm text-foreground/80 cursor-pointer">
+                  <input type="checkbox" checked={saveAddr} onChange={(e) => setSaveAddr(e.target.checked)} className="w-4 h-4 rounded" />
+                  {t('checkout.saveAddress')}
+                </label>
+              )}
             </div>
 
             {/* Gift message */}
@@ -240,12 +298,12 @@ export default function Checkout() {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('common.delivery')}</span>
-                <span className="font-heading font-bold text-cosmic">{t('common.free')}</span>
+                <span className="font-heading font-bold text-cosmic">{deliveryCost === 0 ? t('common.free') : formatPrice(deliveryCost)}</span>
               </div>
             </div>
             <div className="mt-4 pt-4 border-t border-border/60 flex justify-between items-center">
               <span className="font-heading font-bold">{t('common.total')}</span>
-              <span className="font-heading font-extrabold text-2xl">{formatPrice(total)}</span>
+              <span className="font-heading font-extrabold text-2xl">{formatPrice(grandTotal)}</span>
             </div>
 
             <button

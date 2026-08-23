@@ -13,6 +13,19 @@
       "type": "number",
       "title": "Total"
     },
+    "subtotal": {
+      "type": "number",
+      "title": "Subtotal"
+    },
+    "delivery_cost": {
+      "type": "number",
+      "title": "Delivery cost",
+      "default": 0
+    },
+    "city": {
+      "type": "string",
+      "title": "City"
+    },
     "customer_name": {
       "type": "string",
       "title": "Customer Name"
@@ -59,7 +72,8 @@
     "customer_email",
     "address",
     "phone",
-    "payment_method"
+    "payment_method",
+    "city"
   ],
   "rls": {
     "create": null,
