@@ -12,6 +12,7 @@ export const translations = {
     'nav.cart': 'Cart',
     'nav.wishlist': 'Wishlist',
     'nav.admin': 'Manage Products',
+    'nav.search': 'Search toys…',
 
     'footer.tagline': 'A gallery of wonder. Premium toys for sophisticated play, made to be treasured.',
     'footer.shop': 'Shop',
@@ -97,6 +98,7 @@ export const translations = {
     'explore.type': 'Type',
     'explore.age': 'Age',
     'explore.all': 'All',
+    'explore.resultsFor': 'Results for',
 
     'about.heading': 'Our promise',
     'about.title': 'Slow toys, made to be treasured.',
@@ -248,6 +250,7 @@ export const translations = {
     'nav.cart': 'السلة',
     'nav.wishlist': 'المفضلة',
     'nav.admin': 'إدارة المنتجات',
+    'nav.search': 'ابحث عن لعبة…',
 
     'footer.tagline': 'معرض من العجائب. ألعاب فاخرة للعب الراقي، مصنوعة لتُصان.',
     'footer.shop': 'تسوّق',
@@ -333,6 +336,7 @@ export const translations = {
     'explore.type': 'النوع',
     'explore.age': 'العمر',
     'explore.all': 'الكل',
+    'explore.resultsFor': 'نتائج البحث عن',
 
     'about.heading': 'وعدنا',
     'about.title': 'ألعابٌ هادئة، مصنوعة لتُصان.',

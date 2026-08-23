@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, BarChart3, Heart, Settings as SettingsIcon } from 'lucide-react';
+import { ShoppingBag, BarChart3, Heart, Settings as SettingsIcon, Search } from 'lucide-react';
+import SearchBar from '@/components/SearchBar';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import SettingsDialog from '@/components/SettingsDialog';
@@ -15,6 +16,7 @@ export default function Navbar() {
   const { count } = useCart();
   const { count: wishCount } = useWishlist();
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -53,6 +55,14 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          <SearchBar className="hidden md:flex md:w-44 lg:w-72" />
+          <button
+            onClick={() => setSearchOpen((v) => !v)}
+            className="md:hidden grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+            aria-label={t('nav.search')}
+          >
+            <Search className="w-5 h-5" />
+          </button>
           <LanguageToggle />
           <button
             onClick={() => setSettingsOpen(true)}
@@ -87,6 +97,11 @@ export default function Navbar() {
           </button>
         </div>
       </nav>
+      {searchOpen && (
+        <div className="md:hidden border-t border-border/60 px-5 py-3">
+          <SearchBar autoFocus className="w-full" onSubmitted={() => setSearchOpen(false)} />
+        </div>
+      )}
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </header>
   );

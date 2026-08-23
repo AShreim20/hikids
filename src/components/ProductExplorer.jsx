@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { SlidersHorizontal } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import { useLanguage } from '@/context/LanguageContext';
@@ -43,6 +43,8 @@ function overlaps(a, b) {
 
 export default function ProductExplorer({ products, loading }) {
   const { t } = useLanguage();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = (searchParams.get('search') || '').trim();
   const [toyType, setToyType] = useState('All');
   const [age, setAge] = useState('all');
 
@@ -50,17 +52,23 @@ export default function ProductExplorer({ products, loading }) {
   const typeLabel = (v) => (v === 'All' ? t('explore.all') : t(`cat.${CAT_KEYS[v]}`));
 
   const filtered = useMemo(() => {
+    const term = search.toLowerCase();
     return products.filter((p) => {
       const typeOk = toyType === 'All' || p.category === toyType;
       const ageOk =
         !activeAge || overlaps(ageRange(p.age_range), { min: activeAge.min, max: activeAge.max });
-      return typeOk && ageOk;
+      const searchOk =
+        !term ||
+        (p.name && p.name.toLowerCase().includes(term)) ||
+        (p.category && p.category.toLowerCase().includes(term));
+      return typeOk && ageOk && searchOk;
     });
-  }, [products, toyType, activeAge]);
+  }, [products, toyType, activeAge, search]);
 
   const reset = () => {
     setToyType('All');
     setAge('all');
+    if (searchParams.get('search')) setSearchParams({}, { replace: true });
   };
 
   return (
@@ -122,13 +130,27 @@ export default function ProductExplorer({ products, loading }) {
               ? t('common.loading')
               : `${filtered.length} ${filtered.length === 1 ? t('common.foundOne') : t('common.found')}`}
           </p>
-          {(toyType !== 'All' || age !== 'all') && (
+          {(toyType !== 'All' || age !== 'all' || search) && (
             <button onClick={reset} className="text-sm text-cosmic font-heading font-bold hover:underline">
               {t('common.clear')}
             </button>
           )}
         </div>
       </div>
+
+      {search && (
+        <div className="mb-6 flex items-center justify-between flex-wrap gap-3 rounded-2xl bg-mist/60 px-5 py-3">
+          <p className="text-sm text-muted-foreground">
+            {t('explore.resultsFor')} <span className="font-heading font-bold text-foreground">"{search}"</span>
+          </p>
+          <button
+            onClick={() => setSearchParams({}, { replace: true })}
+            className="text-sm text-cosmic font-heading font-bold hover:underline"
+          >
+            {t('common.clear')}
+          </button>
+        </div>
+      )}
 
       {loading ? (
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
