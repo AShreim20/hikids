@@ -24,9 +24,11 @@ export default function Navbar() {
     { label: t('nav.worlds'), to: '/#categories' },
     { label: t('nav.about'), to: '/about' },
     { label: t('nav.faq'), to: '/faq' },
-    { label: t('nav.track'), to: '/track-order' },
   ];
-  if (user?.role === 'admin') links.push({ label: t('nav.admin'), to: '/admin' });
+  if (user?.role === 'admin') {
+    links.push({ label: t('nav.track'), to: '/track-order' });
+    links.push({ label: t('nav.admin'), to: '/admin' });
+  }
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/60 safe-top">

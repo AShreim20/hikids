@@ -1,17 +1,38 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Package, CreditCard, Truck, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
+import { Search, Package, CreditCard, Truck, CheckCircle, XCircle, ArrowRight, Lock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/lib/AuthContext';
 
 export default function TrackOrder() {
   const { t } = useLanguage();
+  const { user } = useAuth();
   const [orderNo, setOrderNo] = useState('');
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+
+  if (user?.role !== 'admin') {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="max-w-2xl mx-auto px-5 py-32 text-center">
+          <div className="mx-auto grid place-items-center w-16 h-16 rounded-full bg-destructive/10">
+            <Lock className="w-8 h-8 text-destructive" />
+          </div>
+          <h1 className="mt-6 font-heading font-extrabold text-3xl">{t('admin.denied')}</h1>
+          <p className="mt-3 text-muted-foreground">{t('admin.deniedDesc')}</p>
+          <Link to="/" className="mt-6 inline-flex items-center gap-2 text-cosmic font-heading font-bold">
+            {t('pd.back')}
+          </Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   const track = async (e) => {
     e.preventDefault();
