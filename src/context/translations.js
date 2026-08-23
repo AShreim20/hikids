@@ -344,6 +344,15 @@ export const translations = {
     'loyalty.nav': 'Loyalty',
     'loyalty.mynav': 'My points',
 
+    'ai.title': 'HiKids Assistant',
+    'ai.subtitle': 'Ask me anything about our toys',
+    'ai.greeting': "Hi! I'm your HiKids assistant. Looking for the perfect toy? Tell me the child's age or what they love.",
+    'ai.placeholder': 'Type your question…',
+    'ai.error': "Sorry, I couldn't respond right now. Please try again.",
+    'ai.sugg1': 'Toys for a 4-year-old?',
+    'ai.sugg2': "What's your shipping policy?",
+    'ai.sugg3': 'Recommend a gift under ₪100',
+
     'pd.back': 'Back to collection',
     'pd.notFound': 'Toy not found',
     'pd.notFoundDesc': 'This piece may have wandered off.',
@@ -712,6 +721,15 @@ export const translations = {
     'loyalty.deniedDesc': 'سجّل الدخول بحساب المالك.',
     'loyalty.nav': 'الولاء',
     'loyalty.mynav': 'نقاطي',
+
+    'ai.title': 'مساعد هاي كيدز',
+    'ai.subtitle': 'اسألني أي شيء عن ألعابنا',
+    'ai.greeting': 'مرحبًا! أنا مساعد هاي كيدز. تبحث عن اللعبة المثالية؟ أخبرني بعمر الطفل أو ما يحبه.',
+    'ai.placeholder': 'اكتب سؤالك…',
+    'ai.error': 'عذرًا، تعذّر الرد الآن. حاول مرة أخرى.',
+    'ai.sugg1': 'ألعاب لطفل عمره 4 سنوات؟',
+    'ai.sugg2': 'ما هي سياسة الشحن؟',
+    'ai.sugg3': 'اقترح هدية أقل من ₪100',
 
     'pd.back': 'العودة للمجموعة',
     'pd.notFound': 'اللعبة غير موجودة',

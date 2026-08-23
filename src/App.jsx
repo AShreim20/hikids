@@ -8,6 +8,8 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import MobileNav from './components/MobileNav';
+import ChatWidget from './components/ai/ChatWidget';
+import WhatsAppButton from './components/WhatsAppButton';
 // Add page imports here
 const Home = lazy(() => import('./pages/Home'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
@@ -82,6 +84,8 @@ const AuthenticatedApp = () => {
       </Routes>
       </Suspense>
       <MobileNav />
+      <ChatWidget />
+      <WhatsAppButton />
       </WishlistProvider>
     </CartProvider>
   );
