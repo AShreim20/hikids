@@ -4,27 +4,27 @@
 
 @layer base {
   :root {
-    --background: 36 26% 95%;
-    --foreground: 30 14% 13%;
-    --card: 36 34% 99%;
-    --card-foreground: 30 14% 13%;
-    --popover: 36 34% 99%;
-    --popover-foreground: 30 14% 13%;
+    --background: 40 36% 95%;
+    --foreground: 28 20% 14%;
+    --card: 42 44% 99%;
+    --card-foreground: 28 20% 14%;
+    --popover: 42 44% 99%;
+    --popover-foreground: 28 20% 14%;
     --primary: 241 74% 63%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 33 22% 93%;
-    --secondary-foreground: 30 14% 13%;
-    --muted: 33 22% 93%;
-    --muted-foreground: 30 10% 42%;
-    --accent: 15 100% 69%;
-    --accent-foreground: 30 14% 13%;
-    --mist: 34 22% 94%;
-    --highlight: 15 100% 69%;
+    --secondary: 38 34% 92%;
+    --secondary-foreground: 28 20% 14%;
+    --muted: 38 34% 92%;
+    --muted-foreground: 28 16% 44%;
+    --accent: 18 100% 68%;
+    --accent-foreground: 28 20% 14%;
+    --mist: 40 32% 94%;
+    --highlight: 18 100% 68%;
     --cosmic: 241 74% 63%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 32 18% 88%;
-    --input: 32 18% 88%;
+    --border: 36 26% 87%;
+    --input: 36 26% 87%;
     --ring: 241 74% 63%;
     --radius: 1.5rem;
     --font-heading: 'Baloo Bhaijaan 2', ui-rounded, system-ui, sans-serif;
