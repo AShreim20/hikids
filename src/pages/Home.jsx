@@ -21,6 +21,14 @@ export default function Home() {
   const categories = ['build','plush','vehicles','early','pretend','arts'].map((k) => ({
     name: t(`cat.${k}`), desc: t(`cat.${k}Desc`), key: k,
   }));
+  const CAT_ENUM = {
+    build: 'Build & Create', plush: 'Plush & Soft', vehicles: 'Vehicles & Motion',
+    early: 'Early Years', pretend: 'Pretend Play', arts: 'Arts & Crafts',
+  };
+  const catImage = (key) => {
+    const p = products.find((pr) => pr.category === CAT_ENUM[key]);
+    return p?.image_url;
+  };
 
   useEffect(() => {
     base44.entities.Product.list('-updated_date', 50)
@@ -103,19 +111,34 @@ export default function Home() {
           <p className="text-muted-foreground max-w-sm">{t('cats.subtitle')}</p>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5 md:gap-6">
-          {categories.map((c, i) => (
-            <a
-              key={c.name}
-              href="#explore"
-              className="group relative overflow-hidden rounded-3xl bg-mist p-4 sm:p-6 md:p-8 aspect-[4/3] sm:aspect-[5/3] flex flex-col justify-end squish"
-              style={{ animationDelay: `${i * 0.05}s` }}
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-accent/0 to-cosmic/0 group-hover:from-accent/10 group-hover:to-cosmic/10 transition-all" />
-              <h3 className="font-heading font-bold text-base sm:text-xl md:text-2xl leading-tight">{c.name}</h3>
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1">{c.desc}</p>
-              <ArrowRight className="w-5 h-5 mt-2 sm:mt-3 text-cosmic opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-            </a>
-          ))}
+          {categories.map((c, i) => {
+            const img = catImage(c.key);
+            return (
+              <a
+                key={c.name}
+                href="#explore"
+                className="group relative overflow-hidden rounded-3xl bg-mist aspect-[4/3] sm:aspect-[5/3] flex flex-col justify-end squish float-in"
+                style={{ animationDelay: `${i * 0.05}s` }}
+              >
+                {img ? (
+                  <Image
+                    src={img}
+                    alt={c.name}
+                    fittingType="fill"
+                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.08]"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-cosmic/20" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                <div className="relative p-4 sm:p-6 md:p-8 text-white">
+                  <h3 className="font-heading font-bold text-base sm:text-xl md:text-2xl leading-tight">{c.name}</h3>
+                  <p className="text-xs sm:text-sm text-white/80 mt-1">{c.desc}</p>
+                  <ArrowRight className="w-5 h-5 mt-2 sm:mt-3 text-white opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+                </div>
+              </a>
+            );
+          })}
         </div>
       </section>
 
