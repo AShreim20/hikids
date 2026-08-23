@@ -115,13 +115,13 @@ export default function Checkout() {
         }).catch(() => {});
       }
       if (appliedDiscount) {
-        base44.functions.invoke('redeemDiscount', { code_id: appliedDiscount.id }).catch(() => {});
+        base44.functions.invoke('redeemDiscount', { code_id: appliedDiscount.id, order_id: order.id }).catch(() => {});
       }
       setOrderId(order.id);
       clear();
       setDone(true);
       base44.functions.invoke('onOrderPlaced', { orderId: order.id }).catch(() => {});
-      if (user) base44.functions.invoke('awardLoyaltyPoints', { subtotal: total }).catch(() => {});
+      if (user) base44.functions.invoke('awardLoyaltyPoints', { order_id: order.id }).catch(() => {});
       toast({ title: lang === 'ar' ? 'تم تأكيد الطلب' : 'Order placed' });
     } catch (err) {
       toast({ title: lang === 'ar' ? 'حدث خطأ' : 'Something went wrong', variant: 'destructive' });

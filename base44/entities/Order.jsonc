@@ -41,6 +41,16 @@
       "title": "Loyalty discount",
       "default": 0
     },
+    "loyalty_awarded": {
+      "type": "boolean",
+      "title": "Loyalty awarded",
+      "default": false
+    },
+    "discount_counted": {
+      "type": "boolean",
+      "title": "Discount counted",
+      "default": false
+    },
     "city": {
       "type": "string",
       "title": "City"
