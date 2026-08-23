@@ -37,6 +37,10 @@
         "cod"
       ]
     },
+    "gift_message": {
+      "type": "string",
+      "title": "Gift Message"
+    },
     "status": {
       "type": "string",
       "title": "Status",

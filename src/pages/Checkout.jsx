@@ -22,6 +22,7 @@ export default function Checkout() {
   const navigate = useNavigate();
 
   const [form, setForm] = useState({ name: '', email: '', address: '', phone: '' });
+  const [giftMessage, setGiftMessage] = useState('');
   const [payment, setPayment] = useState('card');
   const [cardType, setCardType] = useState('visa');
   const [card, setCard] = useState({ name: '', number: '', expiry: '', cvc: '' });
@@ -45,6 +46,7 @@ export default function Checkout() {
         phone: form.phone,
         payment_method: payment,
         status: payment === 'card' ? 'paid' : 'pending',
+        gift_message: giftMessage.trim() || undefined,
       });
       setOrderId(order.id);
       clear();
@@ -120,6 +122,19 @@ export default function Checkout() {
                 <Field label={t('checkout.phone')} required value={form.phone} onChange={set('phone')} />
                 <Field label={t('checkout.address')} required value={form.address} onChange={set('address')} />
               </div>
+            </div>
+
+            {/* Gift message */}
+            <div className="rounded-3xl bg-card border border-border/60 p-6 md:p-8">
+              <h2 className="font-heading font-extrabold text-2xl">{t('checkout.giftTitle')}</h2>
+              <p className="mt-2 text-sm text-muted-foreground">{t('checkout.giftDesc')}</p>
+              <textarea
+                value={giftMessage}
+                onChange={(e) => setGiftMessage(e.target.value)}
+                rows={3}
+                placeholder={t('checkout.giftPlaceholder')}
+                className="mt-4 w-full p-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic resize-none"
+              />
             </div>
 
             {/* Payment */}

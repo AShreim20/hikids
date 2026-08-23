@@ -13,6 +13,7 @@ export const translations = {
     'nav.wishlist': 'Wishlist',
     'nav.admin': 'Manage Products',
     'nav.search': 'Search toys…',
+    'nav.orders': 'My Orders',
 
     'footer.tagline': 'A gallery of wonder. Premium toys for sophisticated play, made to be treasured.',
     'footer.shop': 'Shop',
@@ -158,6 +159,9 @@ export const translations = {
     'checkout.successDesc': 'A receipt is on its way to your inbox.',
     'checkout.back': 'Back to store',
     'checkout.codNote': 'Pay with cash when your order arrives at your door.',
+    'checkout.giftTitle': 'Gift message',
+    'checkout.giftDesc': 'Add a personal note to be included with your order.',
+    'checkout.giftPlaceholder': 'Write your gift message…',
 
     'track.title': 'Track your order',
     'track.subtitle': 'Enter your order number to see its current status.',
@@ -178,6 +182,14 @@ export const translations = {
     'track.s_delivered_d': 'Enjoy your new toys!',
     'track.s_cancelled': 'Cancelled',
     'track.s_cancelled_d': 'This order was cancelled.',
+
+    'orders.title': 'My orders',
+    'orders.subtitle': 'Your recent orders and their status.',
+    'orders.empty': 'No orders yet',
+    'orders.emptyDesc': 'When you place an order, it will appear here.',
+    'orders.signIn': 'Sign in to view your orders.',
+    'orders.orderNo': 'Order',
+    'orders.giftMessage': 'Gift message',
 
     'faq.title': 'Frequently asked questions',
     'faq.subtitle': 'Everything you need to know about shopping with HiKids.',
@@ -251,6 +263,7 @@ export const translations = {
     'nav.wishlist': 'المفضلة',
     'nav.admin': 'إدارة المنتجات',
     'nav.search': 'ابحث عن لعبة…',
+    'nav.orders': 'طلباتي',
 
     'footer.tagline': 'معرض من العجائب. ألعاب فاخرة للعب الراقي، مصنوعة لتُصان.',
     'footer.shop': 'تسوّق',
@@ -396,6 +409,9 @@ export const translations = {
     'checkout.successDesc': 'وصل الإيصال إلى بريدك.',
     'checkout.back': 'العودة للمتجر',
     'checkout.codNote': 'ادفع نقدًا عند وصول طلبك إلى باب منزلك.',
+    'checkout.giftTitle': 'رسالة الهدية',
+    'checkout.giftDesc': 'أضف ملاحظة شخصية تُرفق مع طلبك.',
+    'checkout.giftPlaceholder': 'اكتب رسالة الهدية…',
 
     'track.title': 'تتبّع طلبك',
     'track.subtitle': 'أدخل رقم طلبك لمعرفة حالته الحالية.',
@@ -416,6 +432,14 @@ export const translations = {
     'track.s_delivered_d': 'استمتع بألعابك الجديدة!',
     'track.s_cancelled': 'ملغى',
     'track.s_cancelled_d': 'تم إلغاء هذا الطلب.',
+
+    'orders.title': 'طلباتي',
+    'orders.subtitle': 'طلباتك الأخيرة وحالتها.',
+    'orders.empty': 'لا طلبات بعد',
+    'orders.emptyDesc': 'عند تقديم طلب، سيظهر هنا.',
+    'orders.signIn': 'سجّل الدخول لعرض طلباتك.',
+    'orders.orderNo': 'طلب',
+    'orders.giftMessage': 'رسالة الهدية',
 
     'faq.title': 'الأسئلة الشائعة',
     'faq.subtitle': 'كل ما تحتاج معرفته عن التسوّق من HiKids.',

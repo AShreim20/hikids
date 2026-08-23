@@ -19,6 +19,7 @@ const About = lazy(() => import('./pages/About'));
 const FAQ = lazy(() => import('./pages/FAQ'));
 const TrackOrder = lazy(() => import('./pages/TrackOrder'));
 const Admin = lazy(() => import('./pages/Admin'));
+const MyOrders = lazy(() => import('./pages/MyOrders'));
 import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -64,6 +65,7 @@ const AuthenticatedApp = () => {
         <Route path="/faq" element={<FAQ />} />
         <Route path="/track-order" element={<TrackOrder />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/orders" element={<MyOrders />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
       </Suspense>

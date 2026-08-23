@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home as HomeIcon, Heart, ShoppingBag, BarChart3 } from 'lucide-react';
+import { Home as HomeIcon, Heart, ShoppingBag, Package } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -9,7 +9,7 @@ const tabs = [
   { to: '/', labelKey: 'nav.home', icon: HomeIcon, exact: true },
   { to: '/wishlist', labelKey: 'nav.wishlist', icon: Heart, badge: 'wish' },
   { to: '/cart', labelKey: 'nav.cart', icon: ShoppingBag, badge: 'cart' },
-  { to: '/analytics', labelKey: 'nav.insights', icon: BarChart3 },
+  { to: '/orders', labelKey: 'nav.orders', icon: Package },
 ];
 
 export default function MobileNav() {
