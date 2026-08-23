@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, BarChart3, Heart, Settings as SettingsIcon, Search } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
+import SearchHover from '@/components/SearchHover';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import SettingsDialog from '@/components/SettingsDialog';
@@ -55,9 +56,10 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
+          <SearchHover />
           <button
             onClick={() => setSearchOpen((v) => !v)}
-            className="grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+            className="md:hidden grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
             aria-label={t('nav.search')}
           >
             <Search className="w-5 h-5" />
@@ -97,7 +99,7 @@ export default function Navbar() {
         </div>
       </nav>
       {searchOpen && (
-        <div className="border-t border-border/60 px-5 sm:px-8 py-3 max-w-7xl mx-auto">
+        <div className="md:hidden border-t border-border/60 px-5 sm:px-8 py-3 max-w-7xl mx-auto">
           <SearchBar autoFocus className="w-full" onSubmitted={() => setSearchOpen(false)} />
         </div>
       )}
