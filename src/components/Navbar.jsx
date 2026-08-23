@@ -55,10 +55,9 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-2">
-          <SearchBar className="hidden md:flex md:w-44 lg:w-72" />
           <button
             onClick={() => setSearchOpen((v) => !v)}
-            className="md:hidden grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+            className="grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
             aria-label={t('nav.search')}
           >
             <Search className="w-5 h-5" />
@@ -98,7 +97,7 @@ export default function Navbar() {
         </div>
       </nav>
       {searchOpen && (
-        <div className="md:hidden border-t border-border/60 px-5 py-3">
+        <div className="border-t border-border/60 px-5 sm:px-8 py-3 max-w-7xl mx-auto">
           <SearchBar autoFocus className="w-full" onSubmitted={() => setSearchOpen(false)} />
         </div>
       )}
