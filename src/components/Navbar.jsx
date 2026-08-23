@@ -36,7 +36,7 @@ export default function Navbar() {
           <Logo className="h-10 md:h-12 w-auto rounded-xl group-hover:scale-95 transition-transform" />
         </Link>
 
-        <div className="hidden md:flex items-center gap-9">
+        <div className="hidden md:flex items-center gap-5 lg:gap-9">
           {links.map((l) => (
             <a
               key={l.label}
@@ -51,7 +51,7 @@ export default function Navbar() {
           </Link>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 lg:gap-2">
           <SearchHover />
           <button
             onClick={() => setSearchOpen((v) => !v)}
@@ -64,7 +64,7 @@ export default function Navbar() {
           {user && (
             <button
               onClick={() => navigate('/loyalty')}
-              className="hidden md:grid squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+              className="hidden lg:grid squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
               aria-label={t('loyalty.mynav')}
             >
               <Sparkles className="w-5 h-5" />
@@ -73,7 +73,7 @@ export default function Navbar() {
           {user && (
             <button
               onClick={() => navigate('/addresses')}
-              className="hidden md:grid squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+              className="hidden lg:grid squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
               aria-label={t('address.title')}
             >
               <MapPin className="w-5 h-5" />

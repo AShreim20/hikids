@@ -44,12 +44,12 @@ export default function Home() {
       {/* Hero */}
       <section className="relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 pt-10 md:pt-20 pb-24 md:pb-40">
-          <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+          <div className="grid md:grid-cols-2 gap-10 md:gap-12 lg:gap-16 items-center">
             <div className="float-in">
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-mist text-foreground/70 text-xs font-medium tracking-wider uppercase">
                 <Sparkles className="w-3.5 h-3.5 text-accent" /> {t('hero.badge')}
               </span>
-              <h1 className="mt-6 font-heading font-extrabold text-5xl sm:text-6xl md:text-7xl lg:text-[5.2rem] leading-[1.02] tracking-tight text-balance whitespace-pre-line">
+              <h1 className="mt-6 font-heading font-extrabold text-5xl sm:text-6xl md:text-5xl lg:text-[5.2rem] leading-[1.02] tracking-tight text-balance whitespace-pre-line">
                 {t('hero.title')}
               </h1>
               <p className="mt-7 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
