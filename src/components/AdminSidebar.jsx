@@ -22,7 +22,7 @@ export default function AdminSidebar() {
   ];
 
   return (
-    <aside className="hidden md:flex fixed left-0 top-16 md:top-20 bottom-0 z-10 flex-col items-center gap-1.5 w-14 py-6 border-r border-border/60 bg-background/80 backdrop-blur-xl">
+    <aside className="hidden md:flex fixed left-0 top-16 md:top-20 bottom-0 z-40 flex-col items-center gap-1.5 w-14 py-6 border-r border-border/60 bg-background/80 backdrop-blur-xl">
       {links.map((l) => {
         const active = pathname === l.to;
         return (
