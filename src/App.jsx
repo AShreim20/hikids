@@ -20,7 +20,6 @@ const Analytics = lazy(() => import('./pages/Analytics'));
 const Wishlist = lazy(() => import('./pages/Wishlist'));
 const About = lazy(() => import('./pages/About'));
 const FAQ = lazy(() => import('./pages/FAQ'));
-const TrackOrder = lazy(() => import('./pages/TrackOrder'));
 const Admin = lazy(() => import('./pages/Admin'));
 const MyOrders = lazy(() => import('./pages/MyOrders'));
 const StaffManagement = lazy(() => import('./pages/StaffManagement'));
@@ -72,7 +71,6 @@ const AuthenticatedApp = () => {
         <Route path="/analytics" element={<Analytics />} />
         <Route path="/about" element={<About />} />
         <Route path="/faq" element={<FAQ />} />
-        <Route path="/track-order" element={<TrackOrder />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/staff" element={<StaffManagement />} />
         <Route path="/delivery" element={<DeliveryManagement />} />

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { HelpCircle, ArrowRight } from 'lucide-react';
+import { HelpCircle } from 'lucide-react';
 import {
   Accordion,
   AccordionItem,
@@ -80,14 +80,8 @@ export default function FAQ() {
           </p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link
-              to="/track-order"
-              className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold"
-            >
-              {t('nav.track')} <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
               to="/"
-              className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-card border border-border font-heading font-bold"
+              className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold"
             >
               {t('nav.explore')}
             </Link>

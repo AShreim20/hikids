@@ -3,11 +3,9 @@ import { Link } from 'react-router-dom';
 import { Instagram, Facebook, Twitter } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { useLanguage } from '@/context/LanguageContext';
-import { useAuth } from '@/lib/AuthContext';
 
 export default function Footer() {
   const { t } = useLanguage();
-  const { user } = useAuth();
   return (
     <footer className="hidden md:block mt-32 bg-cosmic text-white">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-16 md:py-20">
@@ -33,9 +31,6 @@ export default function Footer() {
             <ul className="mt-4 space-y-3 text-sm text-white/70">
               <li><Link to="/about" className="hover:text-white">{t('footer.about')}</Link></li>
               <li><Link to="/faq" className="hover:text-white">{t('footer.faq')}</Link></li>
-              {user?.role === 'admin' && (
-                <li><Link to="/track-order" className="hover:text-white">{t('footer.track')}</Link></li>
-              )}
             </ul>
           </div>
           <div>
