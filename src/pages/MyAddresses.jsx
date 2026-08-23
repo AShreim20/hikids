@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { Loader2, Plus, Pencil, Trash2, X, Star, MapPin } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
-import Navbar from '@/components/Navbar';
+import PageHeader from '@/components/PageHeader';
+import SheetSelect from '@/components/ui/SheetSelect';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -43,7 +44,7 @@ export default function MyAddresses() {
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        <PageHeader title={t('address.title')} />
         <div className="max-w-2xl mx-auto px-5 py-32 text-center">
           <h1 className="font-heading font-extrabold text-3xl">{t('address.signIn')}</h1>
           <Link to="/login" className="mt-6 inline-flex items-center gap-2 text-cosmic font-heading font-bold">{t('settings.signIn')} →</Link>
@@ -98,7 +99,7 @@ export default function MyAddresses() {
 
   return (
     <div className="min-h-screen bg-background pb-32">
-      <Navbar />
+      <PageHeader title={t('address.title')} />
       <div className="max-w-5xl mx-auto px-5 sm:px-8 py-12">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">← {t('pd.back')}</Link>
         <div className="mt-6 flex items-end justify-between flex-wrap gap-4">
@@ -162,10 +163,15 @@ export default function MyAddresses() {
               </label>
               <label className="block">
                 <span className="text-sm font-medium text-foreground/80">{t('address.city')}<span className="text-accent"> *</span></span>
-                <select required value={form.city} onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))} className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic">
-                  <option value="">{t('checkout.selectCity')}</option>
-                  {cities.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
-                </select>
+                <SheetSelect
+                  value={form.city}
+                  onChange={(v) => setForm((f) => ({ ...f, city: v }))}
+                  placeholder={t('checkout.selectCity')}
+                  label={t('address.city')}
+                  required
+                  className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic"
+                  options={cities.map((c) => ({ value: c.name, label: c.name }))}
+                />
               </label>
               <label className="block">
                 <span className="text-sm font-medium text-foreground/80">{t('address.street')}<span className="text-accent"> *</span></span>

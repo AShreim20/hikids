@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Minus, Plus, ShoppingBag, ShieldCheck, Leaf, Star, Heart } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import ProductGallery from '@/components/ProductGallery';
-import Navbar from '@/components/Navbar';
+import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import Reviews from '@/components/Reviews';
@@ -48,7 +48,7 @@ export default function ProductDetail() {
   if (!product) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        <PageHeader title={t('pd.notFound')} />
         <div className="max-w-3xl mx-auto px-5 py-32 text-center">
           <h1 className="font-heading font-extrabold text-3xl">{t('pd.notFound')}</h1>
           <p className="mt-3 text-muted-foreground">{t('pd.notFoundDesc')}</p>
@@ -68,7 +68,7 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <PageHeader title={product.name} />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 pt-8">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
@@ -148,7 +148,7 @@ export default function ProductDetail() {
       <Reviews productId={product.id} />
 
       {/* Sticky add-to-cart bar */}
-      <div className="sticky bottom-0 z-40 border-t border-border/60 bg-background/90 backdrop-blur-xl">
+      <div className="sticky bottom-0 z-40 border-t border-border/60 bg-background/90 backdrop-blur-xl safe-bottom">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
           <div className="hidden sm:block">
             <p className="font-heading font-bold">{product.name}</p>

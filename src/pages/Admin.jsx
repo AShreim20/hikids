@@ -8,6 +8,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import SheetSelect from '@/components/ui/SheetSelect';
 
 const CATEGORIES = [
   'Build & Create',
@@ -313,15 +314,15 @@ export default function Admin() {
               <Input label={t('admin.salePrice')} type="number" value={form.sale_price} onChange={(e) => set('sale_price', e.target.value)} />
               <label className="block">
                 <span className="text-sm font-medium text-foreground/80">{t('admin.category')}</span>
-                <select
+                <SheetSelect
                   value={form.category}
-                  onChange={(e) => set('category', e.target.value)}
+                  onChange={(v) => set('category', v)}
+                  placeholder={t('admin.category')}
+                  label={t('admin.category')}
+                  includeEmpty={false}
                   className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40"
-                >
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>{c}</option>
-                  ))}
-                </select>
+                  options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+                />
               </label>
               <Input label={t('admin.ageRange')} value={form.age_range} onChange={(e) => set('age_range', e.target.value)} placeholder="3-5" />
               <Input label={t('admin.material')} value={form.material} onChange={(e) => set('material', e.target.value)} className="sm:col-span-2" />

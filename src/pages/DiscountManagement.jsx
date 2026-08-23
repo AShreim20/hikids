@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Loader2, Lock, Plus, Pencil, Trash2, X } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
-import Navbar from '@/components/Navbar';
+import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { usePermissions } from '@/lib/permissions';
@@ -37,7 +37,7 @@ export default function DiscountManagement() {
   if (!isOwner) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        <PageHeader title={t('discount.title')} />
         <div className="max-w-2xl mx-auto px-5 py-32 text-center">
           <div className="mx-auto grid place-items-center w-16 h-16 rounded-full bg-destructive/10">
             <Lock className="w-8 h-8 text-destructive" />
@@ -114,7 +114,7 @@ export default function DiscountManagement() {
 
   return (
     <div className="min-h-screen bg-background pb-32">
-      <Navbar />
+      <PageHeader title={t('discount.title')} />
       <div className="max-w-5xl mx-auto px-5 sm:px-8 py-12">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">← {t('pd.back')}</Link>
         <div className="mt-6 flex items-end justify-between flex-wrap gap-4">

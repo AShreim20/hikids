@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Banknote, ShieldCheck, Check, Lock } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
-import Navbar from '@/components/Navbar';
+import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -133,7 +133,7 @@ export default function Checkout() {
   if (done) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        <PageHeader title={t('checkout.title')} />
         <div className="max-w-2xl mx-auto px-5 py-24 text-center">
           <div className="mx-auto grid place-items-center w-20 h-20 rounded-full bg-accent/20 text-accent">
             <Check className="w-10 h-10" />
@@ -143,8 +143,8 @@ export default function Checkout() {
           <p className="mt-3 text-sm text-muted-foreground">
             {t('track.orderNo')}: {orderId?.slice(-8).toUpperCase()}
           </p>
-          <Link to="/track-order" className="mt-6 inline-flex items-center gap-2 text-cosmic font-heading font-bold">
-            {t('nav.track')} →
+          <Link to="/orders" className="mt-6 inline-flex items-center gap-2 text-cosmic font-heading font-bold">
+            {t('nav.orders')} →
           </Link>
           <div>
             <Link to="/" className="mt-8 inline-flex items-center gap-2 h-14 px-8 rounded-full bg-cosmic text-white font-heading font-bold squish">
@@ -160,7 +160,7 @@ export default function Checkout() {
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        <PageHeader title={t('checkout.title')} />
         <div className="max-w-2xl mx-auto px-5 py-32 text-center">
           <h1 className="font-heading font-extrabold text-3xl">{t('checkout.empty')}</h1>
           <p className="mt-3 text-muted-foreground">{t('checkout.emptyDesc')}</p>
@@ -174,7 +174,7 @@ export default function Checkout() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <PageHeader title={t('checkout.title')} />
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-12">
         <Link to="/cart" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4 ltr:rotate-180 rtl:rotate-0" /> {t('common.back')}

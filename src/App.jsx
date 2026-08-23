@@ -2,7 +2,9 @@ import { lazy, Suspense } from 'react';
 import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'framer-motion';
+import { useIsMobile } from '@/hooks/use-mobile';
 const PageNotFound = lazy(() => import('./lib/PageNotFound'));
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -33,6 +35,53 @@ import { WishlistProvider } from '@/context/WishlistContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
 
+function AnimatedRoutes() {
+  const location = useLocation();
+  const isMobile = useIsMobile();
+  const routes = (
+    <Routes location={location}>
+      {/* Add your page Route elements here */}
+      <Route path="/" element={<Home />} />
+      <Route path="/product/:id" element={<ProductDetail />} />
+      <Route path="/cart" element={<Cart />} />
+      <Route path="/wishlist" element={<Wishlist />} />
+      <Route path="/checkout" element={<Checkout />} />
+      <Route path="/analytics" element={<Analytics />} />
+      <Route path="/about" element={<About />} />
+      <Route path="/faq" element={<FAQ />} />
+      <Route path="/admin" element={<Admin />} />
+      <Route path="/staff" element={<StaffManagement />} />
+      <Route path="/delivery" element={<DeliveryManagement />} />
+      <Route path="/addresses" element={<MyAddresses />} />
+      <Route path="/discounts" element={<DiscountManagement />} />
+      <Route path="/loyalty" element={<MyLoyalty />} />
+      <Route path="/loyalty-admin" element={<LoyaltyManagement />} />
+      <Route path="/orders" element={<MyOrders />} />
+      <Route path="*" element={<PageNotFound />} />
+    </Routes>
+  );
+
+  // Desktop keeps the default routing (no transition wrapper) so sticky
+  // headers / fixed overlays behave exactly as before. On mobile we wrap
+  // routes in AnimatePresence for a smooth slide-in + fade-out per navigation.
+  if (!isMobile) return routes;
+
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={location.pathname}
+        className="route-slide-in"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2, ease: 'easeOut' }}
+      >
+        {routes}
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
 
@@ -61,26 +110,7 @@ const AuthenticatedApp = () => {
     <CartProvider>
       <WishlistProvider>
       <Suspense fallback={<div className="fixed inset-0 flex items-center justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div></div>}>
-      <Routes>
-        {/* Add your page Route elements here */}
-        <Route path="/" element={<Home />} />
-        <Route path="/product/:id" element={<ProductDetail />} />
-        <Route path="/cart" element={<Cart />} />
-        <Route path="/wishlist" element={<Wishlist />} />
-        <Route path="/checkout" element={<Checkout />} />
-        <Route path="/analytics" element={<Analytics />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/faq" element={<FAQ />} />
-        <Route path="/admin" element={<Admin />} />
-        <Route path="/staff" element={<StaffManagement />} />
-        <Route path="/delivery" element={<DeliveryManagement />} />
-        <Route path="/addresses" element={<MyAddresses />} />
-        <Route path="/discounts" element={<DiscountManagement />} />
-        <Route path="/loyalty" element={<MyLoyalty />} />
-        <Route path="/loyalty-admin" element={<LoyaltyManagement />} />
-        <Route path="/orders" element={<MyOrders />} />
-        <Route path="*" element={<PageNotFound />} />
-      </Routes>
+      <AnimatedRoutes />
       </Suspense>
       <MobileNav />
       <AdminSidebar />

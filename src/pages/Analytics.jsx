@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { base44 } from '@/api/base44Client';
 import { BarChart3, Eye, Users, ArrowLeft, ExternalLink } from 'lucide-react';
-import Navbar from '@/components/Navbar';
+import PageHeader from '@/components/PageHeader';
+import { useLanguage } from '@/context/LanguageContext';
 import Footer from '@/components/Footer';
 import { Image } from '@/components/ui/image';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '@/components/ui/select';
 
 export default function Analytics() {
+  const { t } = useLanguage();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,7 +37,7 @@ export default function Analytics() {
 
   return (
     <div className="min-h-screen bg-background pb-32">
-      <Navbar />
+      <PageHeader title={t('nav.insights')} />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">

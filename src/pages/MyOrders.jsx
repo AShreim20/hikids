@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Package } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import Navbar from '@/components/Navbar';
+import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -43,7 +43,7 @@ export default function MyOrders() {
   if (!user) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        <PageHeader title={t('orders.title')} />
         <div className="max-w-2xl mx-auto px-5 py-32 text-center">
           <div className="mx-auto grid place-items-center w-16 h-16 rounded-full bg-mist">
             <Package className="w-8 h-8 text-muted-foreground" />
@@ -61,7 +61,7 @@ export default function MyOrders() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <PageHeader title={t('orders.title')} />
       <div className="max-w-3xl mx-auto px-5 sm:px-8 py-12">
         <h1 className="font-heading font-extrabold text-4xl md:text-5xl">{t('orders.title')}</h1>
         <p className="mt-3 text-muted-foreground">{t('orders.subtitle')}</p>

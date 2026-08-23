@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Minus, Plus, Trash2, ArrowRight, ArrowLeft } from 'lucide-react';
 import { Image } from '@/components/ui/image';
-import Navbar from '@/components/Navbar';
+import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -15,7 +15,7 @@ export default function Cart() {
   if (items.length === 0) {
     return (
       <div className="min-h-screen bg-background">
-        <Navbar />
+        <PageHeader title={t('cart.title')} />
         <div className="max-w-3xl mx-auto px-5 py-32 text-center">
           <h1 className="font-heading font-extrabold text-4xl md:text-5xl">{t('cart.empty')}</h1>
           <p className="mt-4 text-muted-foreground text-lg">{t('cart.emptyDesc')}</p>
@@ -33,7 +33,7 @@ export default function Cart() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navbar />
+      <PageHeader title={t('cart.title')} />
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-12">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4 ltr:rotate-180 rtl:rotate-0" /> {t('common.continue')}

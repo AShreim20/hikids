@@ -75,7 +75,7 @@
     letter-spacing: 0.005em;
   }
   @media (max-width: 767px) {
-    body { padding-bottom: 4.5rem; line-height: 1.78; }
+    body { padding-bottom: calc(4.5rem + env(safe-area-inset-bottom)); line-height: 1.78; }
   }
   h1, h2, h3, h4, h5 {
     @apply font-heading tracking-tight;
@@ -111,4 +111,6 @@
   .squish:active { transform: scale(0.9); }
   .safe-top { padding-top: env(safe-area-inset-top); }
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+  @keyframes routeSlideIn { from { transform: translateX(24px); } to { transform: none; } }
+  .route-slide-in { animation: routeSlideIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
 }
