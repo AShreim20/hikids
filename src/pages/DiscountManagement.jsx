@@ -6,6 +6,7 @@ import { useToast } from '@/components/ui/use-toast';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
+import SheetSelect from '@/components/ui/SheetSelect';
 import { usePermissions } from '@/lib/permissions';
 
 export default function DiscountManagement() {
@@ -178,10 +179,18 @@ export default function DiscountManagement() {
               <div className="grid grid-cols-2 gap-4">
                 <label className="block">
                   <span className="text-sm font-medium text-foreground/80">{t('discount.type')}</span>
-                  <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))} className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic">
-                    <option value="percent">{t('discount.percent')}</option>
-                    <option value="fixed">{t('discount.fixed')}</option>
-                  </select>
+                  <SheetSelect
+                    value={form.type}
+                    onChange={(v) => setForm((f) => ({ ...f, type: v }))}
+                    placeholder={t('discount.type')}
+                    label={t('discount.type')}
+                    includeEmpty={false}
+                    className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic"
+                    options={[
+                      { value: 'percent', label: t('discount.percent') },
+                      { value: 'fixed', label: t('discount.fixed') },
+                    ]}
+                  />
                 </label>
                 <label className="block">
                   <span className="text-sm font-medium text-foreground/80">{t('discount.value')}<span className="text-accent"> *</span></span>
