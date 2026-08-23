@@ -11,6 +11,7 @@ import { useAuth } from '@/lib/AuthContext';
 import CitySelect from '@/components/checkout/CitySelect';
 import SavedAddressPicker from '@/components/checkout/SavedAddressPicker';
 import DiscountInput from '@/components/checkout/DiscountInput';
+import LoyaltyRedeem from '@/components/checkout/LoyaltyRedeem';
 
 const CARD_TYPES = [
   { key: 'visa', label: 'Visa', badge: 'bg-[#1A1F71] text-white' },
@@ -40,11 +41,13 @@ export default function Checkout() {
   const [savedId, setSavedId] = useState('');
   const [saveAddr, setSaveAddr] = useState(false);
   const [appliedDiscount, setAppliedDiscount] = useState(null);
+  const [loyaltyRedeem, setLoyaltyRedeem] = useState(null);
 
   const selectedCity = cities.find((c) => c.id === cityId);
   const deliveryCost = selectedCity ? selectedCity.price : 0;
   const discountAmount = appliedDiscount?.amount || 0;
-  const grandTotal = Math.max(0, total + deliveryCost - discountAmount);
+  const loyaltyDiscount = loyaltyRedeem?.amount || 0;
+  const grandTotal = Math.max(0, total + deliveryCost - discountAmount - loyaltyDiscount);
 
   useEffect(() => {
     base44.entities.DeliveryCity.filter({ active: true }).then(setCities).catch(() => {});
@@ -71,13 +74,27 @@ export default function Checkout() {
     }
     setPlacing(true);
     try {
+      let loyaltyPoints = 0;
+      let loyaltyAmount = 0;
+      if (loyaltyRedeem && user) {
+        const res = await base44.functions.invoke('redeemLoyaltyPoints', { points: loyaltyRedeem.points, subtotal: total });
+        if (!res.success) {
+          toast({ title: res.message || 'Loyalty error', variant: 'destructive' });
+          setPlacing(false);
+          return;
+        }
+        loyaltyPoints = res.points;
+        loyaltyAmount = res.amount;
+      }
       const order = await base44.entities.Order.create({
         items: items.map((i) => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
         subtotal: total,
         delivery_cost: deliveryCost,
         discount_code: appliedDiscount?.code,
         discount_amount: discountAmount,
-        total: grandTotal,
+        loyalty_points: loyaltyPoints,
+        loyalty_discount: loyaltyAmount,
+        total: Math.max(0, total + deliveryCost - discountAmount - loyaltyAmount),
         city: selectedCity.name,
         customer_name: form.name,
         customer_email: form.email,
@@ -104,6 +121,7 @@ export default function Checkout() {
       clear();
       setDone(true);
       base44.functions.invoke('onOrderPlaced', { orderId: order.id }).catch(() => {});
+      if (user) base44.functions.invoke('awardLoyaltyPoints', { subtotal: total }).catch(() => {});
       toast({ title: lang === 'ar' ? 'تم تأكيد الطلب' : 'Order placed' });
     } catch (err) {
       toast({ title: lang === 'ar' ? 'حدث خطأ' : 'Something went wrong', variant: 'destructive' });
@@ -307,6 +325,16 @@ export default function Checkout() {
                 onRemoved={() => setAppliedDiscount(null)}
               />
             </div>
+            {user && (
+              <div className="mt-4">
+                <LoyaltyRedeem
+                  subtotal={total}
+                  applied={loyaltyRedeem}
+                  onApplied={setLoyaltyRedeem}
+                  onRemoved={() => setLoyaltyRedeem(null)}
+                />
+              </div>
+            )}
             <div className="mt-5 pt-5 border-t border-border/60 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('common.subtotal')}</span>
@@ -320,6 +348,12 @@ export default function Checkout() {
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">{t('checkout.discount')}</span>
                   <span className="font-heading font-bold text-accent">−{formatPrice(appliedDiscount.amount)}</span>
+                </div>
+              )}
+              {loyaltyRedeem && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t('loyalty.title')}</span>
+                  <span className="font-heading font-bold text-accent">−{formatPrice(loyaltyRedeem.amount)}</span>
                 </div>
               )}
             </div>

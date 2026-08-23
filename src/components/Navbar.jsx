@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, BarChart3, Heart, Settings as SettingsIcon, Search, MapPin } from 'lucide-react';
+import { ShoppingBag, BarChart3, Heart, Settings as SettingsIcon, Search, MapPin, Sparkles } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
 import SearchHover from '@/components/SearchHover';
 import { useCart } from '@/context/CartContext';
@@ -34,6 +34,7 @@ export default function Navbar() {
     links.push({ label: t('staff.nav'), to: '/staff' });
     links.push({ label: t('delivery.title'), to: '/delivery' });
     links.push({ label: t('discount.title'), to: '/discounts' });
+    links.push({ label: t('loyalty.nav'), to: '/loyalty-admin' });
   }
 
   return (
@@ -68,6 +69,15 @@ export default function Navbar() {
             <Search className="w-5 h-5" />
           </button>
           <LanguageToggle />
+          {user && (
+            <button
+              onClick={() => navigate('/loyalty')}
+              className="hidden md:grid squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+              aria-label={t('loyalty.mynav')}
+            >
+              <Sparkles className="w-5 h-5" />
+            </button>
+          )}
           {user && (
             <button
               onClick={() => navigate('/addresses')}

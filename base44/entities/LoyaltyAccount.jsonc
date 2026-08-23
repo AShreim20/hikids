@@ -1,0 +1,60 @@
+{
+  "name": "LoyaltyAccount",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "User ID"
+    },
+    "user_email": {
+      "type": "string",
+      "title": "User email"
+    },
+    "user_name": {
+      "type": "string",
+      "title": "User name"
+    },
+    "balance": {
+      "type": "integer",
+      "title": "Balance",
+      "default": 0
+    },
+    "lifetime_earned": {
+      "type": "integer",
+      "title": "Lifetime earned",
+      "default": 0
+    }
+  },
+  "required": [
+    "user_email"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

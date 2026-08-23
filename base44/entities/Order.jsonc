@@ -31,6 +31,16 @@
       "title": "Discount amount",
       "default": 0
     },
+    "loyalty_points": {
+      "type": "integer",
+      "title": "Loyalty points redeemed",
+      "default": 0
+    },
+    "loyalty_discount": {
+      "type": "number",
+      "title": "Loyalty discount",
+      "default": 0
+    },
     "city": {
       "type": "string",
       "title": "City"

@@ -24,6 +24,8 @@ const StaffManagement = lazy(() => import('./pages/StaffManagement'));
 const DeliveryManagement = lazy(() => import('./pages/DeliveryManagement'));
 const MyAddresses = lazy(() => import('./pages/MyAddresses'));
 const DiscountManagement = lazy(() => import('./pages/DiscountManagement'));
+const MyLoyalty = lazy(() => import('./pages/MyLoyalty'));
+const LoyaltyManagement = lazy(() => import('./pages/LoyaltyManagement'));
 import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -73,6 +75,8 @@ const AuthenticatedApp = () => {
         <Route path="/delivery" element={<DeliveryManagement />} />
         <Route path="/addresses" element={<MyAddresses />} />
         <Route path="/discounts" element={<DiscountManagement />} />
+        <Route path="/loyalty" element={<MyLoyalty />} />
+        <Route path="/loyalty-admin" element={<LoyaltyManagement />} />
         <Route path="/orders" element={<MyOrders />} />
         <Route path="*" element={<PageNotFound />} />
       </Routes>
