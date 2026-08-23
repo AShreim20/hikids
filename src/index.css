@@ -27,9 +27,9 @@
     --input: 210 20% 90%;
     --ring: 241 74% 63%;
     --radius: 1.5rem;
-    --font-heading: 'Outfit', ui-sans-serif, system-ui, sans-serif;
-    --font-body: 'Inter', ui-sans-serif, system-ui, sans-serif;
-    --font-display: 'Fraunces', ui-serif, Georgia, serif;
+    --font-heading: 'Baloo Bhaijaan 2', ui-rounded, system-ui, sans-serif;
+    --font-body: 'Tajawal', ui-rounded, system-ui, sans-serif;
+    --font-display: 'Baloo Bhaijaan 2', ui-rounded, system-ui, sans-serif;
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 

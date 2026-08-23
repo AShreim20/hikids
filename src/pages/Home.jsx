@@ -102,18 +102,18 @@ export default function Home() {
           </div>
           <p className="text-muted-foreground max-w-sm">{t('cats.subtitle')}</p>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-5 md:gap-6">
           {categories.map((c, i) => (
             <a
               key={c.name}
               href="#explore"
-              className="group relative overflow-hidden rounded-3xl bg-mist p-6 md:p-8 aspect-[5/3] flex flex-col justify-end squish"
+              className="group relative overflow-hidden rounded-3xl bg-mist p-4 sm:p-6 md:p-8 aspect-[4/3] sm:aspect-[5/3] flex flex-col justify-end squish"
               style={{ animationDelay: `${i * 0.05}s` }}
             >
               <div className="absolute inset-0 bg-gradient-to-br from-accent/0 to-cosmic/0 group-hover:from-accent/10 group-hover:to-cosmic/10 transition-all" />
-              <h3 className="font-heading font-bold text-xl md:text-2xl">{c.name}</h3>
-              <p className="text-sm text-muted-foreground mt-1">{c.desc}</p>
-              <ArrowRight className="w-5 h-5 mt-3 text-cosmic opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
+              <h3 className="font-heading font-bold text-base sm:text-xl md:text-2xl leading-tight">{c.name}</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1">{c.desc}</p>
+              <ArrowRight className="w-5 h-5 mt-2 sm:mt-3 text-cosmic opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
             </a>
           ))}
         </div>
