@@ -139,10 +139,18 @@ export default function Admin() {
     };
     try {
       if (editing === 'new') {
-        await base44.entities.Product.create(payload);
+        const created = await base44.entities.Product.create(payload);
+        await base44.functions.invoke('logAuditActivity', {
+          action: 'product.created', target_type: 'product', target_id: created?.id || '',
+          details: `Created product "${payload.name}"`,
+        });
         toast({ title: lang === 'ar' ? 'أُضيف المنتج' : 'Product added' });
       } else {
         await base44.entities.Product.update(editing, payload);
+        await base44.functions.invoke('logAuditActivity', {
+          action: 'product.updated', target_type: 'product', target_id: editing,
+          details: `Updated product "${payload.name}"`,
+        });
         toast({ title: lang === 'ar' ? 'تم التحديث' : 'Product updated' });
       }
       close();
@@ -162,6 +170,10 @@ export default function Admin() {
     if (!window.confirm(t('admin.confirmDelete'))) return;
     try {
       await base44.entities.Product.delete(p.id);
+      await base44.functions.invoke('logAuditActivity', {
+        action: 'product.deleted', target_type: 'product', target_id: p.id,
+        details: `Deleted product "${p.name}"`,
+      });
       toast({ title: lang === 'ar' ? 'تم الحذف' : 'Deleted' });
       load();
     } catch (err) {

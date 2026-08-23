@@ -31,6 +31,7 @@ export default function Navbar() {
   if (user?.role === 'admin') {
     links.push({ label: t('nav.track'), to: '/track-order' });
     links.push({ label: t('nav.admin'), to: '/admin' });
+    links.push({ label: t('staff.nav'), to: '/staff' });
   }
 
   return (
