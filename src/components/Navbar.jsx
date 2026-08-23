@@ -33,6 +33,7 @@ export default function Navbar() {
     links.push({ label: t('nav.admin'), to: '/admin' });
     links.push({ label: t('staff.nav'), to: '/staff' });
     links.push({ label: t('delivery.title'), to: '/delivery' });
+    links.push({ label: t('discount.title'), to: '/discounts' });
   }
 
   return (

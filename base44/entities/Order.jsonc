@@ -22,6 +22,15 @@
       "title": "Delivery cost",
       "default": 0
     },
+    "discount_code": {
+      "type": "string",
+      "title": "Discount code"
+    },
+    "discount_amount": {
+      "type": "number",
+      "title": "Discount amount",
+      "default": 0
+    },
     "city": {
       "type": "string",
       "title": "City"

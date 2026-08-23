@@ -10,6 +10,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import CitySelect from '@/components/checkout/CitySelect';
 import SavedAddressPicker from '@/components/checkout/SavedAddressPicker';
+import DiscountInput from '@/components/checkout/DiscountInput';
 
 const CARD_TYPES = [
   { key: 'visa', label: 'Visa', badge: 'bg-[#1A1F71] text-white' },
@@ -38,10 +39,12 @@ export default function Checkout() {
   const [cityId, setCityId] = useState('');
   const [savedId, setSavedId] = useState('');
   const [saveAddr, setSaveAddr] = useState(false);
+  const [appliedDiscount, setAppliedDiscount] = useState(null);
 
   const selectedCity = cities.find((c) => c.id === cityId);
   const deliveryCost = selectedCity ? selectedCity.price : 0;
-  const grandTotal = total + deliveryCost;
+  const discountAmount = appliedDiscount?.amount || 0;
+  const grandTotal = Math.max(0, total + deliveryCost - discountAmount);
 
   useEffect(() => {
     base44.entities.DeliveryCity.filter({ active: true }).then(setCities).catch(() => {});
@@ -72,6 +75,8 @@ export default function Checkout() {
         items: items.map((i) => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
         subtotal: total,
         delivery_cost: deliveryCost,
+        discount_code: appliedDiscount?.code,
+        discount_amount: discountAmount,
         total: grandTotal,
         city: selectedCity.name,
         customer_name: form.name,
@@ -91,6 +96,9 @@ export default function Checkout() {
           street: form.address,
           is_default: addresses.length === 0,
         }).catch(() => {});
+      }
+      if (appliedDiscount) {
+        base44.functions.invoke('redeemDiscount', { code_id: appliedDiscount.id }).catch(() => {});
       }
       setOrderId(order.id);
       clear();
@@ -291,6 +299,14 @@ export default function Checkout() {
                 </div>
               ))}
             </div>
+            <div className="mt-5">
+              <DiscountInput
+                subtotal={total}
+                applied={appliedDiscount}
+                onApplied={setAppliedDiscount}
+                onRemoved={() => setAppliedDiscount(null)}
+              />
+            </div>
             <div className="mt-5 pt-5 border-t border-border/60 space-y-2 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('common.subtotal')}</span>
@@ -300,6 +316,12 @@ export default function Checkout() {
                 <span className="text-muted-foreground">{t('common.delivery')}</span>
                 <span className="font-heading font-bold text-cosmic">{deliveryCost === 0 ? t('common.free') : formatPrice(deliveryCost)}</span>
               </div>
+              {appliedDiscount && (
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">{t('checkout.discount')}</span>
+                  <span className="font-heading font-bold text-accent">−{formatPrice(appliedDiscount.amount)}</span>
+                </div>
+              )}
             </div>
             <div className="mt-4 pt-4 border-t border-border/60 flex justify-between items-center">
               <span className="font-heading font-bold">{t('common.total')}</span>
