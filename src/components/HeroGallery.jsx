@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
+import { useLanguage } from '@/context/LanguageContext';
 
 const SLIDE_MS = 4500;
 
 export default function HeroGallery() {
   const [slides, setSlides] = useState([]);
   const [index, setIndex] = useState(0);
+  const { formatPrice } = useLanguage();
 
   useEffect(() => {
     base44.entities.Product.list('-updated_date', 50).
@@ -56,7 +58,7 @@ export default function HeroGallery() {
       <div className="absolute hidden sm:block bg-card rounded-3xl px-6 py-4 shadow-xl -bottom-1 -left-2">
         <p className="text-xs uppercase tracking-widest text-muted-foreground">{onSale ? 'On Sale' : 'Featured'}</p>
         <p className="font-heading font-bold text-lg line-clamp-1 max-w-[10rem]">{current.name}</p>
-        <p className="text-cosmic font-extrabold">${(onSale ? current.sale_price : current.price).toFixed(2)}</p>
+        <p className="text-cosmic font-extrabold">{formatPrice(onSale ? current.sale_price : current.price)}</p>
       </div>
 
       {slides.length > 1 &&
