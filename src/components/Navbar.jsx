@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, BarChart3, Heart, Settings as SettingsIcon, Search, MapPin, Sparkles, Truck, LayoutDashboard, Users, Ticket, Award } from 'lucide-react';
+import { ShoppingBag, BarChart3, Heart, Settings as SettingsIcon, Search, MapPin, Sparkles } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
 import SearchHover from '@/components/SearchHover';
 import { useCart } from '@/context/CartContext';
@@ -28,14 +28,6 @@ export default function Navbar() {
     { label: t('nav.about'), to: '/about' },
     { label: t('nav.faq'), to: '/faq' },
   ];
-  const adminLinks = user?.role === 'admin' ? [
-    { to: '/admin', label: t('nav.admin'), icon: LayoutDashboard },
-    { to: '/staff', label: t('staff.nav'), icon: Users },
-    { to: '/delivery', label: t('delivery.title'), icon: MapPin },
-    { to: '/discounts', label: t('discount.title'), icon: Ticket },
-    { to: '/loyalty-admin', label: t('loyalty.nav'), icon: Award },
-    { to: '/track-order', label: t('nav.track'), icon: Truck },
-  ] : [];
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/60 safe-top">
@@ -43,16 +35,6 @@ export default function Navbar() {
         <Link to="/" className="flex items-center group">
           <Logo className="h-10 md:h-12 w-auto rounded-xl group-hover:scale-95 transition-transform" />
         </Link>
-
-        {adminLinks.length > 0 && (
-          <div className="hidden md:flex items-center gap-1.5 ml-6 pl-6 border-s border-border/60">
-            {adminLinks.map((l) => (
-              <button key={l.to} onClick={() => navigate(l.to)} title={l.label} aria-label={l.label} className="grid place-items-center w-10 h-10 rounded-xl bg-mist text-foreground/70 hover:bg-cosmic hover:text-white transition-colors">
-                <l.icon className="w-5 h-5" />
-              </button>
-            ))}
-          </div>
-        )}
 
         <div className="hidden md:flex items-center gap-9">
           {links.map((l) => (

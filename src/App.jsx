@@ -10,6 +10,7 @@ import ScrollToTop from './components/ScrollToTop';
 import MobileNav from './components/MobileNav';
 import ChatWidget from './components/ai/ChatWidget';
 import WhatsAppButton from './components/WhatsAppButton';
+import AdminSidebar from './components/AdminSidebar';
 // Add page imports here
 const Home = lazy(() => import('./pages/Home'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
@@ -84,6 +85,7 @@ const AuthenticatedApp = () => {
       </Routes>
       </Suspense>
       <MobileNav />
+      <AdminSidebar />
       <ChatWidget />
       <WhatsAppButton />
       </WishlistProvider>
