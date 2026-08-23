@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Minus, Plus, ShoppingBag, ShieldCheck, Leaf, Star, Heart } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { Image } from '@/components/ui/image';
+import ProductGallery from '@/components/ProductGallery';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
@@ -77,9 +77,7 @@ export default function ProductDetail() {
       </div>
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 grid lg:grid-cols-2 gap-10 lg:gap-16">
-        <div className="relative aspect-square rounded-[2.5rem] overflow-hidden bg-mist shadow-[0_30px_70px_-30px_rgba(26,26,30,0.3)] float-in">
-          <Image src={product.image_url} alt={product.name} fittingType="fill" className="w-full h-full object-cover" />
-        </div>
+        <ProductGallery product={product} />
 
         <div className="float-in">
           <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">

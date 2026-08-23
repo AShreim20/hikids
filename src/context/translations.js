@@ -234,6 +234,10 @@ export const translations = {
     'admin.denied': 'Only admins can manage products.',
     'admin.deniedDesc': 'Sign in with an admin account to access this page.',
     'admin.required': 'Name, price, category and image are required.',
+    'admin.gallery': 'More pictures',
+    'admin.addImage': 'Add picture',
+    'admin.video': 'Product video',
+    'admin.uploadVideo': 'Upload video',
 
     'staff.nav': 'Staff & Access',
     'staff.title': 'Staff & Access',
@@ -612,6 +616,10 @@ export const translations = {
     'admin.denied': 'المدير فقط يمكنه إدارة المنتجات.',
     'admin.deniedDesc': 'سجّل الدخول بحساب مدير للوصول إلى هذه الصفحة.',
     'admin.required': 'الاسم والسعر والفئة والصورة مطلوبة.',
+    'admin.gallery': 'صور إضافية',
+    'admin.addImage': 'أضف صورة',
+    'admin.video': 'فيديو المنتج',
+    'admin.uploadVideo': 'ارفع فيديو',
 
     'staff.nav': 'الفريق والصلاحيات',
     'staff.title': 'الفريق والصلاحيات',

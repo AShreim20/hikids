@@ -26,6 +26,8 @@ const EMPTY = {
   category: 'Build & Create',
   age_range: '',
   image_url: '',
+  images: [],
+  video_url: '',
   material: '',
   rating: '',
   stock: '',
@@ -43,6 +45,8 @@ export default function Admin() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef(null);
+  const galleryRef = useRef(null);
+  const videoRef = useRef(null);
 
   const load = () => {
     setLoading(true);
@@ -90,6 +94,8 @@ export default function Admin() {
       category: p.category || CATEGORIES[0],
       age_range: p.age_range || '',
       image_url: p.image_url || '',
+      images: Array.isArray(p.images) ? p.images : [],
+      video_url: p.video_url || '',
       material: p.material || '',
       rating: p.rating ?? '',
       stock: p.stock ?? '',
@@ -117,6 +123,36 @@ export default function Admin() {
     }
   };
 
+  const onGalleryFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      set('images', [...(form.images || []), file_url]);
+    } catch {
+      toast({ title: lang === 'ar' ? 'فشل الرفع' : 'Upload failed', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      if (galleryRef.current) galleryRef.current.value = '';
+    }
+  };
+
+  const onVideoFile = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    try {
+      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      set('video_url', file_url);
+    } catch {
+      toast({ title: lang === 'ar' ? 'فشل الرفع' : 'Upload failed', variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      if (videoRef.current) videoRef.current.value = '';
+    }
+  };
+
   const save = async (e) => {
     e.preventDefault();
     if (!form.name || !form.price || !form.category || !form.image_url) {
@@ -132,6 +168,8 @@ export default function Admin() {
       category: form.category,
       age_range: form.age_range,
       image_url: form.image_url,
+      images: form.images || [],
+      video_url: form.video_url || null,
       material: form.material,
       rating: form.rating ? Number(form.rating) : 0,
       stock: form.stock !== '' ? Number(form.stock) : 0,
@@ -321,6 +359,46 @@ export default function Admin() {
                       placeholder="https://..."
                       className="mt-3 w-full h-11 px-4 rounded-2xl bg-mist border border-border text-sm"
                     />
+                  </div>
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <span className="text-sm font-medium text-foreground/80">{t('admin.gallery')}</span>
+                <div className="mt-2 flex flex-wrap gap-3">
+                  {(form.images || []).map((url, i) => (
+                    <div key={i} className="relative w-20 h-20 rounded-2xl overflow-hidden bg-mist">
+                      <Image src={url} alt={`gallery-${i}`} fittingType="fill" className="w-full h-full" />
+                      <button type="button" onClick={() => set('images', form.images.filter((_, j) => j !== i))} className="absolute top-1 right-1 grid place-items-center w-6 h-6 rounded-full bg-black/60 text-white">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  ))}
+                  <button type="button" onClick={() => galleryRef.current?.click()} disabled={uploading} className="squish w-20 h-20 rounded-2xl border-2 border-dashed border-border grid place-items-center text-muted-foreground hover:border-cosmic hover:text-cosmic disabled:opacity-60">
+                    {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-6 h-6" />}
+                  </button>
+                  <input ref={galleryRef} type="file" accept="image/*" onChange={onGalleryFile} className="hidden" />
+                </div>
+              </div>
+
+              <div className="sm:col-span-2">
+                <span className="text-sm font-medium text-foreground/80">{t('admin.video')}</span>
+                <div className="mt-2 flex items-center gap-4">
+                  {form.video_url && (
+                    <div className="relative w-28 h-20 rounded-2xl overflow-hidden bg-black shrink-0">
+                      <video src={form.video_url} className="w-full h-full object-cover" muted />
+                      <button type="button" onClick={() => set('video_url', '')} className="absolute top-1 right-1 grid place-items-center w-6 h-6 rounded-full bg-black/60 text-white">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  )}
+                  <div className="flex-1">
+                    <input ref={videoRef} type="file" accept="video/*" onChange={onVideoFile} className="hidden" />
+                    <button type="button" onClick={() => videoRef.current?.click()} disabled={uploading} className="squish inline-flex items-center gap-2 h-11 px-5 rounded-full bg-mist font-heading font-bold text-sm disabled:opacity-60">
+                      {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                      {uploading ? t('admin.uploading') : t('admin.uploadVideo')}
+                    </button>
+                    <input value={form.video_url} onChange={(e) => set('video_url', e.target.value)} placeholder="https://...mp4" className="mt-3 w-full h-11 px-4 rounded-2xl bg-mist border border-border text-sm" />
                   </div>
                 </div>
               </div>

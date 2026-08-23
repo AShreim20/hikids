@@ -39,6 +39,19 @@
       "title": "Image URL",
       "format": "uri"
     },
+    "images": {
+      "type": "array",
+      "title": "Gallery images",
+      "items": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "video_url": {
+      "type": "string",
+      "title": "Video URL",
+      "format": "uri"
+    },
     "material": {
       "type": "string",
       "title": "Material"
