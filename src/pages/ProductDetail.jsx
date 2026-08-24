@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Minus, Plus, ShoppingBag, ShieldCheck, Leaf, Star, Heart } from 'lucide-react';
+import { ArrowLeft, Minus, Plus, ShoppingBag, ShieldCheck, Leaf, Star, Heart, AlertTriangle } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import ProductGallery from '@/components/ProductGallery';
 import PageHeader from '@/components/PageHeader';
@@ -150,7 +150,21 @@ export default function ProductDetail() {
                 <Plus className="w-4 h-4" />
               </button>
             </div>
-            <span className="text-sm text-muted-foreground">{product.stock} {t('pd.inStock')}</span>
+            {product.stock > 0 ? (
+              product.stock <= 5 ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/15 text-accent text-sm font-heading font-bold">
+                  <AlertTriangle className="w-4 h-4" />
+                  {t('pd.lowStockPrefix')} {product.stock} {t('pd.lowStockSuffix')}
+                </span>
+              ) : (
+                <span className="text-sm text-muted-foreground">{product.stock} {t('pd.inStock')}</span>
+              )
+            ) : (
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-sm font-heading font-bold">
+                <AlertTriangle className="w-4 h-4" />
+                {t('pd.outOfStock')}
+              </span>
+            )}
           </div>
         </div>
       </div>

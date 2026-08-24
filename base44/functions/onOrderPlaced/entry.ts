@@ -50,6 +50,36 @@ export default async function(req) {
       // recipient not a registered app user or delivery failed — non-fatal
     }
 
+    // Notify store admins of every new sale in real time.
+    try {
+      const admins = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
+      const paymentLabel = order.payment_method === 'card'
+        ? 'Paid by card'
+        : order.payment_method === 'loyalty'
+          ? 'Paid with loyalty points'
+          : 'Cash on delivery';
+      const adminBody =
+        `New order received!\n\n` +
+        `Reference: ${ref}\n` +
+        `Customer: ${order.customer_name || '-'} (${order.customer_email})\n` +
+        `Phone: ${order.phone || '-'}\n` +
+        `City: ${order.city || '-'}\n` +
+        `Address: ${order.address || '-'}\n` +
+        `Payment: ${paymentLabel}\n\n` +
+        `Items:\n${lines}\n\n` +
+        `Total: $${Number(order.total || 0).toFixed(2)}`;
+      for (const a of admins || []) {
+        try {
+          await base44.asServiceRole.integrations.Core.SendEmail({
+            to: a.email,
+            subject: `🛒 New HiKids order — ${ref}`,
+            body: adminBody,
+            from_name: 'HiKids',
+          });
+        } catch {}
+      }
+    } catch {}
+
     return Response.json({ ok: true });
   } catch (error) {
     return Response.json({ error: error.message }, { status: 500 });

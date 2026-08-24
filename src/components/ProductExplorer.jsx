@@ -47,9 +47,16 @@ export default function ProductExplorer({ products, loading }) {
   const search = (searchParams.get('search') || '').trim();
   const [toyType, setToyType] = useState('All');
   const [age, setAge] = useState('all');
+  const [tag, setTag] = useState('All');
 
   const activeAge = AGE_GROUPS.find((g) => g.id === age);
   const typeLabel = (v) => (v === 'All' ? t('explore.all') : t(`cat.${CAT_KEYS[v]}`));
+
+  const allTags = useMemo(() => {
+    const set = new Set();
+    products.forEach((p) => Array.isArray(p.tags) && p.tags.forEach((tg) => set.add(tg)));
+    return ['All', ...Array.from(set)];
+  }, [products]);
 
   const filtered = useMemo(() => {
     const term = search.toLowerCase();
@@ -57,18 +64,20 @@ export default function ProductExplorer({ products, loading }) {
       const typeOk = toyType === 'All' || p.category === toyType;
       const ageOk =
         !activeAge || overlaps(ageRange(p.age_range), { min: activeAge.min, max: activeAge.max });
+      const tagOk = tag === 'All' || (Array.isArray(p.tags) && p.tags.includes(tag));
       const searchOk =
         !term ||
         (p.name && p.name.toLowerCase().includes(term)) ||
         (p.category && p.category.toLowerCase().includes(term)) ||
         (Array.isArray(p.tags) && p.tags.some((tg) => tg.toLowerCase().includes(term)));
-      return typeOk && ageOk && searchOk;
+      return typeOk && ageOk && tagOk && searchOk;
     });
-  }, [products, toyType, activeAge, search]);
+  }, [products, toyType, activeAge, tag, search]);
 
   const reset = () => {
     setToyType('All');
     setAge('all');
+    setTag('All');
     if (searchParams.get('search')) setSearchParams({}, { replace: true });
   };
 
@@ -123,6 +132,25 @@ export default function ProductExplorer({ products, loading }) {
               ))}
             </div>
           </div>
+
+          {allTags.length > 1 && (
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-sm font-heading font-bold w-20 shrink-0">{t('explore.tags')}</span>
+              <div className="flex gap-2 flex-wrap">
+                {allTags.map((tg) => (
+                  <button
+                    key={tg}
+                    onClick={() => setTag(tg)}
+                    className={`squish h-10 px-4 rounded-full text-sm font-medium transition-colors ${
+                      tag === tg ? 'bg-cosmic text-white' : 'bg-background text-foreground/70 hover:bg-accent/20'
+                    }`}
+                  >
+                    {tg === 'All' ? t('explore.all') : tg}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="mt-4 flex items-center justify-between flex-wrap gap-3">
@@ -131,7 +159,7 @@ export default function ProductExplorer({ products, loading }) {
               ? t('common.loading')
               : `${filtered.length} ${filtered.length === 1 ? t('common.foundOne') : t('common.found')}`}
           </p>
-          {(toyType !== 'All' || age !== 'all' || search) && (
+          {(toyType !== 'All' || age !== 'all' || tag !== 'All' || search) && (
             <button onClick={reset} className="text-sm text-cosmic font-heading font-bold hover:underline">
               {t('common.clear')}
             </button>

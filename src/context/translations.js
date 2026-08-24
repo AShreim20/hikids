@@ -415,6 +415,10 @@ export const translations = {
     'loyalty.earnRate': 'Earn rate (points per ₪)',
     'loyalty.saveSettings': 'Save rates',
     'loyalty.settingsSaved': 'Rates saved',
+    'pd.lowStockPrefix': 'Only',
+    'pd.lowStockSuffix': 'left — order soon!',
+    'pd.outOfStock': 'Out of stock',
+    'explore.tags': 'Tags',
   },
   ar: {
     'nav.home': 'الرئيسية',
@@ -832,5 +836,9 @@ export const translations = {
     'loyalty.earnRate': 'سعر الكسب (نقاط لكل ₪)',
     'loyalty.saveSettings': 'حفظ الأسعار',
     'loyalty.settingsSaved': 'تم حفظ الأسعار',
+    'pd.lowStockPrefix': 'بقى',
+    'pd.lowStockSuffix': 'فقط — اطلب الآن!',
+    'pd.outOfStock': 'نفد المخزون',
+    'explore.tags': 'الوسوم',
   },
 };
