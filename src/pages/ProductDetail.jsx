@@ -181,7 +181,7 @@ export default function ProductDetail() {
           <div className="flex flex-1 sm:flex-initial gap-3">
             <button
               onClick={addToCart}
-              className="squish flex-1 sm:w-auto h-14 px-6 rounded-full bg-mist text-foreground font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-white transition-colors"
+              className="squish flex-1 sm:w-auto whitespace-nowrap h-14 px-6 rounded-full bg-mist text-foreground font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-white transition-colors"
             >
               <ShoppingBag className="w-5 h-5" /> {added ? t('common.added') : t('common.addToCart')}
             </button>

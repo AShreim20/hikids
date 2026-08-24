@@ -20,7 +20,7 @@ export default function WhatsAppButton() {
       href={`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`}
       target="_blank"
       rel="noreferrer"
-      className="fixed z-50 bottom-20 md:bottom-6 end-20 md:end-24 grid place-items-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg shadow-[#25D366]/30 squish"
+      className="fixed z-50 bottom-20 md:bottom-6 start-20 md:start-24 grid place-items-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg shadow-[#25D366]/30 squish"
       aria-label="WhatsApp"
     >
       <MessageCircle className="w-6 h-6" />
