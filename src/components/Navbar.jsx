@@ -58,7 +58,9 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-1.5 lg:gap-2">
-          <div className="hidden md:block w-44 lg:w-72"><SearchBar /></div>
+          <div className="hidden md:block group w-11 hover:w-44 lg:hover:w-72 focus-within:w-44 lg:focus-within:w-72 transition-[width] duration-300 overflow-hidden">
+            <SearchBar collapsible />
+          </div>
           <button
             onClick={() => setSearchOpen((v) => !v)}
             className="md:hidden grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
