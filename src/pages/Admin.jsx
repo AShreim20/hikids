@@ -134,12 +134,16 @@ export default function Admin() {
   };
 
   const onGalleryFile = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
-      set('images', [...(form.images || []), file_url]);
+      const urls = [];
+      for (const file of files) {
+        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        urls.push(file_url);
+      }
+      set('images', [...(form.images || []), ...urls]);
     } catch {
       toast({ title: lang === 'ar' ? 'فشل الرفع' : 'Upload failed', variant: 'destructive' });
     } finally {
@@ -315,12 +319,12 @@ export default function Admin() {
       </div>
 
       {editing && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm grid place-items-center p-4 overflow-auto">
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-start sm:items-center justify-center p-0 sm:p-4 overflow-y-auto overscroll-contain">
           <form
             onSubmit={save}
-            className="w-full max-w-4xl rounded-3xl bg-card border border-border/60 p-6 md:p-8 my-8"
+            className="w-full sm:max-w-4xl min-h-full sm:min-h-0 rounded-none sm:rounded-3xl bg-card border border-border/60 px-5 pb-8 sm:p-8 sm:my-8"
           >
-            <div className="flex items-center justify-between">
+            <div className="sticky top-0 z-10 -mx-5 sm:mx-0 px-5 sm:px-0 py-4 sm:py-0 bg-card border-b border-border/60 sm:border-0 flex items-center justify-between safe-top">
               <h2 className="font-heading font-extrabold text-2xl">
                 {editing === 'new' ? t('admin.new') : t('admin.edit')}
               </h2>
@@ -407,7 +411,7 @@ export default function Admin() {
                   <button type="button" onClick={() => galleryRef.current?.click()} disabled={uploading} className="squish w-20 h-20 rounded-2xl border-2 border-dashed border-border grid place-items-center text-muted-foreground hover:border-cosmic hover:text-cosmic disabled:opacity-60">
                     {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-6 h-6" />}
                   </button>
-                  <input ref={galleryRef} type="file" accept="image/*" onChange={onGalleryFile} className="hidden" />
+                  <input ref={galleryRef} type="file" accept="image/*" multiple onChange={onGalleryFile} className="hidden" />
                 </div>
               </div>
 
@@ -457,7 +461,7 @@ export default function Admin() {
               </label>
             </div>
 
-            <div className="mt-8 flex gap-3">
+            <div className="mt-8 sticky bottom-0 -mx-5 sm:mx-0 px-5 sm:px-0 py-4 sm:py-0 bg-card border-t border-border/60 sm:border-0 flex gap-3 safe-bottom">
               <button
                 type="submit"
                 disabled={saving}

@@ -49,7 +49,7 @@ export default function ChatPanel({ onClose }) {
   const suggestions = [t('ai.sugg1'), t('ai.sugg2'), t('ai.sugg3')];
 
   return (
-    <div className="fixed z-50 bottom-36 md:bottom-24 start-4 md:start-6 w-[calc(100vw-2rem)] max-w-sm h-[60vh] max-h-[32rem] rounded-3xl bg-card border border-border shadow-2xl flex flex-col overflow-hidden float-in mx-16">
+    <div className="fixed z-50 inset-x-2 bottom-24 md:inset-x-auto md:start-6 md:bottom-24 md:w-[24rem] h-[min(78vh,34rem)] md:h-[60vh] md:max-h-[32rem] rounded-3xl bg-card border border-border shadow-2xl flex flex-col overflow-hidden float-in">
       <div className="flex items-center gap-3 px-4 py-3 bg-cosmic text-white">
         <Sparkles className="w-5 h-5" />
         <div>

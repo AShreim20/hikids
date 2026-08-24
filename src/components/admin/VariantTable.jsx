@@ -33,7 +33,38 @@ export default function VariantTable({ options, variants, onChange }) {
       {variants.length === 0 ? (
         <p className="mt-4 text-sm text-muted-foreground">{t('variants.noCombos')}</p>
       ) : (
-        <div className="mt-4 overflow-x-auto">
+        <>
+        {/* Mobile / small tablet: one touch-friendly card per combination */}
+        <div className="mt-4 grid gap-3 lg:hidden">
+          {variants.map((v, i) => (
+            <div key={v.key} className="rounded-2xl bg-mist/60 border border-border/60 p-4">
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-heading font-bold text-sm">
+                  {optionNames.map((n) => v.attributes?.[n]).filter(Boolean).join(' · ')}
+                </p>
+                <label className="flex items-center gap-2 text-xs shrink-0">
+                  {t('variants.active')}
+                  <input
+                    type="checkbox"
+                    checked={v.active !== false}
+                    onChange={(e) => update(i, { active: e.target.checked })}
+                    className="w-5 h-5 rounded accent-cosmic"
+                  />
+                </label>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <Field label={t('variants.price')} type="number" value={v.price} onChange={(x) => update(i, { price: x })} />
+                <Field label={t('variants.comparePrice')} type="number" value={v.compare_price} onChange={(x) => update(i, { compare_price: x })} />
+                <Field label={t('variants.stock')} type="number" value={v.stock} onChange={(x) => update(i, { stock: x })} />
+                <Field label={t('variants.weight')} type="number" value={v.weight} onChange={(x) => update(i, { weight: x })} />
+                <Field label={t('variants.sku')} value={v.sku} onChange={(x) => update(i, { sku: x })} />
+                <Field label={t('variants.barcode')} value={v.barcode} onChange={(x) => update(i, { barcode: x })} />
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-4 overflow-x-auto hidden lg:block">
           <table className="w-full text-sm min-w-[720px]">
             <thead>
               <tr className="text-xs uppercase tracking-wider text-muted-foreground">
@@ -86,8 +117,23 @@ export default function VariantTable({ options, variants, onChange }) {
             </tbody>
           </table>
         </div>
+        </>
       )}
     </div>
+  );
+}
+
+function Field({ label, value, onChange, type = 'text' }) {
+  return (
+    <label className="block">
+      <span className="text-xs text-muted-foreground">{label}</span>
+      <input
+        type={type}
+        value={value ?? ''}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1 w-full h-12 px-3 rounded-xl bg-background border border-border text-sm"
+      />
+    </label>
   );
 }
 

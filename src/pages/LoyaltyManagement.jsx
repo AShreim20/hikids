@@ -178,7 +178,7 @@ export default function LoyaltyManagement() {
           <div className="mt-8 space-y-3">
             {filtered.map((a) => (
               <React.Fragment key={a.id}>
-                <div className="flex items-center justify-between gap-4 rounded-2xl bg-card border border-border/60 p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 rounded-2xl bg-card border border-border/60 p-4">
                   <div className="flex items-center gap-3 min-w-0">
                     <div className="grid place-items-center w-11 h-11 rounded-xl bg-accent/15 text-accent shrink-0">
                       <Sparkles className="w-5 h-5" />
@@ -188,8 +188,8 @@ export default function LoyaltyManagement() {
                       <p className="text-xs text-muted-foreground truncate">{a.user_email}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-4">
-                    <div className="text-end">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="text-start sm:text-end">
                       <p className="font-heading font-extrabold text-lg">{a.balance || 0}</p>
                       <p className="text-xs text-muted-foreground">{t('loyalty.points')}</p>
                     </div>

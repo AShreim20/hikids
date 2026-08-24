@@ -13,6 +13,7 @@ import MobileNav from './components/MobileNav';
 import ChatWidget from './components/ai/ChatWidget';
 import WhatsAppButton from './components/WhatsAppButton';
 import AdminSidebar from './components/AdminSidebar';
+import AdminMobileMenu from './components/AdminMobileMenu';
 import NewOrderNotifier from './components/orders/NewOrderNotifier';
 // Add page imports here
 const Home = lazy(() => import('./pages/Home'));
@@ -127,6 +128,7 @@ const AuthenticatedApp = () => {
       </Suspense>
       <MobileNav />
       <AdminSidebar />
+      <AdminMobileMenu />
       <NewOrderNotifier />
       <ChatWidget />
       <WhatsAppButton />

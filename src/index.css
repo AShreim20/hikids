@@ -68,6 +68,17 @@
   }
   html, body {
     overscroll-behavior-y: none;
+    overflow-x: hidden;
+    max-width: 100%;
+  }
+  img, video, canvas, svg, table {
+    max-width: 100%;
+  }
+  input, select, textarea {
+    font-size: 16px; /* prevents iOS Safari zoom-on-focus */
+  }
+  @media (min-width: 768px) {
+    input, select, textarea { font-size: inherit; }
   }
   body {
     @apply bg-background text-foreground font-body;
