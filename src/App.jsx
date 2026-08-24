@@ -30,6 +30,10 @@ const MyAddresses = lazy(() => import('./pages/MyAddresses'));
 const DiscountManagement = lazy(() => import('./pages/DiscountManagement'));
 const MyLoyalty = lazy(() => import('./pages/MyLoyalty'));
 const LoyaltyManagement = lazy(() => import('./pages/LoyaltyManagement'));
+const Login = lazy(() => import('./pages/Login'));
+const Register = lazy(() => import('./pages/Register'));
+const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -57,6 +61,10 @@ function AnimatedRoutes() {
       <Route path="/loyalty" element={<MyLoyalty />} />
       <Route path="/loyalty-admin" element={<LoyaltyManagement />} />
       <Route path="/orders" element={<MyOrders />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );
