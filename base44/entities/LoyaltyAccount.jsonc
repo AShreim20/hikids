@@ -70,6 +70,11 @@
     "last_activity_at": {
       "type": "string",
       "title": "Last activity"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "maxLength": 1000
     }
   },
   "required": [

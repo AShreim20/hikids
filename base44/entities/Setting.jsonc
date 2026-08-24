@@ -10,6 +10,11 @@
       "type": "number",
       "title": "Value",
       "default": 0
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "maxLength": 1000
     }
   },
   "required": [

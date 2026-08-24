@@ -83,6 +83,11 @@
     "expires_at": {
       "type": "string",
       "title": "Expires at"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "maxLength": 1000
     }
   },
   "required": [

@@ -10,6 +10,11 @@
       "type": "string",
       "title": "Subtitle"
     },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "maxLength": 1000
+    },
     "image_url": {
       "type": "string",
       "title": "Image URL",

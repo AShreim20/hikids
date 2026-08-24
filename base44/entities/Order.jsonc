@@ -122,6 +122,11 @@
       "type": "string",
       "title": "Internal notes"
     },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "maxLength": 1000
+    },
     "handled_by": {
       "type": "string",
       "title": "Handled by (email)"
