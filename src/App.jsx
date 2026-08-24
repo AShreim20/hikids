@@ -13,6 +13,7 @@ import MobileNav from './components/MobileNav';
 import ChatWidget from './components/ai/ChatWidget';
 import WhatsAppButton from './components/WhatsAppButton';
 import AdminSidebar from './components/AdminSidebar';
+import NewOrderNotifier from './components/orders/NewOrderNotifier';
 // Add page imports here
 const Home = lazy(() => import('./pages/Home'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
@@ -25,6 +26,8 @@ const FAQ = lazy(() => import('./pages/FAQ'));
 const Admin = lazy(() => import('./pages/Admin'));
 const MyOrders = lazy(() => import('./pages/MyOrders'));
 const StaffManagement = lazy(() => import('./pages/StaffManagement'));
+const OrdersManagement = lazy(() => import('./pages/OrdersManagement'));
+const OrderDetail = lazy(() => import('./pages/OrderDetail'));
 const DeliveryManagement = lazy(() => import('./pages/DeliveryManagement'));
 const MyAddresses = lazy(() => import('./pages/MyAddresses'));
 const DiscountManagement = lazy(() => import('./pages/DiscountManagement'));
@@ -61,6 +64,8 @@ function AnimatedRoutes() {
       <Route path="/loyalty" element={<MyLoyalty />} />
       <Route path="/loyalty-admin" element={<LoyaltyManagement />} />
       <Route path="/orders" element={<MyOrders />} />
+      <Route path="/orders-admin" element={<OrdersManagement />} />
+      <Route path="/orders-admin/:id" element={<OrderDetail />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -122,6 +127,7 @@ const AuthenticatedApp = () => {
       </Suspense>
       <MobileNav />
       <AdminSidebar />
+      <NewOrderNotifier />
       <ChatWidget />
       <WhatsAppButton />
       </WishlistProvider>

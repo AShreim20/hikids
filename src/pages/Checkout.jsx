@@ -134,7 +134,8 @@ export default function Checkout() {
         address: `${form.address}, ${selectedCity.name}`,
         phone: form.phone,
         payment_method: payment,
-        status: payment === 'card' || payment === 'loyalty' ? 'paid' : 'pending',
+        status: 'new',
+        payment_status: payment === 'card' || payment === 'loyalty' ? 'paid' : 'unpaid',
         gift_message: giftMessage.trim() || undefined,
       });
       if (saveAddr && user && form.address) {

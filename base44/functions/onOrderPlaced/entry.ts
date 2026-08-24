@@ -58,8 +58,13 @@ export default async function(req) {
         : order.payment_method === 'loyalty'
           ? 'Paid with loyalty points'
           : 'Cash on delivery';
+      const itemCount = (order.items || []).reduce((n, it) => n + Number(it.qty || 0), 0);
       const adminBody =
         `New order received!\n\n` +
+        `Order: #ORD-${String(order.id).slice(-6).toUpperCase()}\n` +
+        `Items: ${itemCount}\n` +
+        `Status: ${order.status || 'new'}\n` +
+        `Placed: ${new Date(order.created_date || Date.now()).toLocaleString('en-GB')}\n` +
         `Reference: ${ref}\n` +
         `Customer: ${order.customer_name || '-'} (${order.customer_email})\n` +
         `Phone: ${order.phone || '-'}\n` +

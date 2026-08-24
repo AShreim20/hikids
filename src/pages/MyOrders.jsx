@@ -6,22 +6,7 @@ import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
-
-const STATUS_KEY = {
-  pending: 'track.s_pending',
-  paid: 'track.s_paid',
-  shipped: 'track.s_shipped',
-  delivered: 'track.s_delivered',
-  cancelled: 'track.s_cancelled',
-};
-
-const STATUS_COLOR = {
-  pending: 'bg-amber-100 text-amber-700',
-  paid: 'bg-emerald-100 text-emerald-700',
-  shipped: 'bg-cosmic/10 text-cosmic',
-  delivered: 'bg-emerald-100 text-emerald-700',
-  cancelled: 'bg-destructive/10 text-destructive',
-};
+import { statusLabel, statusColor } from '@/lib/orderStatus';
 
 export default function MyOrders() {
   const { t, formatPrice, lang } = useLanguage();
@@ -92,8 +77,8 @@ export default function MyOrders() {
                     <p className="text-xs text-muted-foreground">{t('orders.orderNo')}</p>
                     <p className="font-heading font-bold">#{(o.id || '').slice(-8).toUpperCase()}</p>
                   </div>
-                  <span className={`px-3 py-1.5 rounded-full text-xs font-heading font-bold ${STATUS_COLOR[o.status] || 'bg-mist text-muted-foreground'}`}>
-                    {t(STATUS_KEY[o.status] || 'track.s_pending')}
+                  <span className={`px-3 py-1.5 rounded-full text-xs font-heading font-bold ${statusColor(o.status)}`}>
+                    {statusLabel(o.status, lang)}
                   </span>
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">
