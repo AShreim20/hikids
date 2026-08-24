@@ -44,6 +44,8 @@ export default function Checkout() {
   const [loyaltyRedeem, setLoyaltyRedeem] = useState(null);
   const [loyaltyBalance, setLoyaltyBalance] = useState(0);
   const [loyaltyRate, setLoyaltyRate] = useState(0.1);
+  // Stable per-checkout key so a retried submit can never spend points twice.
+  const [checkoutKey] = useState(() => `co-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
 
   const selectedCity = cities.find((c) => c.id === cityId);
   const deliveryCost = selectedCity ? selectedCity.price : 0;
@@ -94,7 +96,13 @@ export default function Checkout() {
           return;
         }
         if (requiredPoints > 0) {
-          const res = await base44.functions.invoke('redeemLoyaltyPoints', { points: requiredPoints, subtotal: grandTotal });
+          const res = await base44.functions.invoke('redeemLoyaltyPoints', {
+            points: requiredPoints,
+            subtotal: total,
+            delivery_cost: deliveryCost,
+            discount_amount: discountAmount,
+            idempotency_key: checkoutKey,
+          });
           if (!res.success) {
             toast({ title: res.message || 'Loyalty error', variant: 'destructive' });
             setPlacing(false);
@@ -104,7 +112,13 @@ export default function Checkout() {
           loyaltyAmount = res.amount;
         }
       } else if (loyaltyRedeem && user) {
-        const res = await base44.functions.invoke('redeemLoyaltyPoints', { points: loyaltyRedeem.points, subtotal: total });
+        const res = await base44.functions.invoke('redeemLoyaltyPoints', {
+          points: loyaltyRedeem.points,
+          subtotal: total,
+          delivery_cost: deliveryCost,
+          discount_amount: discountAmount,
+          idempotency_key: checkoutKey,
+        });
         if (!res.success) {
           toast({ title: res.message || 'Loyalty error', variant: 'destructive' });
           setPlacing(false);
@@ -399,6 +413,9 @@ export default function Checkout() {
               <div className="mt-4">
                 <LoyaltyRedeem
                   subtotal={total}
+                  deliveryCost={deliveryCost}
+                  discountAmount={discountAmount}
+                  orderTotal={grandTotal}
                   applied={loyaltyRedeem}
                   onApplied={setLoyaltyRedeem}
                   onRemoved={() => setLoyaltyRedeem(null)}

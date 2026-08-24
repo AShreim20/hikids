@@ -46,6 +46,11 @@
       "title": "Loyalty awarded",
       "default": false
     },
+    "loyalty_reversed": {
+      "type": "boolean",
+      "title": "Loyalty reversed",
+      "default": false
+    },
     "discount_counted": {
       "type": "boolean",
       "title": "Discount counted",

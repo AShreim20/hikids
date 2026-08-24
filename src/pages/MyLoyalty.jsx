@@ -1,26 +1,30 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, Loader2, TrendingUp, Gift, ArrowLeft } from 'lucide-react';
+import { Sparkles, Loader2, ArrowLeft, Gift } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import WalletCard from '@/components/loyalty/WalletCard';
+import WalletStats from '@/components/loyalty/WalletStats';
+import TransactionList from '@/components/loyalty/TransactionList';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
-import { REDEEM_RATE } from '@/lib/loyalty';
 
 export default function MyLoyalty() {
-  const { t, formatPrice } = useLanguage();
+  const { t } = useLanguage();
   const { user } = useAuth();
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
-    base44.functions.invoke('getLoyaltyBalance')
+    setLoading(true);
+    base44.functions.invoke('getLoyaltyBalance', { limit: showAll ? 200 : 6 })
       .then((res) => { if (res.success) setData(res); })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [user]);
+  }, [user, showAll]);
 
   if (!user) {
     return (
@@ -39,8 +43,6 @@ export default function MyLoyalty() {
     );
   }
 
-  const redeemValue = data ? Math.round(data.balance * (data.redeem_rate ?? REDEEM_RATE) * 100) / 100 : 0;
-
   return (
     <div className="min-h-screen bg-background pb-32">
       <Navbar />
@@ -48,35 +50,27 @@ export default function MyLoyalty() {
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4 ltr:rotate-180 rtl:rotate-0" /> {t('pd.back')}
         </Link>
-        <h1 className="mt-6 font-heading font-extrabold text-4xl md:text-5xl">{t('loyalty.title')}</h1>
+        <h1 className="mt-6 font-heading font-extrabold text-4xl md:text-5xl">{t('wallet.title')}</h1>
         <p className="mt-3 text-muted-foreground">{t('loyalty.subtitle')}</p>
 
-        {loading ? (
+        {loading && !data ? (
           <div className="mt-10 grid place-items-center py-16"><Loader2 className="w-8 h-8 animate-spin text-cosmic" /></div>
         ) : (
           <>
-            <div className="mt-8 rounded-3xl bg-cosmic text-white p-8 relative overflow-hidden">
-              <Sparkles className="absolute top-6 end-6 w-24 h-24 text-white/10" />
-              <p className="text-sm uppercase tracking-widest text-white/60 font-medium">{t('loyalty.balance')}</p>
-              <p className="mt-2 font-heading font-extrabold text-6xl">{data?.balance || 0}</p>
-              <p className="mt-2 text-white/70">= {formatPrice(redeemValue)}</p>
-            </div>
+            <div className="mt-8"><WalletCard wallet={data} /></div>
+            <div className="mt-4"><WalletStats wallet={data} /></div>
 
-            <div className="mt-6 grid sm:grid-cols-2 gap-4">
-              <div className="rounded-3xl bg-card border border-border/60 p-6">
-                <div className="grid place-items-center w-11 h-11 rounded-xl bg-accent/15 text-accent">
-                  <TrendingUp className="w-5 h-5" />
-                </div>
-                <p className="mt-3 text-sm text-muted-foreground">{t('loyalty.lifetime')}</p>
-                <p className="font-heading font-extrabold text-2xl">{data?.lifetime_earned || 0}</p>
+            <div className="mt-6 rounded-3xl bg-card border border-border/60 p-5 sm:p-6">
+              <div className="flex items-center justify-between gap-3">
+                <h2 className="font-heading font-extrabold text-xl">{t('wallet.recent')}</h2>
+                {loading && <Loader2 className="w-4 h-4 animate-spin text-cosmic" />}
               </div>
-              <div className="rounded-3xl bg-card border border-border/60 p-6">
-                <div className="grid place-items-center w-11 h-11 rounded-xl bg-cosmic/15 text-cosmic">
-                  <Gift className="w-5 h-5" />
-                </div>
-                <p className="mt-3 text-sm text-muted-foreground">{t('loyalty.worth')}</p>
-                <p className="font-heading font-extrabold text-2xl">{formatPrice(redeemValue)}</p>
-              </div>
+              <TransactionList transactions={data?.transactions || []} />
+              {!showAll && (data?.transactions || []).length >= 6 && (
+                <button onClick={() => setShowAll(true)} className="mt-3 squish h-11 px-5 rounded-full bg-mist font-heading font-bold text-sm">
+                  {t('wallet.viewAll')}
+                </button>
+              )}
             </div>
 
             <div className="mt-6 rounded-3xl bg-card border border-border/60 p-6 md:p-8">

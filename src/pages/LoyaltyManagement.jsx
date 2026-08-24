@@ -1,32 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Lock, Pencil, Search, Sparkles } from 'lucide-react';
+import { Loader2, Lock, Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
-import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import LoyaltySettingsForm from '@/components/loyalty/LoyaltySettingsForm';
+import WalletAdminRow from '@/components/loyalty/WalletAdminRow';
 import { useLanguage } from '@/context/LanguageContext';
 import { usePermissions } from '@/lib/permissions';
 
 export default function LoyaltyManagement() {
   const { t } = useLanguage();
-  const { toast } = useToast();
-  const { isOwner } = usePermissions();
+  const { can } = usePermissions();
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
-  const [adjusting, setAdjusting] = useState(null);
-  const [settings, setSettings] = useState({ loyalty_redeem_rate: 0.1, loyalty_earn_rate: 1 });
-  const [savingSettings, setSavingSettings] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [delta, setDelta] = useState('');
-  const [reason, setReason] = useState('');
-  const [savingId, setSavingId] = useState(null);
+  const [redeemRate, setRedeemRate] = useState(0.1);
+
+  const canView = can('loyalty.view');
+  const perms = {
+    canAdd: can('loyalty.add'),
+    canRemove: can('loyalty.remove'),
+    canViewTx: can('loyalty.transactions.view'),
+    canSettings: can('loyalty.settings'),
+    redeemRate,
+  };
 
   const load = async () => {
     setLoading(true);
     try {
-      setAccounts(await base44.entities.LoyaltyAccount.list('-lifetime_earned', 200));
+      setAccounts(await base44.entities.LoyaltyAccount.list('-balance', 200));
     } catch {
       setAccounts([]);
     } finally {
@@ -35,44 +38,14 @@ export default function LoyaltyManagement() {
   };
 
   useEffect(() => {
-    if (isOwner) load();
-    else setLoading(false);
-  }, [isOwner]);
-
-  useEffect(() => {
-    if (!isOwner) return;
-    base44.entities.Setting.list()
-      .then((rows) => {
-        const map = { loyalty_redeem_rate: 0.1, loyalty_earn_rate: 1 };
-        (rows || []).forEach((r) => { if (r.key in map) map[r.key] = r.value; });
-        setSettings(map);
-      })
+    if (!canView) { setLoading(false); return; }
+    load();
+    base44.entities.Setting.filter({ key: 'loyalty_redeem_rate' })
+      .then((rows) => { if (rows && rows.length) setRedeemRate(rows[0].value || 0.1); })
       .catch(() => {});
-  }, [isOwner]);
+  }, [canView]);
 
-  const saveSettings = async () => {
-    setSavingSettings(true);
-    try {
-      for (const key of ['loyalty_redeem_rate', 'loyalty_earn_rate']) {
-        const value = Number(settings[key]) || 0;
-        const existing = await base44.entities.Setting.filter({ key });
-        if (existing.length) await base44.entities.Setting.update(existing[0].id, { value });
-        else await base44.entities.Setting.create({ key, value });
-      }
-      await base44.functions.invoke('logAuditActivity', {
-        action: 'loyalty.settings_updated',
-        target_type: 'setting',
-        details: JSON.stringify(settings),
-      });
-      toast({ title: t('loyalty.settingsSaved') });
-    } catch (err) {
-      toast({ title: err.message || 'Error', variant: 'destructive' });
-    } finally {
-      setSavingSettings(false);
-    }
-  };
-
-  if (!isOwner) {
+  if (!canView) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
@@ -90,46 +63,10 @@ export default function LoyaltyManagement() {
   }
 
   const filtered = accounts.filter((a) =>
-    !query || (a.user_email || '').toLowerCase().includes(query.toLowerCase()) || (a.user_name || '').toLowerCase().includes(query.toLowerCase())
+    !query ||
+    (a.user_email || '').toLowerCase().includes(query.toLowerCase()) ||
+    (a.user_name || '').toLowerCase().includes(query.toLowerCase())
   );
-
-  const openEditor = (acct) => {
-    setEditing(acct.id);
-    setDelta('');
-    setReason('');
-  };
-  const cancelEditor = () => { setEditing(null); setDelta(''); setReason(''); };
-
-  const applyAdjust = async (acct) => {
-    const d = Math.floor(Number(delta) || 0);
-    if (!d) {
-      toast({ title: t('loyalty.adjustDelta'), variant: 'destructive' });
-      return;
-    }
-    const newBalance = Math.max(0, (acct.balance || 0) + d);
-    const actualDelta = newBalance - (acct.balance || 0);
-    if (actualDelta === 0) return;
-    setSavingId(acct.id);
-    try {
-      await base44.entities.LoyaltyAccount.update(acct.id, { balance: newBalance });
-      if (actualDelta > 0) {
-        await base44.entities.LoyaltyAccount.update(acct.id, { lifetime_earned: (acct.lifetime_earned || 0) + actualDelta });
-      }
-      await base44.functions.invoke('logAuditActivity', {
-        action: 'loyalty.adjusted',
-        target_type: 'loyalty_account',
-        target_id: acct.id,
-        details: `${acct.user_email}: ${actualDelta > 0 ? '+' : ''}${actualDelta} pts${reason ? ' — ' + reason : ''}`,
-      });
-      toast({ title: t('loyalty.adjustSaved') });
-      cancelEditor();
-      load();
-    } catch (err) {
-      toast({ title: err.message || 'Error', variant: 'destructive' });
-    } finally {
-      setSavingId(null);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background pb-32">
@@ -137,27 +74,12 @@ export default function LoyaltyManagement() {
       <div className="max-w-5xl mx-auto px-5 sm:px-8 py-12">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">← {t('pd.back')}</Link>
         <div className="mt-6">
-          <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">{t('loyalty.adminSubtitle')}</p>
-          <h1 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl">{t('loyalty.adminTitle')}</h1>
+          <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">{t('wallet.adminSubtitle')}</p>
+          <h1 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl">{t('wallet.adminTitle')}</h1>
         </div>
 
-        <div className="mt-8 rounded-3xl bg-card border border-border/60 p-5 md:p-6">
-          <h2 className="font-heading font-extrabold text-xl">{t('loyalty.settingsTitle')}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">{t('loyalty.settingsDesc')}</p>
-          <div className="mt-4 grid sm:grid-cols-2 gap-4">
-            <label className="block">
-              <span className="text-sm font-medium text-foreground/80">{t('loyalty.redeemRate')}</span>
-              <input type="number" min="0" step="0.001" value={settings.loyalty_redeem_rate} onChange={(e) => setSettings((s) => ({ ...s, loyalty_redeem_rate: e.target.value }))} className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
-            </label>
-            <label className="block">
-              <span className="text-sm font-medium text-foreground/80">{t('loyalty.earnRate')}</span>
-              <input type="number" min="0" step="0.1" value={settings.loyalty_earn_rate} onChange={(e) => setSettings((s) => ({ ...s, loyalty_earn_rate: e.target.value }))} className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
-            </label>
-          </div>
-          <button onClick={saveSettings} disabled={savingSettings} className="mt-4 squish h-11 px-5 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center gap-2 disabled:opacity-60">
-            {savingSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-            {t('loyalty.saveSettings')}
-          </button>
+        <div className="mt-8">
+          <LoyaltySettingsForm canEdit={perms.canSettings} />
         </div>
 
         <div className="mt-8 relative max-w-md">
@@ -177,49 +99,7 @@ export default function LoyaltyManagement() {
         ) : (
           <div className="mt-8 space-y-3">
             {filtered.map((a) => (
-              <React.Fragment key={a.id}>
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 rounded-2xl bg-card border border-border/60 p-4">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="grid place-items-center w-11 h-11 rounded-xl bg-accent/15 text-accent shrink-0">
-                      <Sparkles className="w-5 h-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-heading font-bold truncate">{a.user_name || a.user_email}</p>
-                      <p className="text-xs text-muted-foreground truncate">{a.user_email}</p>
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="text-start sm:text-end">
-                      <p className="font-heading font-extrabold text-lg">{a.balance || 0}</p>
-                      <p className="text-xs text-muted-foreground">{t('loyalty.points')}</p>
-                    </div>
-                    <button onClick={() => (editing === a.id ? cancelEditor() : openEditor(a))} className="squish inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-cosmic/10 text-cosmic hover:bg-cosmic hover:text-white transition-colors text-sm font-heading font-bold">
-                      <Pencil className="w-4 h-4" /> {t('loyalty.adjust')}
-                    </button>
-                  </div>
-                </div>
-                {editing === a.id && (
-                  <div className="rounded-2xl bg-mist border border-border/60 p-4 float-in">
-                    <div className="flex flex-wrap items-end gap-3">
-                      <label className="block flex-1 min-w-40">
-                        <span className="text-xs font-medium text-foreground/70">{t('loyalty.adjustDelta')}</span>
-                        <input type="number" value={delta} onChange={(e) => setDelta(e.target.value)} placeholder="+50 / −20" className="mt-1.5 w-full h-11 px-4 rounded-2xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
-                      </label>
-                      <label className="block flex-[2] min-w-48">
-                        <span className="text-xs font-medium text-foreground/70">{t('loyalty.adjustReason')}</span>
-                        <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1.5 w-full h-11 px-4 rounded-2xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
-                      </label>
-                    </div>
-                    <div className="mt-3 flex items-center gap-2">
-                      <button type="button" onClick={() => applyAdjust(a)} disabled={savingId === a.id} className="squish inline-flex items-center gap-2 h-11 px-5 rounded-full bg-cosmic text-white font-heading font-bold disabled:opacity-60">
-                        {savingId === a.id ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                        {t('loyalty.apply')}
-                      </button>
-                      <button type="button" onClick={cancelEditor} className="h-11 px-5 rounded-full bg-card border border-border font-heading font-bold hover:bg-background">{t('loyalty.cancel')}</button>
-                    </div>
-                  </div>
-                )}
-              </React.Fragment>
+              <WalletAdminRow key={a.id} account={a} perms={perms} onChanged={load} />
             ))}
           </div>
         )}

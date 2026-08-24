@@ -69,9 +69,29 @@ export default function OrderDetail() {
     }
   };
 
-  const changeStatus = (to, { override } = {}) => {
+  // Loyalty follows the order lifecycle: points land on delivery and are
+  // reversed (earned clawed back, spent refunded) on cancellation / return.
+  const syncLoyalty = async (to) => {
+    try {
+      if (to === 'delivered') {
+        const res = await base44.functions.invoke('awardLoyaltyPoints', { order_id: order.id });
+        if (res?.awarded > 0) {
+          toast({ title: ar ? `تم إضافة ${res.awarded} نقطة للزبون` : `${res.awarded} points credited to the customer` });
+        }
+      } else if (['cancelled', 'returned', 'return_approved'].includes(to)) {
+        const res = await base44.functions.invoke('reverseOrderLoyalty', { order_id: order.id });
+        if (res?.reversed || res?.refunded) {
+          toast({ title: ar ? 'تم تسوية نقاط الولاء لهذا الطلب' : 'Loyalty points settled for this order' });
+        }
+      }
+    } catch {
+      // non-blocking: the status change itself already succeeded
+    }
+  };
+
+  const changeStatus = async (to, { override } = {}) => {
     const from = normalizeStatus(order.status);
-    persist(
+    await persist(
       { status: to },
       logEntry({
         action: 'status',
@@ -81,6 +101,7 @@ export default function OrderDetail() {
         note: override || isWorkflowOverride(from, to) ? (ar ? 'تغيير خارج المسار الطبيعي' : 'Workflow override') : '',
       })
     );
+    await syncLoyalty(to);
   };
 
   const saveEdits = (patch, note) => {
