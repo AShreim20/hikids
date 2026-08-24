@@ -165,18 +165,16 @@ export default function SettingsDialog({ open, onOpenChange }) {
           )}
 
           {!user && (
-            <div className="rounded-2xl bg-mist p-4">
-              <p className="text-sm text-muted-foreground">{t('settings.notSignedIn')}</p>
-              <button
-                onClick={() => { onOpenChange(false); navigate('/login'); }}
-                className="mt-3 squish inline-flex items-center gap-2 h-11 px-5 rounded-full bg-cosmic text-white font-heading font-bold text-sm"
-              >
-                {t('settings.signIn')}
-              </button>
-            </div>
+            <button
+              onClick={() => { onOpenChange(false); navigate('/login'); }}
+              className="squish w-full inline-flex items-center justify-center gap-2 h-12 rounded-full bg-cosmic text-white font-heading font-bold text-sm"
+            >
+              {t('settings.signIn')}
+            </button>
           )}
 
           {/* Delete account */}
+          {user && (
           <div className="rounded-2xl border border-destructive/30 bg-destructive/5 p-4">
             <p className="font-heading font-bold text-destructive">{t('settings.delete')}</p>
             <p className="text-sm text-muted-foreground mt-1">{t('settings.deleteDesc')}</p>
@@ -211,6 +209,7 @@ export default function SettingsDialog({ open, onOpenChange }) {
               </div>
             )}
           </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>
