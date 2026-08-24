@@ -35,7 +35,7 @@ export default function SaleBanner() {
   const off = Math.round((1 - current.sale_price / current.price) * 100);
 
   return (
-    <section className="max-w-7xl mx-auto px-5 sm:px-8 py-10">
+    <section className="max-w-7xl mx-auto px-5 sm:px-8 py-8">
       <div className="relative overflow-hidden rounded-[2.5rem] bg-accent text-white">
         {items.map((p, i) => (
           <div

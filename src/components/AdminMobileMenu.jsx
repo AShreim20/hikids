@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, MapPin, Ticket, Award, ClipboardList, Menu } from 'lucide-react';
+import { LayoutDashboard, MapPin, Ticket, Award, ClipboardList, Menu, GalleryHorizontal } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
@@ -18,6 +18,7 @@ export default function AdminMobileMenu() {
 
   const links = [
     { to: '/admin', label: t('nav.admin'), icon: LayoutDashboard },
+    { to: '/admin/carousel', label: 'Carousel', icon: GalleryHorizontal },
     { to: '/orders-admin', label: t('nav.ordersAdmin'), icon: ClipboardList },
     { to: '/delivery', label: t('delivery.title'), icon: MapPin },
     { to: '/discounts', label: t('discount.title'), icon: Ticket },

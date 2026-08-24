@@ -76,8 +76,8 @@ export default function Recommendations() {
   };
 
   return (
-    <section className="max-w-7xl mx-auto px-5 sm:px-8 py-16 md:py-24">
-      <div className="flex items-end justify-between flex-wrap gap-4 mb-10">
+    <section className="max-w-7xl mx-auto px-5 sm:px-8 py-10 md:py-14">
+      <div className="flex items-end justify-between flex-wrap gap-4 mb-8">
         <div>
           <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">
             {t('rec.label')}

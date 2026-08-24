@@ -16,8 +16,8 @@ export default function Newsletter() {
   };
 
   return (
-    <section className="max-w-7xl mx-auto px-5 sm:px-8 py-20 md:py-28">
-      <div className="rounded-[2.5rem] bg-mist/60 border border-border/60 px-6 sm:px-12 py-14 md:py-20 text-center">
+    <section className="max-w-7xl mx-auto px-5 sm:px-8 py-12 md:py-16">
+      <div className="rounded-[2.5rem] bg-mist/60 border border-border/60 px-6 sm:px-12 py-10 md:py-14 text-center">
         <div className="mx-auto grid place-items-center w-14 h-14 rounded-2xl bg-card shadow-sm">
           <Mail className="w-7 h-7 text-cosmic" />
         </div>

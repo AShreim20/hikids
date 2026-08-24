@@ -7,7 +7,7 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductExplorer from '@/components/ProductExplorer';
 import Recommendations from '@/components/Recommendations';
-import HeroGallery from '@/components/HeroGallery';
+import HeroCarousel from '@/components/HeroCarousel';
 import SaleBanner from '@/components/SaleBanner';
 import Newsletter from '@/components/Newsletter';
 import { useLanguage } from '@/context/LanguageContext';
@@ -41,42 +41,8 @@ export default function Home() {
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="max-w-7xl mx-auto px-5 sm:px-8 pt-10 md:pt-20 pb-24 md:pb-40">
-          <div className="grid md:grid-cols-2 gap-10 md:gap-12 lg:gap-16 items-center">
-            <div className="float-in">
-              <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-mist text-foreground/70 text-xs font-medium tracking-wider uppercase">
-                <Sparkles className="w-3.5 h-3.5 text-accent" /> {t('hero.badge')}
-              </span>
-              <h1 className="mt-6 font-heading font-extrabold text-5xl sm:text-6xl md:text-5xl lg:text-[5.2rem] leading-[1.02] tracking-tight text-balance whitespace-pre-line">
-                {t('hero.title')}
-              </h1>
-              <p className="mt-7 text-lg md:text-xl text-muted-foreground max-w-xl leading-relaxed">
-                {t('hero.subtitle')}
-              </p>
-              <div className="mt-9 flex flex-wrap gap-4">
-                <a
-                  href="#explore"
-                  className="squish inline-flex items-center gap-2 h-14 px-8 rounded-full bg-cosmic text-white font-heading font-bold shadow-lg shadow-cosmic/30 hover:bg-primary transition-colors"
-                >
-                  {t('hero.exploreCta')} <ArrowRight className="w-5 h-5" />
-                </a>
-                <a
-                  href="#categories"
-                  className="squish inline-flex items-center gap-2 h-14 px-8 rounded-full bg-mist text-foreground font-heading font-bold hover:bg-accent hover:text-white transition-colors"
-                >
-                  {t('hero.worldsCta')}
-                </a>
-              </div>
-            </div>
-
-            <div className="relative float-in">
-              <HeroGallery />
-            </div>
-          </div>
-        </div>
-      </section>
+      {/* Hero carousel */}
+      <HeroCarousel />
 
       {/* Promise strip */}
       <section id="promise" className="border-y border-border/60 bg-mist/50">
@@ -102,8 +68,8 @@ export default function Home() {
       <SaleBanner />
 
       {/* Categories */}
-      <section id="categories" className="max-w-7xl mx-auto px-5 sm:px-8 py-24 md:py-32">
-        <div className="flex items-end justify-between flex-wrap gap-4 mb-12">
+      <section id="categories" className="max-w-7xl mx-auto px-5 sm:px-8 py-12 md:py-16">
+        <div className="flex items-end justify-between flex-wrap gap-4 mb-8">
           <div>
             <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">{t('cats.curateBy')}</p>
             <h2 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl">{t('cats.title')}</h2>
@@ -149,8 +115,8 @@ export default function Home() {
       <ProductExplorer products={products} loading={loading} />
 
       {/* About */}
-      <section id="about" className="max-w-7xl mx-auto px-5 sm:px-8 py-24 md:py-32">
-        <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
+      <section id="about" className="max-w-7xl mx-auto px-5 sm:px-8 py-12 md:py-16">
+        <div className="grid md:grid-cols-2 gap-10 md:gap-14 items-center">
           <div className="relative aspect-[4/3] rounded-[2.5rem] overflow-hidden bg-mist">
             <Image
               src="https://media.base44.com/images/public/6a75c91fa5dfe02359c5f127/df023ab5e_generated_37f54450.png"
