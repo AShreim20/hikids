@@ -5,6 +5,14 @@ import { useLanguage } from '@/context/LanguageContext';
 
 const STORE = { name: 'HiKids', tagline: 'HiKids Toy Store', instagram: '@hi_kids.ps' };
 
+const esc = (v) =>
+  String(v == null ? '' : v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+
 // Opens a print-ready invoice in a new window (print / save as PDF / reprint).
 export function printInvoice(order, { lang = 'en', currency = '$' } = {}) {
   const ar = lang === 'ar';
@@ -13,8 +21,8 @@ export function printInvoice(order, { lang = 'en', currency = '$' } = {}) {
   const rows = (order.items || [])
     .map(
       (it) => `<tr>
-        <td>${it.name}${it.variant_label ? `<br><small>${it.variant_label}</small>` : ''}${it.sku ? `<br><small>SKU: ${it.sku}</small>` : ''}</td>
-        <td>${it.qty}</td>
+        <td>${esc(it.name)}${it.variant_label ? `<br><small>${esc(it.variant_label)}</small>` : ''}${it.sku ? `<br><small>SKU: ${esc(it.sku)}</small>` : ''}</td>
+        <td>${esc(it.qty)}</td>
         <td>${money(it.price)}</td>
         <td>${money(Number(it.price || 0) * Number(it.qty || 0))}</td>
       </tr>`
@@ -38,20 +46,20 @@ export function printInvoice(order, { lang = 'en', currency = '$' } = {}) {
       <span class="muted">${new Date(order.created_date).toLocaleString(ar ? 'ar' : 'en')}</span><br>
       <span class="muted">${ar ? 'الحالة' : 'Status'}: ${statusLabel(order.status, lang)}</span></p>
     <p><strong>${ar ? 'الزبون' : 'Customer'}</strong><br>
-      ${order.customer_name || ''}<br>${order.phone || ''}<br>${order.customer_email || ''}<br>
-      ${order.address || ''}${order.city ? `, ${order.city}` : ''}</p>
+      ${esc(order.customer_name)}<br>${esc(order.phone)}<br>${esc(order.customer_email)}<br>
+      ${esc(order.address)}${order.city ? `, ${esc(order.city)}` : ''}</p>
     <table><thead><tr>
       <th>${ar ? 'المنتج' : 'Product'}</th><th>${ar ? 'الكمية' : 'Qty'}</th>
       <th>${ar ? 'السعر' : 'Price'}</th><th>${ar ? 'الإجمالي' : 'Total'}</th>
     </tr></thead><tbody>${rows}</tbody></table>
     <div class="totals">
       <div><span>${ar ? 'المجموع الفرعي' : 'Subtotal'}</span><span>${money(subtotal)}</span></div>
-      ${discount > 0 ? `<div><span>${ar ? 'خصم' : 'Discount'}${order.discount_code ? ` (${order.discount_code})` : ''}</span><span>−${money(discount)}</span></div>` : ''}
+      ${discount > 0 ? `<div><span>${ar ? 'خصم' : 'Discount'}${order.discount_code ? ` (${esc(order.discount_code)})` : ''}</span><span>−${money(discount)}</span></div>` : ''}
       ${loyalty > 0 ? `<div><span>${ar ? 'نقاط الولاء' : 'Loyalty points'}</span><span>−${money(loyalty)}</span></div>` : ''}
       <div><span>${ar ? 'التوصيل' : 'Delivery'}</span><span>${money(delivery)}</span></div>
       <div class="grand"><span>${ar ? 'الإجمالي النهائي' : 'Final total'}</span><span>${money(total)}</span></div>
-      <div><span>${ar ? 'طريقة الدفع' : 'Payment method'}</span><span>${order.payment_method}</span></div>
-      <div><span>${ar ? 'حالة الدفع' : 'Payment status'}</span><span>${order.payment_status || 'unpaid'}</span></div>
+      <div><span>${ar ? 'طريقة الدفع' : 'Payment method'}</span><span>${esc(order.payment_method)}</span></div>
+      <div><span>${ar ? 'حالة الدفع' : 'Payment status'}</span><span>${esc(order.payment_status || 'unpaid')}</span></div>
     </div>
     <script>window.onload=function(){window.print()}</script>
   </body></html>`;
