@@ -45,9 +45,16 @@ export default function Navbar() {
               {l.label}
             </a>
           ))}
-          <Link to="/analytics" className="text-sm font-medium text-cosmic hover:text-primary transition-colors flex items-center gap-1.5">
-            <BarChart3 className="w-4 h-4" /> {t('nav.insights')}
-          </Link>
+          {user && (
+            <Link to="/orders" className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors">
+              {t('orders.title')}
+            </Link>
+          )}
+          {user?.role === 'admin' && (
+            <Link to="/analytics" className="text-sm font-medium text-cosmic hover:text-primary transition-colors flex items-center gap-1.5">
+              <BarChart3 className="w-4 h-4" /> {t('nav.insights')}
+            </Link>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 lg:gap-2">
