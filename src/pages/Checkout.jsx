@@ -12,6 +12,7 @@ import CitySelect from '@/components/checkout/CitySelect';
 import SavedAddressPicker from '@/components/checkout/SavedAddressPicker';
 import DiscountInput from '@/components/checkout/DiscountInput';
 import LoyaltyRedeem from '@/components/checkout/LoyaltyRedeem';
+import { unwrap } from '@/lib/invoke';
 
 const CARD_TYPES = [
   { key: 'visa', label: 'Visa', badge: 'bg-[#1A1F71]', dot: 'bg-[#1A1F71]' },
@@ -63,7 +64,7 @@ export default function Checkout() {
   useEffect(() => {
     if (!user) return;
     base44.functions.invoke('getLoyaltyBalance')
-      .then((res) => { if (res.success) { setLoyaltyBalance(res.balance || 0); if (res.redeem_rate) setLoyaltyRate(res.redeem_rate); } })
+      .then((raw) => { const res = unwrap(raw); if (res.success) { setLoyaltyBalance(res.balance || 0); if (res.redeem_rate) setLoyaltyRate(res.redeem_rate); } })
       .catch(() => {});
   }, [user]);
 
@@ -97,13 +98,13 @@ export default function Checkout() {
           return;
         }
         if (requiredPoints > 0) {
-          const res = await base44.functions.invoke('redeemLoyaltyPoints', {
+          const res = unwrap(await base44.functions.invoke('redeemLoyaltyPoints', {
             points: requiredPoints,
             subtotal: total,
             delivery_cost: deliveryCost,
             discount_amount: discountAmount,
             idempotency_key: checkoutKey,
-          });
+          }));
           if (!res.success) {
             toast({ title: res.message || 'Loyalty error', variant: 'destructive' });
             setPlacing(false);
@@ -114,13 +115,13 @@ export default function Checkout() {
           reserved = true;
         }
       } else if (loyaltyRedeem && user) {
-        const res = await base44.functions.invoke('redeemLoyaltyPoints', {
+        const res = unwrap(await base44.functions.invoke('redeemLoyaltyPoints', {
           points: loyaltyRedeem.points,
           subtotal: total,
           delivery_cost: deliveryCost,
           discount_amount: discountAmount,
           idempotency_key: checkoutKey,
-        });
+        }));
         if (!res.success) {
           toast({ title: res.message || 'Loyalty error', variant: 'destructive' });
           setPlacing(false);

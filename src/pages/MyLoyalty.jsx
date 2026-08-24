@@ -9,6 +9,7 @@ import WalletStats from '@/components/loyalty/WalletStats';
 import TransactionList from '@/components/loyalty/TransactionList';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
+import { unwrap } from '@/lib/invoke';
 
 export default function MyLoyalty() {
   const { t } = useLanguage();
@@ -21,7 +22,7 @@ export default function MyLoyalty() {
     if (!user) { setLoading(false); return; }
     setLoading(true);
     base44.functions.invoke('getLoyaltyBalance', { limit: showAll ? 200 : 6 })
-      .then((res) => { if (res.success) setData(res); })
+      .then((raw) => { const res = unwrap(raw); if (res.success) setData(res); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [user, showAll]);
