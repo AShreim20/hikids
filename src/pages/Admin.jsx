@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import SheetSelect from '@/components/ui/SheetSelect';
+import TagInput from '@/components/TagInput';
 
 const CATEGORIES = [
   'Build & Create',
@@ -33,6 +34,7 @@ const EMPTY = {
   rating: '',
   stock: '',
   featured: false,
+  tags: [],
 };
 
 export default function Admin() {
@@ -101,6 +103,7 @@ export default function Admin() {
       rating: p.rating ?? '',
       stock: p.stock ?? '',
       featured: !!p.featured,
+      tags: Array.isArray(p.tags) ? p.tags : [],
     });
   };
   const close = () => {
@@ -175,6 +178,7 @@ export default function Admin() {
       rating: form.rating ? Number(form.rating) : 0,
       stock: form.stock !== '' ? Number(form.stock) : 0,
       featured: !!form.featured,
+      tags: form.tags || [],
     };
     try {
       if (editing === 'new') {
@@ -328,6 +332,13 @@ export default function Admin() {
               <Input label={t('admin.material')} value={form.material} onChange={(e) => set('material', e.target.value)} className="sm:col-span-2" />
               <Input label={t('admin.rating')} type="number" value={form.rating} onChange={(e) => set('rating', e.target.value)} />
               <Input label={t('admin.stock')} type="number" value={form.stock} onChange={(e) => set('stock', e.target.value)} />
+
+              <div className="sm:col-span-2">
+                <span className="text-sm font-medium text-foreground/80">{t('admin.tags')}</span>
+                <div className="mt-2">
+                  <TagInput value={form.tags || []} onChange={(v) => set('tags', v)} placeholder={t('admin.tagsPlaceholder')} />
+                </div>
+              </div>
 
               <div className="sm:col-span-2">
                 <span className="text-sm font-medium text-foreground/80">{t('admin.image')}</span>

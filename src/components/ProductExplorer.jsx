@@ -60,7 +60,8 @@ export default function ProductExplorer({ products, loading }) {
       const searchOk =
         !term ||
         (p.name && p.name.toLowerCase().includes(term)) ||
-        (p.category && p.category.toLowerCase().includes(term));
+        (p.category && p.category.toLowerCase().includes(term)) ||
+        (Array.isArray(p.tags) && p.tags.some((tg) => tg.toLowerCase().includes(term)));
       return typeOk && ageOk && searchOk;
     });
   }, [products, toyType, activeAge, search]);

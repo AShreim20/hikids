@@ -2,9 +2,12 @@ import React, { useState } from 'react';
 import { MessageCircle, X } from 'lucide-react';
 import ChatPanel from './ChatPanel';
 import { useLanguage } from '@/context/LanguageContext';
+import { useLocation } from 'react-router-dom';
 
 export default function ChatWidget() {
   const { t } = useLanguage();
+  const { pathname } = useLocation();
+  if (pathname === '/checkout') return null;
   const [open, setOpen] = useState(false);
   return (
     <>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { MessageCircle } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import { useLocation } from 'react-router-dom';
 
 // Replace with the store's WhatsApp number (international format, digits only, no +).
 const WHATSAPP_NUMBER = '970599000000';
@@ -11,6 +12,8 @@ const DEFAULT_MESSAGE = {
 
 export default function WhatsAppButton() {
   const { lang } = useLanguage();
+  const { pathname } = useLocation();
+  if (pathname === '/checkout') return null;
   const msg = encodeURIComponent(DEFAULT_MESSAGE[lang] || DEFAULT_MESSAGE.en);
   return (
     <a

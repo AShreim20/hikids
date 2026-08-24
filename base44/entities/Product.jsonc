@@ -68,6 +68,14 @@
       "type": "boolean",
       "title": "Featured",
       "default": false
+    },
+    "tags": {
+      "type": "array",
+      "title": "Tags",
+      "items": {
+        "type": "string"
+      },
+      "default": []
     }
   },
   "required": [

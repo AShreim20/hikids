@@ -99,6 +99,16 @@ export default function ProductDetail() {
             <span className="text-sm text-muted-foreground">{product.rating?.toFixed(1)} · {t('pd.ages')} {product.age_range}</span>
           </div>
 
+          {Array.isArray(product.tags) && product.tags.length > 0 && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {product.tags.map((tag) => (
+                <span key={tag} className="px-3 py-1.5 rounded-full bg-mist text-foreground/70 text-xs font-medium">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+
           <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
             {product.description}
           </p>

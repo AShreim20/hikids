@@ -76,7 +76,8 @@
       "title": "Payment Method",
       "enum": [
         "card",
-        "cod"
+        "cod",
+        "loyalty"
       ]
     },
     "gift_message": {
