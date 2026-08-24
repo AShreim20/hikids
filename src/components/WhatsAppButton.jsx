@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useSyncExternalStore } from 'react';
 import { MessageCircle } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useLocation } from 'react-router-dom';
+import { subscribeChatOpen, getChatOpen } from '@/lib/chatOpenStore';
 
 // Replace with the store's WhatsApp number (international format, digits only, no +).
 const WHATSAPP_NUMBER = '970599000000';
@@ -13,7 +14,8 @@ const DEFAULT_MESSAGE = {
 export default function WhatsAppButton() {
   const { lang } = useLanguage();
   const { pathname } = useLocation();
-  if (pathname === '/checkout') return null;
+  const chatOpen = useSyncExternalStore(subscribeChatOpen, getChatOpen);
+  if (pathname === '/checkout' || chatOpen) return null;
   const msg = encodeURIComponent(DEFAULT_MESSAGE[lang] || DEFAULT_MESSAGE.en);
   return (
     <a
