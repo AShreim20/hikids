@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Sparkles, Loader2, ArrowLeft, Gift } from 'lucide-react';
+import { Sparkles, Loader2, ArrowLeft, Gift, ShieldAlert } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -57,6 +57,12 @@ export default function MyLoyalty() {
           <div className="mt-10 grid place-items-center py-16"><Loader2 className="w-8 h-8 animate-spin text-cosmic" /></div>
         ) : (
           <>
+            {data?.status && data.status !== 'active' && (
+              <div className="mt-8 rounded-2xl bg-destructive/10 border border-destructive/30 p-5 flex items-start gap-3">
+                <ShieldAlert className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+                <p className="text-sm text-foreground/80">{t('wallet.frozenNotice')}</p>
+              </div>
+            )}
             <div className="mt-8"><WalletCard wallet={data} /></div>
             <div className="mt-4"><WalletStats wallet={data} /></div>
 

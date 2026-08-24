@@ -3,12 +3,12 @@ import { Loader2, Sparkles, History, Plus, Minus, ShieldAlert } from 'lucide-rea
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
-import { WALLET_STATUSES } from '@/lib/loyalty';
 import TransactionList from './TransactionList';
+import WalletStatusControl from './WalletStatusControl';
 
 // One customer wallet in the admin list: identity, balances, manual credit/debit
 // with a mandatory reason, wallet status and the full ledger history.
-export default function WalletAdminRow({ account, perms, onChanged }) {
+export default function WalletAdminRow({ account: incoming, perms, onChanged }) {
   const { t, formatPrice, lang } = useLanguage();
   const { toast } = useToast();
   const [mode, setMode] = useState(null); // 'add' | 'remove' | 'history'
@@ -16,6 +16,9 @@ export default function WalletAdminRow({ account, perms, onChanged }) {
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState(null);
+  // The server response is authoritative after a status change.
+  const [fresh, setFresh] = useState(null);
+  const account = fresh || incoming;
 
   const status = account.status || (account.frozen ? 'frozen' : 'active');
   const value = Math.round((account.balance || 0) * (perms.redeemRate || 0.1) * 100) / 100;
@@ -34,22 +37,6 @@ export default function WalletAdminRow({ account, perms, onChanged }) {
       if (!res.success) throw new Error(res.message);
       toast({ title: t('loyalty.adjustSaved') });
       setMode(null); setAmount(''); setReason(''); setHistory(null);
-      onChanged();
-    } catch (err) {
-      toast({ title: err.message || 'Error', variant: 'destructive' });
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const changeStatus = async (next) => {
-    setBusy(true);
-    try {
-      const res = await base44.functions.invoke('adjustLoyaltyPoints', {
-        user_email: account.user_email,
-        status: next,
-      });
-      if (!res.success) throw new Error(res.message);
       onChanged();
     } catch (err) {
       toast({ title: err.message || 'Error', variant: 'destructive' });
@@ -90,7 +77,7 @@ export default function WalletAdminRow({ account, perms, onChanged }) {
             <p className="font-heading font-extrabold text-lg">{(account.balance || 0).toLocaleString()}</p>
             <p className="text-xs text-muted-foreground">{formatPrice(value)}</p>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex flex-wrap items-center gap-1.5">
             {perms.canAdd && (
               <button onClick={() => setMode(mode === 'add' ? null : 'add')} className="squish grid place-items-center w-11 h-11 rounded-full bg-accent/10 text-accent" aria-label={t('wallet.addPoints')} title={t('wallet.addPoints')}>
                 <Plus className="w-4 h-4" />
@@ -107,28 +94,23 @@ export default function WalletAdminRow({ account, perms, onChanged }) {
               </button>
             )}
             {perms.canSettings && (
-              <select
-                value={status}
-                disabled={busy}
-                onChange={(e) => changeStatus(e.target.value)}
-                aria-label={t('wallet.statusLabel')}
-                className="h-11 px-3 rounded-full bg-mist border border-border text-sm font-heading font-bold focus:outline-none focus:ring-2 focus:ring-cosmic/40"
-              >
-                {WALLET_STATUSES.map((s) => (
-                  <option key={s} value={s}>{t(`wallet.status_${s}`)}</option>
-                ))}
-              </select>
+              <WalletStatusControl wallet={account} onUpdated={(w) => { setFresh(w); onChanged(); }} />
             )}
           </div>
         </div>
       </div>
 
       <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
-        {status !== 'active' && (
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-cosmic/10 text-cosmic px-3 py-1 font-bold">
-            <ShieldAlert className="w-3.5 h-3.5" /> {t(`wallet.status_${status}`)}
-          </span>
-        )}
+        <span
+          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 font-bold ${
+            status === 'active' ? 'bg-emerald-500/15 text-emerald-600' : 'bg-destructive/10 text-destructive'
+          }`}
+        >
+          {status === 'active'
+            ? <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            : <ShieldAlert className="w-3.5 h-3.5" />}
+          {t(`wallet.status_${status}`)}
+        </span>
         {(account.pending_points || 0) > 0 && (
           <span className="rounded-full bg-mist px-3 py-1 text-muted-foreground">
             {t('wallet.pending')}: {(account.pending_points || 0).toLocaleString()}
