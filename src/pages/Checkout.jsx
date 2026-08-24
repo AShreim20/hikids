@@ -14,10 +14,10 @@ import DiscountInput from '@/components/checkout/DiscountInput';
 import LoyaltyRedeem from '@/components/checkout/LoyaltyRedeem';
 
 const CARD_TYPES = [
-  { key: 'visa', label: 'Visa', badge: 'bg-[#1A1F71] text-white' },
-  { key: 'mastercard', label: 'Mastercard', badge: 'bg-[#EB001B] text-white' },
-  { key: 'amex', label: 'American Express', badge: 'bg-[#006FCF] text-white' },
-  { key: 'debit', label: 'Debit', badge: 'bg-emerald-600 text-white' },
+  { key: 'visa', label: 'Visa', badge: 'bg-[#1A1F71]', dot: 'bg-[#1A1F71]' },
+  { key: 'mastercard', label: 'Mastercard', badge: 'bg-[#EB001B]', dot: 'bg-[#EB001B]' },
+  { key: 'amex', label: 'American Express', badge: 'bg-[#006FCF]', dot: 'bg-[#006FCF]' },
+  { key: 'debit', label: 'Debit', badge: 'bg-emerald-600', dot: 'bg-emerald-600' },
 ];
 
 export default function Checkout() {
@@ -360,11 +360,15 @@ export default function Checkout() {
                             key={c.key}
                             type="button"
                             onClick={() => setCardType(c.key)}
-                            className={`flex items-center justify-center h-11 rounded-xl text-sm font-bold transition-all border-2 ${
-                              active ? 'border-cosmic bg-card' : 'border-transparent opacity-70 hover:opacity-100'
-                            } ${c.badge}`}
+                            aria-pressed={active}
+                            className={`flex items-center justify-center gap-2 px-2 h-11 rounded-xl text-sm font-bold transition-all border-2 ${
+                              active
+                                ? 'border-cosmic bg-card text-foreground shadow-sm ring-2 ring-cosmic/25'
+                                : `border-transparent text-white opacity-80 hover:opacity-100 ${c.badge}`
+                            }`}
                           >
-                            {c.label}
+                            {active && <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${c.dot}`} />}
+                            <span className="truncate">{c.label}</span>
                           </button>
                         );
                       })}
