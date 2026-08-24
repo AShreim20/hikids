@@ -1,8 +1,9 @@
 import React, { useRef, useState } from 'react';
-import { Plus, X, Upload, Loader2, Star } from 'lucide-react';
+import { Plus, X, Upload, Loader2, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { base44 } from '@/api/base44Client';
 import { useLanguage } from '@/context/LanguageContext';
+import { isColorOption } from '@/lib/variants';
 
 // Admin editor for product options (Color, Size, …) and their values, with
 // per-value image galleries.
@@ -19,6 +20,15 @@ export default function OptionsEditor({ options, onChange }) {
     update(oi, {
       values: options[oi].values.map((v, j) => (j === vi ? { ...v, ...patch } : v)),
     });
+
+  // Moves an image within a value's gallery (index 0 is the primary image).
+  const moveImage = (oi, vi, from, to) => {
+    const imgs = [...(options[oi].values[vi].images || [])];
+    if (to < 0 || to >= imgs.length) return;
+    const [moved] = imgs.splice(from, 1);
+    imgs.splice(to, 0, moved);
+    updateValue(oi, vi, { images: imgs });
+  };
 
   const pickImages = (oi, vi) => {
     targetRef.current = { oi, vi };
@@ -81,6 +91,10 @@ export default function OptionsEditor({ options, onChange }) {
               </button>
             </div>
 
+            {isColorOption(opt.name) && (
+              <p className="mt-2 text-xs text-cosmic font-medium">{t('variants.colorImagesHint')}</p>
+            )}
+
             <div className="mt-3 space-y-3">
               {(opt.values || []).map((val, vi) => (
                 <div key={vi} className="rounded-2xl bg-card border border-border/60 p-3">
@@ -113,7 +127,7 @@ export default function OptionsEditor({ options, onChange }) {
                   {(val.images || []).length > 0 && (
                     <div className="mt-3 flex flex-wrap gap-2">
                       {val.images.map((url, ii) => (
-                        <div key={ii} className="relative w-16 h-16 rounded-xl overflow-hidden bg-mist">
+                        <div key={ii} className="relative w-20 h-20 rounded-xl overflow-hidden bg-mist">
                           <Image src={url} alt="" fittingType="fill" className="w-full h-full" />
                           {ii === 0 ? (
                             <span className="absolute bottom-1 left-1 grid place-items-center w-5 h-5 rounded-full bg-cosmic text-white">
@@ -140,6 +154,26 @@ export default function OptionsEditor({ options, onChange }) {
                           >
                             <X className="w-3 h-3" />
                           </button>
+                          <div className="absolute bottom-1 right-1 flex gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => moveImage(oi, vi, ii, ii - 1)}
+                              disabled={ii === 0}
+                              className="grid place-items-center w-5 h-5 rounded-full bg-black/60 text-white disabled:opacity-30"
+                              aria-label="Move left"
+                            >
+                              <ChevronLeft className="w-3 h-3" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => moveImage(oi, vi, ii, ii + 1)}
+                              disabled={ii === val.images.length - 1}
+                              className="grid place-items-center w-5 h-5 rounded-full bg-black/60 text-white disabled:opacity-30"
+                              aria-label="Move right"
+                            >
+                              <ChevronRight className="w-3 h-3" />
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>

@@ -86,12 +86,32 @@ export function defaultSelection(product) {
   return first ? { ...first.attributes } : {};
 }
 
-// Images tied to the selected attribute values (Color first), falling back to
-// the product's own gallery.
+const COLOR_NAMES = ['color', 'colour', 'لون', 'اللون'];
+
+export const isColorOption = (name) =>
+  COLOR_NAMES.includes(String(name || '').trim().toLowerCase());
+
+const valueImages = (opt, selection) => {
+  const chosen = (opt.values || []).find((v) => v.value === selection?.[opt.name]);
+  return (chosen?.images || []).filter(Boolean);
+};
+
+// Images are driven by the Color attribute; other options only affect price,
+// stock and availability. Falls back to any option that does carry images, then
+// to the product's own gallery (empty result).
 export function selectionImages(product, selection) {
-  for (const opt of getOptions(product)) {
-    const chosen = (opt.values || []).find((v) => v.value === selection?.[opt.name]);
-    const imgs = (chosen?.images || []).filter(Boolean);
+  const options = getOptions(product);
+  const color = options.find((o) => isColorOption(o.name));
+  if (color) {
+    const imgs = valueImages(color, selection);
+    if (imgs.length > 0) return imgs;
+    // A Color option exists but this value has no images — keep the shared gallery.
+    if (options.some((o) => isColorOption(o.name) && (o.values || []).some((v) => (v.images || []).length > 0))) {
+      return [];
+    }
+  }
+  for (const opt of options) {
+    const imgs = valueImages(opt, selection);
     if (imgs.length > 0) return imgs;
   }
   return [];
