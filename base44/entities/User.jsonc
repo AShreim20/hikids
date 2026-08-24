@@ -1,25 +1,10 @@
 {
-  "properties": {
-    "role": {
-      "type": "string",
-      "description": "The role of the user in the app",
-      "enum": [
-        "admin",
-        "user"
-      ]
-    },
-    "permissions": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      },
-      "default": [],
-      "description": "Granular staff permissions. Non-empty on a role:user account marks them as staff."
-    }
-  },
-  "required": [
-    "role"
-  ],
   "name": "User",
-  "type": "object"
+  "type": "object",
+  "properties": {
+    "phone": {
+      "type": "string",
+      "title": "Phone"
+    }
+  }
 }
