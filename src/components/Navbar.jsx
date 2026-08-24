@@ -109,6 +109,22 @@ export default function Navbar() {
               </span>
             )}
           </button>
+          {!user && (
+            <div className="hidden md:flex items-center gap-2 ms-1">
+              <Link
+                to="/login"
+                className="h-11 px-4 rounded-2xl bg-mist text-foreground text-sm font-heading font-bold inline-flex items-center hover:bg-accent hover:text-white transition-colors"
+              >
+                {t('nav.signIn')}
+              </Link>
+              <Link
+                to="/register"
+                className="h-11 px-4 rounded-2xl bg-cosmic text-white text-sm font-heading font-bold inline-flex items-center hover:bg-primary transition-colors whitespace-nowrap"
+              >
+                {t('nav.signUp')}
+              </Link>
+            </div>
+          )}
         </div>
       </nav>
       {searchOpen && (

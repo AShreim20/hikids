@@ -21,10 +21,12 @@ export default function ProductCard({ product, large = false }) {
   const { t, formatPrice } = useLanguage();
   const [added, setAdded] = useState(false);
   const saved = isSaved(product.id);
+  const outOfStock = Number(product.stock) === 0;
 
   const handleAdd = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (outOfStock) return;
     addItem(product, 1);
     setAdded(true);
     setTimeout(() => setAdded(false), 1200);
@@ -49,6 +51,11 @@ export default function ProductCard({ product, large = false }) {
           fittingType="fill"
           className="w-full h-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.07]"
         />
+        {outOfStock && (
+          <span className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-destructive text-white text-[11px] font-heading font-bold shadow-lg">
+            {t('pd.outOfStock')}
+          </span>
+        )}
         <button
           onClick={handleWish}
           className={`absolute top-4 left-4 squish grid place-items-center w-11 h-11 rounded-full backdrop-blur-md transition-all duration-300 ${
@@ -60,8 +67,11 @@ export default function ProductCard({ product, large = false }) {
         </button>
         <button
           onClick={handleAdd}
+          disabled={outOfStock}
           className={`absolute bottom-4 right-4 squish grid place-items-center gap-2 rounded-full shadow-lg transition-all duration-300 ${
-            added
+            outOfStock
+              ? 'bg-card/60 text-muted-foreground w-12 h-12 cursor-not-allowed'
+              : added
               ? 'bg-accent text-white w-auto px-5'
               : 'bg-card text-foreground w-12 h-12 hover:bg-cosmic hover:text-white'
           }`}
@@ -83,6 +93,9 @@ export default function ProductCard({ product, large = false }) {
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">{t('pd.ages')} {product.age_range}</p>
         <p className="mt-2 font-heading font-extrabold text-xl">{formatPrice(product.price)}</p>
+        {outOfStock && (
+          <p className="mt-1 text-sm font-heading font-bold text-destructive">{t('pd.outOfStock')}</p>
+        )}
       </div>
     </Link>
   );
