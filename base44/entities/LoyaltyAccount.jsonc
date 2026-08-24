@@ -16,13 +16,37 @@
     },
     "balance": {
       "type": "integer",
-      "title": "Balance",
+      "title": "Available balance",
       "default": 0
     },
     "lifetime_earned": {
       "type": "integer",
-      "title": "Lifetime earned",
+      "title": "Total earned",
       "default": 0
+    },
+    "lifetime_spent": {
+      "type": "integer",
+      "title": "Total spent",
+      "default": 0
+    },
+    "lifetime_removed": {
+      "type": "integer",
+      "title": "Total removed/reversed",
+      "default": 0
+    },
+    "expired_points": {
+      "type": "integer",
+      "title": "Total expired",
+      "default": 0
+    },
+    "frozen": {
+      "type": "boolean",
+      "title": "Wallet frozen",
+      "default": false
+    },
+    "last_activity_at": {
+      "type": "string",
+      "title": "Last activity"
     }
   },
   "required": [

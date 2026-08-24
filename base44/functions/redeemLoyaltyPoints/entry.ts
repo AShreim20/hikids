@@ -1,44 +1,62 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
+import { loadLoyaltySettings, getOrCreateWallet, maxRedeemable, postLedger, expiryDate } from '../../shared/loyalty.ts';
 
-// Default redeem rate: ₪ value per point redeemed (admin-configurable via Setting).
-const DEFAULT_REDEEM_RATE = 0.1;
-
-async function getRate(base44, key, fallback) {
-  try {
-    const rows = await base44.asServiceRole.entities.Setting.filter({ key });
-    if (rows && rows.length) return Number(rows[0].value) || fallback;
-  } catch {}
-  return fallback;
-}
-
-// Atomically redeems points for the logged-in user as a checkout discount.
-// Validates balance, decrements, and returns the discount amount (capped at
-// the order subtotal). Called at order placement — not for preview.
+// Deducts points for the logged-in customer at order placement and writes the
+// ledger entry. All rules (frozen wallet, minimum, max % / max value, combining
+// with a promo code) are enforced server-side — the client value is advisory.
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
-    const REDEEM_RATE = await getRate(base44, 'loyalty_redeem_rate', DEFAULT_REDEEM_RATE);
     const user = await base44.auth.me().catch(() => null);
-    if (!user) return Response.json({ success: false, message: 'Auth required' });
-    const body = await req.json().catch(() => ({}));
-    const points = Math.floor(Number(body.points) || 0);
-    const subtotal = Number(body.subtotal) || 0;
-    if (points <= 0) return Response.json({ success: false, message: 'Enter points to redeem' });
+    if (!user) return Response.json({ success: false, message: 'Auth required' }, { status: 401 });
 
-    const existing = await base44.asServiceRole.entities.LoyaltyAccount.filter({ user_email: user.email });
-    const acct = existing[0];
-    if (!acct || (acct.balance || 0) < points) {
+    const body = await req.json().catch(() => ({}));
+    const requested = Math.floor(Number(body.points) || 0);
+    if (requested <= 0) return Response.json({ success: false, message: 'Enter points to redeem' });
+
+    const settings = await loadLoyaltySettings(base44);
+    const wallet = await getOrCreateWallet(base44, user);
+    if (wallet.frozen) return Response.json({ success: false, message: 'Wallet is frozen' });
+
+    const discountAmount = Number(body.discount_amount) || 0;
+    if (!settings.loyalty_redeem_with_discount && discountAmount > 0) {
+      return Response.json({ success: false, message: 'Points cannot be combined with a discount code' });
+    }
+    if (settings.loyalty_min_redeem > 0 && requested < settings.loyalty_min_redeem) {
+      return Response.json({ success: false, message: `Minimum ${settings.loyalty_min_redeem} points per redemption` });
+    }
+    if ((wallet.balance || 0) < requested) {
       return Response.json({ success: false, message: 'Insufficient points' });
     }
 
-    let amount = Math.round(points * REDEEM_RATE * 100) / 100;
-    if (amount > subtotal) amount = subtotal;
-
-    await base44.asServiceRole.entities.LoyaltyAccount.update(acct.id, {
-      balance: (acct.balance || 0) - points,
+    const limits = maxRedeemable(settings, {
+      subtotal: Number(body.subtotal) || 0,
+      delivery_cost: Number(body.delivery_cost) || 0,
+      discount_amount: discountAmount,
     });
-    return Response.json({ success: true, amount, points });
+    const points = Math.min(requested, limits.max_points);
+    if (points <= 0) return Response.json({ success: false, message: 'Points cannot be applied to this order' });
+    const amount = Math.min(Math.round(points * limits.rate * 100) / 100, limits.max_amount);
+
+    const key = body.idempotency_key ? `redeem:${body.idempotency_key}` : '';
+    const res = await postLedger(base44, {
+      wallet,
+      points: -points,
+      type: 'redeem',
+      reason: body.reason || 'Redeemed at checkout',
+      order_id: body.order_id || '',
+      actor_email: user.email,
+      idempotency_key: key,
+      expires_at: expiryDate(settings),
+    });
+    if (res.duplicate) return Response.json({ success: true, points, amount, duplicate: true });
+
+    return Response.json({ success: true, points, amount, balance: res.wallet.balance });
   } catch (error) {
-    return Response.json({ success: false, message: error.message }, { status: 500 });
+    const insufficient = error.code === 'insufficient';
+    return Response.json(
+      { success: false, message: insufficient ? 'Insufficient points' : error.message },
+      { status: insufficient ? 200 : 500 }
+    );
   }
 }
