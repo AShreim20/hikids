@@ -4,28 +4,28 @@
 
 @layer base {
   :root {
-    --background: 40 36% 95%;
-    --foreground: 28 20% 14%;
-    --card: 42 44% 99%;
-    --card-foreground: 28 20% 14%;
-    --popover: 42 44% 99%;
-    --popover-foreground: 28 20% 14%;
-    --primary: 241 74% 63%;
+    --background: 48 56% 97%;
+    --foreground: 266 28% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 266 28% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 266 28% 16%;
+    --primary: 266 45% 42%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 38 34% 92%;
-    --secondary-foreground: 28 20% 14%;
-    --muted: 38 34% 92%;
-    --muted-foreground: 28 16% 44%;
-    --accent: 18 100% 68%;
-    --accent-foreground: 28 20% 14%;
-    --mist: 40 32% 94%;
-    --highlight: 18 100% 68%;
-    --cosmic: 241 74% 63%;
+    --secondary: 266 28% 94%;
+    --secondary-foreground: 266 28% 16%;
+    --muted: 266 28% 94%;
+    --muted-foreground: 266 14% 44%;
+    --accent: 350 87% 65%;
+    --accent-foreground: 0 0% 100%;
+    --mist: 266 32% 95%;
+    --highlight: 56 97% 68%;
+    --cosmic: 266 45% 40%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
-    --border: 36 26% 87%;
-    --input: 36 26% 87%;
-    --ring: 241 74% 63%;
+    --border: 266 20% 89%;
+    --input: 266 20% 89%;
+    --ring: 266 45% 42%;
     --radius: 1.5rem;
     --font-heading: 'Baloo Bhaijaan 2', ui-rounded, system-ui, sans-serif;
     --font-body: 'Tajawal', ui-rounded, system-ui, sans-serif;
@@ -34,28 +34,28 @@
   }
 
   .dark {
-    --background: 240 10% 8%;
-    --foreground: 60 20% 98%;
-    --card: 240 10% 11%;
-    --card-foreground: 60 20% 98%;
-    --popover: 240 10% 11%;
-    --popover-foreground: 60 20% 98%;
-    --primary: 241 74% 68%;
-    --primary-foreground: 240 10% 8%;
-    --secondary: 240 5% 18%;
-    --secondary-foreground: 60 20% 98%;
-    --muted: 240 5% 18%;
-    --muted-foreground: 240 5% 65%;
-    --accent: 15 100% 72%;
-    --accent-foreground: 240 10% 8%;
-    --mist: 240 5% 14%;
-    --highlight: 15 100% 72%;
-    --cosmic: 241 74% 68%;
-    --destructive: 0 62% 40%;
+    --background: 266 30% 10%;
+    --foreground: 48 40% 97%;
+    --card: 266 26% 15%;
+    --card-foreground: 48 40% 97%;
+    --popover: 266 26% 15%;
+    --popover-foreground: 48 40% 97%;
+    --primary: 266 60% 70%;
+    --primary-foreground: 266 30% 10%;
+    --secondary: 266 22% 20%;
+    --secondary-foreground: 48 40% 97%;
+    --muted: 266 22% 20%;
+    --muted-foreground: 266 14% 68%;
+    --accent: 350 85% 68%;
+    --accent-foreground: 266 30% 10%;
+    --mist: 266 24% 18%;
+    --highlight: 56 92% 70%;
+    --cosmic: 266 45% 34%;
+    --destructive: 0 62% 45%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5% 20%;
-    --input: 240 5% 20%;
-    --ring: 241 74% 68%;
+    --border: 266 20% 26%;
+    --input: 266 20% 26%;
+    --ring: 266 60% 70%;
   }
 }
 
