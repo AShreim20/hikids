@@ -1,7 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
-// Redeem rate: ₪ value per point redeemed.
-const REDEEM_RATE = 0.1;
+// Default redeem rate: ₪ value per point redeemed (admin-configurable via Setting).
+const DEFAULT_REDEEM_RATE = 0.1;
+
+async function getRate(base44, key, fallback) {
+  try {
+    const rows = await base44.asServiceRole.entities.Setting.filter({ key });
+    if (rows && rows.length) return Number(rows[0].value) || fallback;
+  } catch {}
+  return fallback;
+}
 
 // Atomically redeems points for the logged-in user as a checkout discount.
 // Validates balance, decrements, and returns the discount amount (capped at
@@ -9,6 +17,7 @@ const REDEEM_RATE = 0.1;
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
+    const REDEEM_RATE = await getRate(base44, 'loyalty_redeem_rate', DEFAULT_REDEEM_RATE);
     const user = await base44.auth.me().catch(() => null);
     if (!user) return Response.json({ success: false, message: 'Auth required' });
     const body = await req.json().catch(() => ({}));

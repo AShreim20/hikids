@@ -9,11 +9,12 @@ export default function LoyaltyRedeem({ subtotal, applied, onApplied, onRemoved 
   const { t, formatPrice } = useLanguage();
   const { toast } = useToast();
   const [balance, setBalance] = useState(0);
+  const [rate, setRate] = useState(REDEEM_RATE);
   const [points, setPoints] = useState('');
 
   useEffect(() => {
     base44.functions.invoke('getLoyaltyBalance')
-      .then((res) => { if (res.success) setBalance(res.balance); })
+      .then((res) => { if (res.success) { setBalance(res.balance); if (res.redeem_rate) setRate(res.redeem_rate); } })
       .catch(() => {});
   }, []);
 
@@ -25,7 +26,7 @@ export default function LoyaltyRedeem({ subtotal, applied, onApplied, onRemoved 
       toast({ title: t('loyalty.insufficient'), variant: 'destructive' });
       return;
     }
-    let amount = Math.round(p * REDEEM_RATE * 100) / 100;
+    let amount = Math.round(p * rate * 100) / 100;
     if (amount > subtotal) amount = subtotal;
     onApplied({ points: p, amount });
   };
@@ -52,7 +53,7 @@ export default function LoyaltyRedeem({ subtotal, applied, onApplied, onRemoved 
       <div className="flex items-center gap-2 text-sm">
         <Sparkles className="w-4 h-4 text-accent" />
         <span className="font-heading font-bold">{t('loyalty.balance')}: {balance}</span>
-        <span className="text-muted-foreground">· {formatPrice(Math.round(balance * REDEEM_RATE * 100) / 100)}</span>
+        <span className="text-muted-foreground">· {formatPrice(Math.round(balance * rate * 100) / 100)}</span>
       </div>
       <div className="mt-3 flex gap-2">
         <input

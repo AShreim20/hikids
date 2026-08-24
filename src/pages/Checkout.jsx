@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CreditCard, Banknote, ShieldCheck, Check, Lock } from 'lucide-react';
+import { ArrowLeft, CreditCard, Banknote, ShieldCheck, Check, Lock, Sparkles } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import PageHeader from '@/components/PageHeader';
@@ -42,16 +42,27 @@ export default function Checkout() {
   const [saveAddr, setSaveAddr] = useState(false);
   const [appliedDiscount, setAppliedDiscount] = useState(null);
   const [loyaltyRedeem, setLoyaltyRedeem] = useState(null);
+  const [loyaltyBalance, setLoyaltyBalance] = useState(0);
+  const [loyaltyRate, setLoyaltyRate] = useState(0.1);
 
   const selectedCity = cities.find((c) => c.id === cityId);
   const deliveryCost = selectedCity ? selectedCity.price : 0;
   const discountAmount = appliedDiscount?.amount || 0;
   const loyaltyDiscount = loyaltyRedeem?.amount || 0;
   const grandTotal = Math.max(0, total + deliveryCost - discountAmount - loyaltyDiscount);
+  const requiredPoints = grandTotal > 0 ? Math.ceil(grandTotal / loyaltyRate) : 0;
+  const loyaltyShort = payment === 'loyalty' && grandTotal > 0 && loyaltyBalance < requiredPoints;
 
   useEffect(() => {
     base44.entities.DeliveryCity.filter({ active: true }).then(setCities).catch(() => {});
     if (user) base44.entities.Address.list('-created_date', 50).then(setAddresses).catch(() => {});
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    base44.functions.invoke('getLoyaltyBalance')
+      .then((res) => { if (res.success) { setLoyaltyBalance(res.balance || 0); if (res.redeem_rate) setLoyaltyRate(res.redeem_rate); } })
+      .catch(() => {});
   }, [user]);
 
   const applySavedAddress = (id) => {
@@ -76,7 +87,23 @@ export default function Checkout() {
     try {
       let loyaltyPoints = 0;
       let loyaltyAmount = 0;
-      if (loyaltyRedeem && user) {
+      if (payment === 'loyalty' && user) {
+        if (requiredPoints > loyaltyBalance) {
+          toast({ title: t('checkout.insufficientPoints'), variant: 'destructive' });
+          setPlacing(false);
+          return;
+        }
+        if (requiredPoints > 0) {
+          const res = await base44.functions.invoke('redeemLoyaltyPoints', { points: requiredPoints, subtotal: grandTotal });
+          if (!res.success) {
+            toast({ title: res.message || 'Loyalty error', variant: 'destructive' });
+            setPlacing(false);
+            return;
+          }
+          loyaltyPoints = res.points;
+          loyaltyAmount = res.amount;
+        }
+      } else if (loyaltyRedeem && user) {
         const res = await base44.functions.invoke('redeemLoyaltyPoints', { points: loyaltyRedeem.points, subtotal: total });
         if (!res.success) {
           toast({ title: res.message || 'Loyalty error', variant: 'destructive' });
@@ -101,7 +128,7 @@ export default function Checkout() {
         address: `${form.address}, ${selectedCity.name}`,
         phone: form.phone,
         payment_method: payment,
-        status: payment === 'card' ? 'paid' : 'pending',
+        status: payment === 'card' || payment === 'loyalty' ? 'paid' : 'pending',
         gift_message: giftMessage.trim() || undefined,
       });
       if (saveAddr && user && form.address) {
@@ -257,6 +284,31 @@ export default function Checkout() {
                   </div>
                   <p className="mt-3 font-heading font-bold">{t('checkout.cod')}</p>
                 </button>
+
+                {user && loyaltyBalance > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => { setPayment('loyalty'); setLoyaltyRedeem(null); }}
+                    className={`sm:col-span-2 text-left p-5 rounded-2xl border-2 transition-all ${
+                      payment === 'loyalty' ? 'border-cosmic bg-cosmic/5' : 'border-border hover:border-cosmic/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="grid place-items-center w-11 h-11 rounded-xl bg-mist">
+                          <Sparkles className="w-5 h-5 text-accent" />
+                        </div>
+                        <div>
+                          <p className="font-heading font-bold">{t('checkout.payWithPoints')}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {t('checkout.pointsBalance')}: {loyaltyBalance} · {t('checkout.pointsRequired')}: {requiredPoints}
+                          </p>
+                        </div>
+                      </div>
+                      {payment === 'loyalty' && <Check className="w-5 h-5 text-cosmic" />}
+                    </div>
+                  </button>
+                )}
               </div>
 
               {payment === 'card' && (
@@ -303,6 +355,15 @@ export default function Checkout() {
                   <p className="text-sm text-muted-foreground">{t('checkout.codNote')}</p>
                 </div>
               )}
+
+              {payment === 'loyalty' && (
+                <div className={`mt-6 rounded-2xl border p-5 flex items-start gap-3 float-in ${loyaltyShort ? 'bg-destructive/10 border-destructive/30' : 'bg-accent/10 border-accent/30'}`}>
+                  <Sparkles className="w-5 h-5 text-accent shrink-0 mt-0.5" />
+                  <p className="text-sm text-muted-foreground">
+                    {loyaltyShort ? t('checkout.insufficientPoints') : t('checkout.loyaltyNote')}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -325,7 +386,7 @@ export default function Checkout() {
                 onRemoved={() => setAppliedDiscount(null)}
               />
             </div>
-            {user && (
+            {user && payment !== 'loyalty' && (
               <div className="mt-4">
                 <LoyaltyRedeem
                   subtotal={total}
@@ -364,7 +425,7 @@ export default function Checkout() {
 
             <button
               type="submit"
-              disabled={placing}
+              disabled={placing || loyaltyShort}
               className="squish mt-6 w-full h-14 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-primary transition-colors disabled:opacity-60"
             >
               {placing ? t('checkout.placing') : t('checkout.placeOrder')}

@@ -16,6 +16,8 @@ export default function LoyaltyManagement() {
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');
   const [adjusting, setAdjusting] = useState(null);
+  const [settings, setSettings] = useState({ loyalty_redeem_rate: 0.1, loyalty_earn_rate: 1 });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -32,6 +34,39 @@ export default function LoyaltyManagement() {
     if (isOwner) load();
     else setLoading(false);
   }, [isOwner]);
+
+  useEffect(() => {
+    if (!isOwner) return;
+    base44.entities.Setting.list()
+      .then((rows) => {
+        const map = { loyalty_redeem_rate: 0.1, loyalty_earn_rate: 1 };
+        (rows || []).forEach((r) => { if (r.key in map) map[r.key] = r.value; });
+        setSettings(map);
+      })
+      .catch(() => {});
+  }, [isOwner]);
+
+  const saveSettings = async () => {
+    setSavingSettings(true);
+    try {
+      for (const key of ['loyalty_redeem_rate', 'loyalty_earn_rate']) {
+        const value = Number(settings[key]) || 0;
+        const existing = await base44.entities.Setting.filter({ key });
+        if (existing.length) await base44.entities.Setting.update(existing[0].id, { value });
+        else await base44.entities.Setting.create({ key, value });
+      }
+      await base44.functions.invoke('logAuditActivity', {
+        action: 'loyalty.settings_updated',
+        target_type: 'setting',
+        details: JSON.stringify(settings),
+      });
+      toast({ title: t('loyalty.settingsSaved') });
+    } catch (err) {
+      toast({ title: err.message || 'Error', variant: 'destructive' });
+    } finally {
+      setSavingSettings(false);
+    }
+  };
 
   if (!isOwner) {
     return (
@@ -88,6 +123,25 @@ export default function LoyaltyManagement() {
         <div className="mt-6">
           <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">{t('loyalty.adminSubtitle')}</p>
           <h1 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl">{t('loyalty.adminTitle')}</h1>
+        </div>
+
+        <div className="mt-8 rounded-3xl bg-card border border-border/60 p-5 md:p-6">
+          <h2 className="font-heading font-extrabold text-xl">{t('loyalty.settingsTitle')}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t('loyalty.settingsDesc')}</p>
+          <div className="mt-4 grid sm:grid-cols-2 gap-4">
+            <label className="block">
+              <span className="text-sm font-medium text-foreground/80">{t('loyalty.redeemRate')}</span>
+              <input type="number" min="0" step="0.001" value={settings.loyalty_redeem_rate} onChange={(e) => setSettings((s) => ({ ...s, loyalty_redeem_rate: e.target.value }))} className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
+            </label>
+            <label className="block">
+              <span className="text-sm font-medium text-foreground/80">{t('loyalty.earnRate')}</span>
+              <input type="number" min="0" step="0.1" value={settings.loyalty_earn_rate} onChange={(e) => setSettings((s) => ({ ...s, loyalty_earn_rate: e.target.value }))} className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
+            </label>
+          </div>
+          <button onClick={saveSettings} disabled={savingSettings} className="mt-4 squish h-11 px-5 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center gap-2 disabled:opacity-60">
+            {savingSettings ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+            {t('loyalty.saveSettings')}
+          </button>
         </div>
 
         <div className="mt-8 relative max-w-md">

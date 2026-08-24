@@ -7,8 +7,8 @@ import { useLocation } from 'react-router-dom';
 export default function ChatWidget() {
   const { t } = useLanguage();
   const { pathname } = useLocation();
-  if (pathname === '/checkout') return null;
   const [open, setOpen] = useState(false);
+  if (pathname === '/checkout') return null;
   return (
     <>
       <button

@@ -1,7 +1,15 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
 
-// Earn rate: points awarded per ₪ spent (on subtotal, excl. delivery).
-const EARN_RATE = 1;
+// Default earn rate: points awarded per ₪ spent (admin-configurable via Setting).
+const DEFAULT_EARN_RATE = 1;
+
+async function getRate(base44, key, fallback) {
+  try {
+    const rows = await base44.asServiceRole.entities.Setting.filter({ key });
+    if (rows && rows.length) return Number(rows[0].value) || fallback;
+  } catch {}
+  return fallback;
+}
 
 // Awards loyalty points to the logged-in user for a verified order's subtotal.
 // The subtotal is read server-side from the order record (never trusted from
@@ -9,6 +17,7 @@ const EARN_RATE = 1;
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
+    const EARN_RATE = await getRate(base44, 'loyalty_earn_rate', DEFAULT_EARN_RATE);
 
     let user;
     try {
@@ -31,6 +40,12 @@ export default async function(req) {
 
     // Idempotency: never award twice for the same order.
     if (order.loyalty_awarded) return Response.json({ success: true, awarded: 0, message: 'already awarded' });
+
+    // Orders paid entirely with loyalty points don't earn new points.
+    if (order.payment_method === 'loyalty') {
+      await base44.asServiceRole.entities.Order.update(orderId, { loyalty_awarded: true });
+      return Response.json({ success: true, awarded: 0 });
+    }
 
     const subtotal = Number(order.subtotal) || 0;
     const awarded = Math.floor(subtotal * EARN_RATE);

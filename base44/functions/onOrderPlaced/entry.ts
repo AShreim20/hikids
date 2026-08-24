@@ -32,7 +32,7 @@ export default async function(req) {
       `Hi ${order.customer_name || 'there'},\n\n` +
       `Thank you for your order from HiKids!\n\n` +
       `Order reference: ${ref}\n` +
-      `Payment: ${order.payment_method === 'card' ? 'Paid by card' : 'Cash on delivery'}\n\n` +
+      `Payment: ${order.payment_method === 'card' ? 'Paid by card' : order.payment_method === 'loyalty' ? 'Paid with loyalty points' : 'Cash on delivery'}\n\n` +
       `Items:\n${lines}\n\n` +
       `Total: $${Number(order.total || 0).toFixed(2)}\n\n` +
       `Delivery to: ${order.address}\n\n` +
