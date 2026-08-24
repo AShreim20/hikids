@@ -18,8 +18,7 @@ export default function LoyaltyRedeem({ subtotal, applied, onApplied, onRemoved 
       .catch(() => {});
   }, []);
 
-  const apply = (e) => {
-    e.preventDefault();
+  const apply = () => {
     const p = Math.floor(Number(points) || 0);
     if (p <= 0) return;
     if (p > balance) {
@@ -49,7 +48,7 @@ export default function LoyaltyRedeem({ subtotal, applied, onApplied, onRemoved 
   }
 
   return (
-    <form onSubmit={apply} className="rounded-2xl bg-mist border border-border p-4">
+    <div className="rounded-2xl bg-mist border border-border p-4">
       <div className="flex items-center gap-2 text-sm">
         <Sparkles className="w-4 h-4 text-accent" />
         <span className="font-heading font-bold">{t('loyalty.balance')}: {balance}</span>
@@ -62,11 +61,12 @@ export default function LoyaltyRedeem({ subtotal, applied, onApplied, onRemoved 
           max={balance}
           value={points}
           onChange={(e) => setPoints(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); apply(); } }}
           placeholder={t('loyalty.redeemPlaceholder')}
           className="flex-1 h-12 px-4 rounded-2xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-accent/40 focus:border-accent"
         />
-        <button type="submit" className="h-12 px-5 rounded-2xl bg-accent text-white font-heading font-bold">{t('checkout.apply')}</button>
+        <button type="button" onClick={apply} className="h-12 px-5 rounded-2xl bg-accent text-white font-heading font-bold">{t('checkout.apply')}</button>
       </div>
-    </form>
+    </div>
   );
 }

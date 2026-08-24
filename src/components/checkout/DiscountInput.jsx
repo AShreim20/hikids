@@ -10,8 +10,7 @@ export default function DiscountInput({ subtotal, applied, onApplied, onRemoved 
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const apply = async (e) => {
-    e.preventDefault();
+  const apply = async () => {
     if (!code.trim() || applied) return;
     setBusy(true);
     try {
@@ -45,20 +44,21 @@ export default function DiscountInput({ subtotal, applied, onApplied, onRemoved 
   }
 
   return (
-    <form onSubmit={apply} className="flex gap-2">
+    <div className="flex gap-2">
       <div className="relative flex-1">
         <Tag className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <input
           value={code}
           onChange={(e) => setCode(e.target.value.toUpperCase())}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); apply(); } }}
           placeholder={t('checkout.promo')}
           className="w-full h-12 ps-10 pe-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic"
         />
       </div>
-      <button type="submit" disabled={busy} className="h-12 px-5 rounded-2xl bg-cosmic text-white font-heading font-bold inline-flex items-center gap-2 disabled:opacity-60">
+      <button type="button" onClick={apply} disabled={busy} className="h-12 px-5 rounded-2xl bg-cosmic text-white font-heading font-bold inline-flex items-center gap-2 disabled:opacity-60">
         {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
         {t('checkout.apply')}
       </button>
-    </form>
+    </div>
   );
 }
