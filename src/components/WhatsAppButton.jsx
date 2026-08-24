@@ -7,7 +7,7 @@ import { useLocation } from 'react-router-dom';
 const WHATSAPP_NUMBER = '970599000000';
 const DEFAULT_MESSAGE = {
   en: "Hi HiKids! I have a question about your toys.",
-  ar: "مرحبًا هاي كيدز! لدي سؤال عن ألعابكم.",
+  ar: "مرحبًا هاي كيدز! لدي سؤال عن ألعابكم."
 };
 
 export default function WhatsAppButton() {
@@ -20,10 +20,10 @@ export default function WhatsAppButton() {
       href={`https://wa.me/${WHATSAPP_NUMBER}?text=${msg}`}
       target="_blank"
       rel="noreferrer"
-      className="fixed z-50 bottom-20 md:bottom-6 start-20 md:start-24 grid place-items-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg shadow-[#25D366]/30 squish"
-      aria-label="WhatsApp"
-    >
+      className="fixed z-50 bottom-20 md:bottom-6 start-20 md:start-24 grid place-items-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg shadow-[#25D366]/30 squish my-16"
+      aria-label="WhatsApp">
+      
       <MessageCircle className="w-6 h-6" />
-    </a>
-  );
+    </a>);
+
 }
