@@ -1,17 +1,23 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Image } from '@/components/ui/image';
 import { ZoomIn, X } from 'lucide-react';
 
 // Renders a product's cover image, additional gallery images, and video as a
 // single gallery with a thumbnail strip. Images support a hover magnifier on
 // desktop and a tap-to-zoom lightbox on every device.
-export default function ProductGallery({ product }) {
+export default function ProductGallery({ product, images }) {
+  const override = Array.isArray(images) ? images.filter(Boolean) : null;
   const items = [
-    ...(product.image_url ? [{ type: 'image', url: product.image_url }] : []),
-    ...(Array.isArray(product.images) ? product.images.filter(Boolean).map((url) => ({ type: 'image', url })) : []),
+    ...(override && override.length > 0
+      ? override.map((url) => ({ type: 'image', url }))
+      : [
+          ...(product.image_url ? [{ type: 'image', url: product.image_url }] : []),
+          ...(Array.isArray(product.images) ? product.images.filter(Boolean).map((url) => ({ type: 'image', url })) : []),
+        ]),
     ...(product.video_url ? [{ type: 'video', url: product.video_url }] : []),
   ];
   const [active, setActive] = useState(0);
+  useEffect(() => { setActive(0); }, [override?.join('|')]);
   const [zoom, setZoom] = useState(false);
   const [origin, setOrigin] = useState({ x: 50, y: 50 });
   const [lightbox, setLightbox] = useState(null);

@@ -76,6 +76,75 @@
         "type": "string"
       },
       "default": []
+    },
+    "options": {
+      "type": "array",
+      "title": "Options",
+      "default": [],
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "value": {
+                  "type": "string"
+                },
+                "images": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "variants": {
+      "type": "array",
+      "title": "Variant combinations",
+      "default": [],
+      "items": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "attributes": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "price": {
+            "type": "number"
+          },
+          "compare_price": {
+            "type": "number"
+          },
+          "stock": {
+            "type": "integer"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "barcode": {
+            "type": "string"
+          },
+          "weight": {
+            "type": "number"
+          },
+          "active": {
+            "type": "boolean",
+            "default": true
+          }
+        }
+      }
     }
   },
   "required": [

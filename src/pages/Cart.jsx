@@ -44,7 +44,7 @@ export default function Cart() {
         <div className="mt-10 grid lg:grid-cols-3 gap-10">
           <div className="lg:col-span-2 space-y-4">
             {items.map((i) => (
-              <div key={i.id} className="flex gap-4 p-4 rounded-3xl bg-card border border-border/60">
+              <div key={i.lineId || i.id} className="flex gap-4 p-4 rounded-3xl bg-card border border-border/60">
                 <Link to={`/product/${i.id}`} className="shrink-0">
                   <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-mist">
                     <Image src={i.image_url} alt={i.name} fittingType="fill" className="w-full h-full object-cover" />
@@ -56,10 +56,13 @@ export default function Cart() {
                       <Link to={`/product/${i.id}`} className="font-heading font-bold text-lg hover:text-cosmic">
                         {i.name}
                       </Link>
+                      {i.variant_label && (
+                        <p className="text-sm font-heading font-bold text-cosmic mt-1">{i.variant_label}</p>
+                      )}
                       <p className="text-sm text-muted-foreground mt-1">{formatPrice(i.price)}</p>
                     </div>
                     <button
-                      onClick={() => removeItem(i.id)}
+                      onClick={() => removeItem(i.lineId || i.id)}
                       className="text-muted-foreground hover:text-destructive"
                       aria-label={t('admin.delete')}
                     >
@@ -68,11 +71,11 @@ export default function Cart() {
                   </div>
                   <div className="mt-auto flex items-center justify-between">
                     <div className="flex items-center rounded-full bg-mist">
-                      <button onClick={() => updateQty(i.id, i.qty - 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card" aria-label="-">
+                      <button onClick={() => updateQty(i.lineId || i.id, i.qty - 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card" aria-label="-">
                         <Minus className="w-4 h-4" />
                       </button>
                       <span className="w-8 text-center font-heading font-bold text-sm">{i.qty}</span>
-                      <button onClick={() => updateQty(i.id, i.qty + 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card" aria-label="+">
+                      <button onClick={() => updateQty(i.lineId || i.id, i.qty + 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card" aria-label="+">
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>

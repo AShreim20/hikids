@@ -10,6 +10,8 @@ import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import SheetSelect from '@/components/ui/SheetSelect';
 import TagInput from '@/components/TagInput';
+import OptionsEditor from '@/components/admin/OptionsEditor';
+import VariantTable from '@/components/admin/VariantTable';
 
 const CATEGORIES = [
   'Build & Create',
@@ -35,6 +37,8 @@ const EMPTY = {
   stock: '',
   featured: false,
   tags: [],
+  options: [],
+  variants: [],
 };
 
 export default function Admin() {
@@ -104,6 +108,8 @@ export default function Admin() {
       stock: p.stock ?? '',
       featured: !!p.featured,
       tags: Array.isArray(p.tags) ? p.tags : [],
+      options: Array.isArray(p.options) ? p.options : [],
+      variants: Array.isArray(p.variants) ? p.variants : [],
     });
   };
   const close = () => {
@@ -179,6 +185,18 @@ export default function Admin() {
       stock: form.stock !== '' ? Number(form.stock) : 0,
       featured: !!form.featured,
       tags: form.tags || [],
+      options: (form.options || []).filter((o) => o.name),
+      variants: (form.variants || []).map((v) => ({
+        key: v.key,
+        attributes: v.attributes,
+        price: v.price === '' || v.price == null ? null : Number(v.price),
+        compare_price: v.compare_price === '' || v.compare_price == null ? null : Number(v.compare_price),
+        stock: Number(v.stock) || 0,
+        sku: v.sku || '',
+        barcode: v.barcode || '',
+        weight: v.weight === '' || v.weight == null ? null : Number(v.weight),
+        active: v.active !== false,
+      })),
     };
     try {
       if (editing === 'new') {
@@ -300,7 +318,7 @@ export default function Admin() {
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm grid place-items-center p-4 overflow-auto">
           <form
             onSubmit={save}
-            className="w-full max-w-2xl rounded-3xl bg-card border border-border/60 p-6 md:p-8 my-8"
+            className="w-full max-w-4xl rounded-3xl bg-card border border-border/60 p-6 md:p-8 my-8"
           >
             <div className="flex items-center justify-between">
               <h2 className="font-heading font-extrabold text-2xl">
@@ -414,6 +432,19 @@ export default function Admin() {
                   </div>
                 </div>
               </div>
+
+              <div className="sm:col-span-2">
+                <OptionsEditor options={form.options || []} onChange={(v) => set('options', v)} />
+              </div>
+              {(form.options || []).some((o) => o.name) && (
+                <div className="sm:col-span-2">
+                  <VariantTable
+                    options={form.options || []}
+                    variants={form.variants || []}
+                    onChange={(v) => set('variants', v)}
+                  />
+                </div>
+              )}
 
               <label className="sm:col-span-2 flex items-center gap-3 cursor-pointer">
                 <input

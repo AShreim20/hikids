@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { variantLabel } from '@/lib/variants';
 
 const CartContext = createContext(null);
 const STORAGE_KEY = 'hikids_cart_v1';
@@ -18,33 +19,42 @@ export function CartProvider({ children }) {
     } catch { /* ignore */ }
   }, [items]);
 
-  const addItem = (product, qty = 1) => {
+  // `variant` (optional) is the selected variant combination — its exact
+  // details are snapshotted into the cart line so later product edits don't
+  // change what was bought.
+  const addItem = (product, qty = 1, variant = null, price = null) => {
+    const lineId = variant ? `${product.id}::${variant.key}` : product.id;
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === product.id);
+      const existing = prev.find((i) => i.lineId === lineId);
       if (existing) {
-        return prev.map((i) =>
-          i.id === product.id ? { ...i, qty: i.qty + qty } : i
-        );
+        return prev.map((i) => (i.lineId === lineId ? { ...i, qty: i.qty + qty } : i));
       }
       return [
         ...prev,
         {
+          lineId,
           id: product.id,
           name: product.name,
-          price: product.price,
+          price: price != null ? price : (product.sale_price ?? product.price),
           image_url: product.image_url,
           qty,
+          variant_key: variant?.key || null,
+          variant_label: variant ? variantLabel(variant.attributes) : null,
+          variant_attributes: variant?.attributes || null,
+          sku: variant?.sku || null,
         },
       ];
     });
   };
 
-  const removeItem = (id) =>
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const removeItem = (lineId) =>
+    setItems((prev) => prev.filter((i) => (i.lineId || i.id) !== lineId));
 
-  const updateQty = (id, qty) =>
+  const updateQty = (lineId, qty) =>
     setItems((prev) =>
-      prev.map((i) => (i.id === id ? { ...i, qty: Math.max(1, qty) } : i))
+      prev.map((i) =>
+        (i.lineId || i.id) === lineId ? { ...i, qty: Math.max(1, qty) } : i
+      )
     );
 
   const clear = () => setItems([]);

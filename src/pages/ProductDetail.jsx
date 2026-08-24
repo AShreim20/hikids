@@ -9,6 +9,11 @@ import { useCart } from '@/context/CartContext';
 import Reviews from '@/components/Reviews';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
+import VariantSelector from '@/components/product/VariantSelector';
+import {
+  hasVariants, findVariant, defaultSelection, selectionImages,
+  variantPrice, isSellable, getOptions,
+} from '@/lib/variants';
 
 export default function ProductDetail() {
   const { id } = useParams();
@@ -19,6 +24,7 @@ export default function ProductDetail() {
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
+  const [selection, setSelection] = useState({});
   const { t, formatPrice } = useLanguage();
 
   useEffect(() => {
@@ -26,6 +32,7 @@ export default function ProductDetail() {
     base44.entities.Product.get(id)
       .then((p) => {
         setProduct(p);
+        setSelection(p ? defaultSelection(p) : {});
         if (p) {
           base44.analytics.track({
             eventName: 'product_view',
@@ -60,8 +67,30 @@ export default function ProductDetail() {
     );
   }
 
+  const variantMode = hasVariants(product);
+  const variant = variantMode ? findVariant(product, selection) : null;
+  const price = variantMode ? variantPrice(product, variant) : product.price;
+  const stock = variantMode ? Number(variant?.stock || 0) : Number(product.stock || 0);
+  const canBuy = variantMode ? isSellable(variant) : stock > 0;
+  const galleryImages = variantMode ? selectionImages(product, selection) : null;
+
+  // Keeps the selection on a real combination: if the picked value breaks the
+  // current one, snap the other options to the first sellable match.
+  const selectValue = (name, value) => {
+    const next = { ...selection, [name]: value };
+    if (isSellable(findVariant(product, next))) {
+      setSelection(next);
+      return;
+    }
+    const match = (product.variants || []).find(
+      (v) => isSellable(v) && v.attributes?.[name] === value
+    );
+    setSelection(match ? { ...match.attributes } : next);
+  };
+
   const addToCart = () => {
-    addItem(product, qty);
+    if (!canBuy) return;
+    addItem(product, qty, variant, price);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
@@ -77,7 +106,7 @@ export default function ProductDetail() {
       </div>
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 grid lg:grid-cols-2 gap-10 lg:gap-16">
-        <ProductGallery product={product} />
+        <ProductGallery product={product} images={galleryImages} />
 
         <div className="float-in">
           <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
@@ -114,7 +143,10 @@ export default function ProductDetail() {
           </p>
 
           <div className="mt-8 flex items-center gap-4">
-            <p className="font-heading font-extrabold text-4xl">{formatPrice(product.price)}</p>
+            <p className="font-heading font-extrabold text-4xl">{formatPrice(price)}</p>
+            {variant?.compare_price != null && Number(variant.compare_price) > price && (
+              <span className="text-lg text-muted-foreground line-through">{formatPrice(Number(variant.compare_price))}</span>
+            )}
             <button
               onClick={() => toggle(product)}
               className={`squish grid place-items-center w-12 h-12 rounded-full border transition-all ${isSaved(product.id) ? 'bg-accent text-white border-accent' : 'border-border text-foreground hover:bg-mist'}`}
@@ -123,6 +155,12 @@ export default function ProductDetail() {
               <Heart className={`w-5 h-5 ${isSaved(product.id) ? 'fill-current' : ''}`} />
             </button>
           </div>
+
+          <VariantSelector product={product} selection={selection} onSelect={selectValue} />
+
+          {variant?.sku && (
+            <p className="mt-3 text-xs text-muted-foreground">{t('variants.sku')}: {variant.sku}</p>
+          )}
 
           {/* Materiality bar */}
           <div className="mt-8 rounded-3xl bg-mist p-6">
@@ -150,14 +188,14 @@ export default function ProductDetail() {
                 <Plus className="w-4 h-4" />
               </button>
             </div>
-            {product.stock > 0 ? (
-              product.stock <= 5 ? (
+            {stock > 0 ? (
+              stock <= 5 ? (
                 <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-accent/15 text-accent text-sm font-heading font-bold">
                   <AlertTriangle className="w-4 h-4" />
-                  {t('pd.lowStockPrefix')} {product.stock} {t('pd.lowStockSuffix')}
+                  {t('pd.lowStockPrefix')} {stock} {t('pd.lowStockSuffix')}
                 </span>
               ) : (
-                <span className="text-sm text-muted-foreground">{product.stock} {t('pd.inStock')}</span>
+                <span className="text-sm text-muted-foreground">{stock} {t('pd.inStock')}</span>
               )
             ) : (
               <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-sm font-heading font-bold">
@@ -176,18 +214,23 @@ export default function ProductDetail() {
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
           <div className="hidden sm:block">
             <p className="font-heading font-bold">{product.name}</p>
-            <p className="text-sm text-muted-foreground">{formatPrice(product.price)} · {qty}</p>
+            <p className="text-sm text-muted-foreground">
+              {formatPrice(price)} · {qty}
+              {variant ? ` · ${Object.values(variant.attributes || {}).join(' / ')}` : ''}
+            </p>
           </div>
           <div className="flex flex-1 sm:flex-initial gap-3">
             <button
               onClick={addToCart}
-              className="squish flex-1 sm:w-auto whitespace-nowrap h-14 px-6 rounded-full bg-mist text-foreground font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-white transition-colors"
+              disabled={!canBuy}
+              className="squish flex-1 sm:w-auto whitespace-nowrap h-14 px-6 rounded-full bg-mist text-foreground font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-white transition-colors disabled:opacity-50 disabled:hover:bg-mist disabled:hover:text-foreground"
             >
-              <ShoppingBag className="w-5 h-5" /> {added ? t('common.added') : t('common.addToCart')}
+              <ShoppingBag className="w-5 h-5" /> {!canBuy ? t('pd.outOfStock') : added ? t('common.added') : t('common.addToCart')}
             </button>
             <button
-              onClick={() => { addItem(product, qty); navigate('/checkout'); }}
-              className="squish flex-1 sm:w-auto h-14 px-6 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-primary transition-colors"
+              disabled={!canBuy}
+              onClick={() => { addItem(product, qty, variant, price); navigate('/checkout'); }}
+              className="squish flex-1 sm:w-auto h-14 px-6 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-primary transition-colors disabled:opacity-50"
             >
               {t('common.buyNow')}
             </button>

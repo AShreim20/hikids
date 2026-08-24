@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Heart } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { hasVariants, getVariants, isSellable } from '@/lib/variants';
 
 const CAT_LABEL = {
   'Build & Create': 'cat.build',
@@ -16,17 +17,26 @@ const CAT_LABEL = {
 };
 
 export default function ProductCard({ product, large = false }) {
+  const navigate = useNavigate();
   const { addItem } = useCart();
   const { toggle, isSaved } = useWishlist();
   const { t, formatPrice } = useLanguage();
   const [added, setAdded] = useState(false);
   const saved = isSaved(product.id);
-  const outOfStock = Number(product.stock) === 0;
+  const variantMode = hasVariants(product);
+  const outOfStock = variantMode
+    ? !getVariants(product).some(isSellable)
+    : Number(product.stock) === 0;
 
   const handleAdd = (e) => {
     e.preventDefault();
     e.stopPropagation();
     if (outOfStock) return;
+    // Variant products need an explicit combination — open the product page.
+    if (variantMode) {
+      navigate(`/product/${product.id}`);
+      return;
+    }
     addItem(product, 1);
     setAdded(true);
     setTimeout(() => setAdded(false), 1200);
