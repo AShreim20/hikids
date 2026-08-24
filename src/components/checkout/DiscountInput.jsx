@@ -14,7 +14,8 @@ export default function DiscountInput({ subtotal, applied, onApplied, onRemoved 
     if (!code.trim() || applied) return;
     setBusy(true);
     try {
-      const res = await base44.functions.invoke('validateDiscount', { code: code.trim(), subtotal });
+      const raw = await base44.functions.invoke('validateDiscount', { code: code.trim(), subtotal });
+      const res = raw?.data ?? raw;
       if (res.valid) {
         onApplied({ id: res.code.id, code: res.code.code, amount: res.discount_amount });
         toast({ title: t('checkout.discountApplied') });
