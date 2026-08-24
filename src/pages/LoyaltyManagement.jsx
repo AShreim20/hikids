@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Lock, Plus, Minus, Search, Sparkles } from 'lucide-react';
+import { Loader2, Lock, Pencil, Search, Sparkles } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
@@ -18,6 +18,10 @@ export default function LoyaltyManagement() {
   const [adjusting, setAdjusting] = useState(null);
   const [settings, setSettings] = useState({ loyalty_redeem_rate: 0.1, loyalty_earn_rate: 1 });
   const [savingSettings, setSavingSettings] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [delta, setDelta] = useState('');
+  const [reason, setReason] = useState('');
+  const [savingId, setSavingId] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -89,14 +93,23 @@ export default function LoyaltyManagement() {
     !query || (a.user_email || '').toLowerCase().includes(query.toLowerCase()) || (a.user_name || '').toLowerCase().includes(query.toLowerCase())
   );
 
-  const doAdjust = async (acct, delta) => {
-    const input = window.prompt(t('loyalty.adjustPrompt'), '');
-    if (input === null) return;
-    const points = Math.floor(Number(input) || 0);
-    if (!points) return;
-    const newBalance = Math.max(0, (acct.balance || 0) + (delta > 0 ? points : -points));
+  const openEditor = (acct) => {
+    setEditing(acct.id);
+    setDelta('');
+    setReason('');
+  };
+  const cancelEditor = () => { setEditing(null); setDelta(''); setReason(''); };
+
+  const applyAdjust = async (acct) => {
+    const d = Math.floor(Number(delta) || 0);
+    if (!d) {
+      toast({ title: t('loyalty.adjustDelta'), variant: 'destructive' });
+      return;
+    }
+    const newBalance = Math.max(0, (acct.balance || 0) + d);
     const actualDelta = newBalance - (acct.balance || 0);
     if (actualDelta === 0) return;
+    setSavingId(acct.id);
     try {
       await base44.entities.LoyaltyAccount.update(acct.id, { balance: newBalance });
       if (actualDelta > 0) {
@@ -106,12 +119,15 @@ export default function LoyaltyManagement() {
         action: 'loyalty.adjusted',
         target_type: 'loyalty_account',
         target_id: acct.id,
-        details: `${acct.user_email}: ${actualDelta > 0 ? '+' : ''}${actualDelta} pts`,
+        details: `${acct.user_email}: ${actualDelta > 0 ? '+' : ''}${actualDelta} pts${reason ? ' — ' + reason : ''}`,
       });
-      toast({ title: t('address.saved') });
+      toast({ title: t('loyalty.adjustSaved') });
+      cancelEditor();
       load();
     } catch (err) {
       toast({ title: err.message || 'Error', variant: 'destructive' });
+    } finally {
+      setSavingId(null);
     }
   };
 
@@ -161,27 +177,49 @@ export default function LoyaltyManagement() {
         ) : (
           <div className="mt-8 space-y-3">
             {filtered.map((a) => (
-              <div key={a.id} className="flex items-center justify-between gap-4 rounded-2xl bg-card border border-border/60 p-4">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="grid place-items-center w-11 h-11 rounded-xl bg-accent/15 text-accent shrink-0">
-                    <Sparkles className="w-5 h-5" />
+              <React.Fragment key={a.id}>
+                <div className="flex items-center justify-between gap-4 rounded-2xl bg-card border border-border/60 p-4">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="grid place-items-center w-11 h-11 rounded-xl bg-accent/15 text-accent shrink-0">
+                      <Sparkles className="w-5 h-5" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="font-heading font-bold truncate">{a.user_name || a.user_email}</p>
+                      <p className="text-xs text-muted-foreground truncate">{a.user_email}</p>
+                    </div>
                   </div>
-                  <div className="min-w-0">
-                    <p className="font-heading font-bold truncate">{a.user_name || a.user_email}</p>
-                    <p className="text-xs text-muted-foreground truncate">{a.user_email}</p>
+                  <div className="flex items-center gap-4">
+                    <div className="text-end">
+                      <p className="font-heading font-extrabold text-lg">{a.balance || 0}</p>
+                      <p className="text-xs text-muted-foreground">{t('loyalty.points')}</p>
+                    </div>
+                    <button onClick={() => (editing === a.id ? cancelEditor() : openEditor(a))} className="squish inline-flex items-center gap-1.5 h-9 px-3 rounded-full bg-cosmic/10 text-cosmic hover:bg-cosmic hover:text-white transition-colors text-sm font-heading font-bold">
+                      <Pencil className="w-4 h-4" /> {t('loyalty.adjust')}
+                    </button>
                   </div>
                 </div>
-                <div className="flex items-center gap-4">
-                  <div className="text-end">
-                    <p className="font-heading font-extrabold text-lg">{a.balance || 0}</p>
-                    <p className="text-xs text-muted-foreground">{t('loyalty.points')}</p>
+                {editing === a.id && (
+                  <div className="rounded-2xl bg-mist border border-border/60 p-4 float-in">
+                    <div className="flex flex-wrap items-end gap-3">
+                      <label className="block flex-1 min-w-40">
+                        <span className="text-xs font-medium text-foreground/70">{t('loyalty.adjustDelta')}</span>
+                        <input type="number" value={delta} onChange={(e) => setDelta(e.target.value)} placeholder="+50 / −20" className="mt-1.5 w-full h-11 px-4 rounded-2xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
+                      </label>
+                      <label className="block flex-[2] min-w-48">
+                        <span className="text-xs font-medium text-foreground/70">{t('loyalty.adjustReason')}</span>
+                        <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} className="mt-1.5 w-full h-11 px-4 rounded-2xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
+                      </label>
+                    </div>
+                    <div className="mt-3 flex items-center gap-2">
+                      <button type="button" onClick={() => applyAdjust(a)} disabled={savingId === a.id} className="squish inline-flex items-center gap-2 h-11 px-5 rounded-full bg-cosmic text-white font-heading font-bold disabled:opacity-60">
+                        {savingId === a.id ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                        {t('loyalty.apply')}
+                      </button>
+                      <button type="button" onClick={cancelEditor} className="h-11 px-5 rounded-full bg-card border border-border font-heading font-bold hover:bg-background">{t('loyalty.cancel')}</button>
+                    </div>
                   </div>
-                  <div className="flex gap-1">
-                    <button onClick={() => doAdjust(a, 1)} className="grid place-items-center w-9 h-9 rounded-full bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/20" aria-label="Add"><Plus className="w-4 h-4" /></button>
-                    <button onClick={() => doAdjust(a, -1)} className="grid place-items-center w-9 h-9 rounded-full bg-destructive/10 text-destructive hover:bg-destructive/20" aria-label="Remove"><Minus className="w-4 h-4" /></button>
-                  </div>
-                </div>
-              </div>
+                )}
+              </React.Fragment>
             ))}
           </div>
         )}
