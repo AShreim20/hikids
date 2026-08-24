@@ -2,9 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { Star, MessageSquare } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
+import { useLanguage } from '@/context/LanguageContext';
 
 export default function Reviews({ productId }) {
   const { toast } = useToast();
+  const { t } = useLanguage();
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
@@ -32,7 +34,7 @@ export default function Reviews({ productId }) {
   const submit = async (e) => {
     e.preventDefault();
     if (rating < 1) {
-      toast({ title: 'Please pick a star rating', variant: 'destructive' });
+      toast({ title: t('reviews.pickRating'), variant: 'destructive' });
       return;
     }
     setSubmitting(true);
@@ -40,16 +42,16 @@ export default function Reviews({ productId }) {
       await base44.entities.Review.create({
         product_id: productId,
         rating,
-        name: name.trim() || 'Anonymous',
+        name: name.trim() || t('reviews.anonymous'),
         comment: comment.trim(),
       });
       setName('');
       setRating(0);
       setComment('');
       load();
-      toast({ title: 'Thanks for your review!' });
+      toast({ title: t('reviews.thanks') });
     } catch {
-      toast({ title: 'Could not submit review', variant: 'destructive' });
+      toast({ title: t('reviews.error'), variant: 'destructive' });
     } finally {
       setSubmitting(false);
     }
@@ -60,10 +62,10 @@ export default function Reviews({ productId }) {
       <div className="flex items-end justify-between flex-wrap gap-4 mb-8">
         <div>
           <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">
-            From the playroom
+            {t('reviews.label')}
           </p>
           <h2 className="mt-2 font-heading font-extrabold text-3xl md:text-4xl">
-            Customer reviews
+            {t('reviews.title')}
           </h2>
         </div>
         {reviews.length > 0 && (
@@ -77,7 +79,8 @@ export default function Reviews({ productId }) {
               ))}
             </div>
             <span className="font-heading font-bold">
-              {avg.toFixed(1)} · {reviews.length} review{reviews.length === 1 ? '' : 's'}
+              {avg.toFixed(1)} · {reviews.length}{' '}
+              {reviews.length === 1 ? t('reviews.reviewSingular') : t('reviews.reviewPlural')}
             </span>
           </div>
         )}
@@ -93,10 +96,8 @@ export default function Reviews({ productId }) {
           ) : reviews.length === 0 ? (
             <div className="rounded-3xl bg-mist p-8 text-center">
               <MessageSquare className="w-8 h-8 mx-auto text-muted-foreground" />
-              <p className="mt-3 font-heading font-bold text-lg">No reviews yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Be the first to share your experience with this toy.
-              </p>
+              <p className="mt-3 font-heading font-bold text-lg">{t('reviews.emptyTitle')}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{t('reviews.emptyDesc')}</p>
             </div>
           ) : (
             reviews.map((r) => (
@@ -130,13 +131,11 @@ export default function Reviews({ productId }) {
 
         {/* Form */}
         <div className="lg:sticky lg:top-28 h-fit rounded-3xl bg-mist p-6 md:p-8">
-          <h3 className="font-heading font-extrabold text-xl">Leave a review</h3>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Tell other families what you thought of this toy.
-          </p>
+          <h3 className="font-heading font-extrabold text-xl">{t('reviews.leaveTitle')}</h3>
+          <p className="mt-1 text-sm text-muted-foreground">{t('reviews.leaveDesc')}</p>
           <form onSubmit={submit} className="mt-5 space-y-4">
             <div>
-              <span className="text-sm font-medium text-foreground/80">Your rating</span>
+              <span className="text-sm font-medium text-foreground/80">{t('reviews.yourRating')}</span>
               <div className="mt-2 flex gap-1">
                 {Array.from({ length: 5 }).map((_, i) => {
                   const val = i + 1;
@@ -162,22 +161,22 @@ export default function Reviews({ productId }) {
             </div>
 
             <label className="block">
-              <span className="text-sm font-medium text-foreground/80">Name</span>
+              <span className="text-sm font-medium text-foreground/80">{t('reviews.name')}</span>
               <input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
+                placeholder={t('reviews.namePlaceholder')}
                 className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic"
               />
             </label>
 
             <label className="block">
-              <span className="text-sm font-medium text-foreground/80">Review</span>
+              <span className="text-sm font-medium text-foreground/80">{t('reviews.review')}</span>
               <textarea
                 required
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                placeholder="What did your little one think?"
+                placeholder={t('reviews.reviewPlaceholder')}
                 rows={4}
                 className="mt-1.5 w-full p-4 rounded-2xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic resize-none"
               />
@@ -186,9 +185,9 @@ export default function Reviews({ productId }) {
             <button
               type="submit"
               disabled={submitting}
-              className="squish w-full h-13 py-3.5 rounded-full bg-cosmic text-white font-heading font-bold hover:bg-primary transition-colors disabled:opacity-60"
+              className="squish w-full py-3.5 rounded-full bg-cosmic text-white font-heading font-bold hover:bg-primary transition-colors disabled:opacity-60"
             >
-              {submitting ? 'Submitting…' : 'Submit review'}
+              {submitting ? t('reviews.submitting') : t('reviews.submit')}
             </button>
           </form>
         </div>
