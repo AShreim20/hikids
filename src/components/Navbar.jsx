@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, BarChart3, Heart, Settings as SettingsIcon, Search, MapPin, Sparkles } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
-import SearchHover from '@/components/SearchHover';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import SettingsDialog from '@/components/SettingsDialog';
@@ -52,7 +51,7 @@ export default function Navbar() {
         </div>
 
         <div className="flex items-center gap-1.5 lg:gap-2">
-          <SearchHover />
+          <div className="hidden md:block w-44 lg:w-72"><SearchBar /></div>
           <button
             onClick={() => setSearchOpen((v) => !v)}
             className="md:hidden grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
