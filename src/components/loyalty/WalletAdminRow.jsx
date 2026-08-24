@@ -1,14 +1,15 @@
 import React, { useState } from 'react';
-import { Loader2, Sparkles, Snowflake, History, Plus, Minus } from 'lucide-react';
+import { Loader2, Sparkles, History, Plus, Minus, ShieldAlert } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
+import { WALLET_STATUSES } from '@/lib/loyalty';
 import TransactionList from './TransactionList';
 
-// One customer wallet in the admin list: balance, manual add/remove with a
-// mandatory reason, freeze toggle and the ledger history.
+// One customer wallet in the admin list: identity, balances, manual credit/debit
+// with a mandatory reason, wallet status and the full ledger history.
 export default function WalletAdminRow({ account, perms, onChanged }) {
-  const { t, formatPrice } = useLanguage();
+  const { t, formatPrice, lang } = useLanguage();
   const { toast } = useToast();
   const [mode, setMode] = useState(null); // 'add' | 'remove' | 'history'
   const [amount, setAmount] = useState('');
@@ -16,6 +17,7 @@ export default function WalletAdminRow({ account, perms, onChanged }) {
   const [busy, setBusy] = useState(false);
   const [history, setHistory] = useState(null);
 
+  const status = account.status || (account.frozen ? 'frozen' : 'active');
   const value = Math.round((account.balance || 0) * (perms.redeemRate || 0.1) * 100) / 100;
 
   const submit = async () => {
@@ -31,7 +33,7 @@ export default function WalletAdminRow({ account, perms, onChanged }) {
       });
       if (!res.success) throw new Error(res.message);
       toast({ title: t('loyalty.adjustSaved') });
-      setMode(null); setAmount(''); setReason('');
+      setMode(null); setAmount(''); setReason(''); setHistory(null);
       onChanged();
     } catch (err) {
       toast({ title: err.message || 'Error', variant: 'destructive' });
@@ -40,12 +42,12 @@ export default function WalletAdminRow({ account, perms, onChanged }) {
     }
   };
 
-  const toggleFreeze = async () => {
+  const changeStatus = async (next) => {
     setBusy(true);
     try {
       const res = await base44.functions.invoke('adjustLoyaltyPoints', {
         user_email: account.user_email,
-        action: account.frozen ? 'unfreeze' : 'freeze',
+        status: next,
       });
       if (!res.success) throw new Error(res.message);
       onChanged();
@@ -61,7 +63,7 @@ export default function WalletAdminRow({ account, perms, onChanged }) {
     setMode('history');
     if (history) return;
     try {
-      const res = await base44.functions.invoke('adminLoyaltyWallet', { user_email: account.user_email, limit: 50 });
+      const res = await base44.functions.invoke('adminLoyaltyWallet', { user_email: account.user_email, limit: 100 });
       setHistory(res.success ? res.transactions || [] : []);
     } catch {
       setHistory([]);
@@ -77,7 +79,10 @@ export default function WalletAdminRow({ account, perms, onChanged }) {
           </div>
           <div className="min-w-0">
             <p className="font-heading font-bold truncate">{account.user_name || account.user_email}</p>
-            <p className="text-xs text-muted-foreground truncate">{account.user_email}</p>
+            <p className="text-xs text-muted-foreground truncate">
+              {account.wallet_code ? `${account.wallet_code} · ` : ''}{account.user_email}
+              {account.user_phone ? ` · ${account.user_phone}` : ''}
+            </p>
           </div>
         </div>
         <div className="flex items-center justify-between gap-3">
@@ -102,17 +107,45 @@ export default function WalletAdminRow({ account, perms, onChanged }) {
               </button>
             )}
             {perms.canSettings && (
-              <button onClick={toggleFreeze} disabled={busy} className={`squish grid place-items-center w-11 h-11 rounded-full ${account.frozen ? 'bg-cosmic text-white' : 'bg-mist'}`} aria-label={t('wallet.freeze')} title={t('wallet.freeze')}>
-                <Snowflake className="w-4 h-4" />
-              </button>
+              <select
+                value={status}
+                disabled={busy}
+                onChange={(e) => changeStatus(e.target.value)}
+                aria-label={t('wallet.statusLabel')}
+                className="h-11 px-3 rounded-full bg-mist border border-border text-sm font-heading font-bold focus:outline-none focus:ring-2 focus:ring-cosmic/40"
+              >
+                {WALLET_STATUSES.map((s) => (
+                  <option key={s} value={s}>{t(`wallet.status_${s}`)}</option>
+                ))}
+              </select>
             )}
           </div>
         </div>
       </div>
 
-      {account.frozen && (
-        <p className="mt-2 inline-block rounded-full bg-cosmic/10 text-cosmic px-3 py-1 text-xs font-bold">{t('wallet.frozen')}</p>
-      )}
+      <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
+        {status !== 'active' && (
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-cosmic/10 text-cosmic px-3 py-1 font-bold">
+            <ShieldAlert className="w-3.5 h-3.5" /> {t(`wallet.status_${status}`)}
+          </span>
+        )}
+        {(account.pending_points || 0) > 0 && (
+          <span className="rounded-full bg-mist px-3 py-1 text-muted-foreground">
+            {t('wallet.pending')}: {(account.pending_points || 0).toLocaleString()}
+          </span>
+        )}
+        <span className="rounded-full bg-mist px-3 py-1 text-muted-foreground">
+          {t('wallet.earned')}: {(account.lifetime_earned || 0).toLocaleString()}
+        </span>
+        <span className="rounded-full bg-mist px-3 py-1 text-muted-foreground">
+          {t('wallet.spent')}: {(account.lifetime_spent || 0).toLocaleString()}
+        </span>
+        {account.last_activity_at && (
+          <span className="rounded-full bg-mist px-3 py-1 text-muted-foreground">
+            {t('wallet.lastActivity')}: {new Date(account.last_activity_at).toLocaleDateString(lang === 'ar' ? 'ar' : 'en-GB')}
+          </span>
+        )}
+      </div>
 
       {(mode === 'add' || mode === 'remove') && (
         <div className="mt-3 rounded-2xl bg-mist border border-border/60 p-4 float-in">
@@ -122,7 +155,7 @@ export default function WalletAdminRow({ account, perms, onChanged }) {
               <input type="number" min="1" value={amount} onChange={(e) => setAmount(e.target.value)} className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
             </label>
             <label className="block flex-[2] min-w-48">
-              <span className="text-xs font-medium text-foreground/70">{t('wallet.reason')}</span>
+              <span className="text-xs font-medium text-foreground/70">{t('wallet.reason')} *</span>
               <input type="text" value={reason} onChange={(e) => setReason(e.target.value)} placeholder={t('wallet.reasonPlaceholder')} className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
             </label>
           </div>

@@ -1,9 +1,13 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { loadLoyaltySettings, getOrCreateWallet, maxRedeemable, postLedger, expiryDate } from '../../shared/loyalty.ts';
+import {
+  loadLoyaltySettings, getOrCreateWallet, maxRedeemable, postLedger,
+  expiryDate, isWalletBlocked, TX,
+} from '../../shared/loyalty.ts';
 
-// Deducts points for the logged-in customer at order placement and writes the
-// ledger entry. All rules (frozen wallet, minimum, max % / max value, combining
-// with a promo code) are enforced server-side — the client value is advisory.
+// Reserves (deducts) points for a checkout. Everything is enforced server-side:
+// wallet status, minimum, max % / max value, combining with a promo code and the
+// real balance. The idempotency key makes the same checkout unable to spend twice,
+// which is also what stops two concurrent orders from using the same points.
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -16,7 +20,7 @@ export default async function(req) {
 
     const settings = await loadLoyaltySettings(base44);
     const wallet = await getOrCreateWallet(base44, user);
-    if (wallet.frozen) return Response.json({ success: false, message: 'Wallet is frozen' });
+    if (isWalletBlocked(wallet)) return Response.json({ success: false, message: 'Wallet is not active' });
 
     const discountAmount = Number(body.discount_amount) || 0;
     if (!settings.loyalty_redeem_with_discount && discountAmount > 0) {
@@ -42,16 +46,24 @@ export default async function(req) {
     const res = await postLedger(base44, {
       wallet,
       points: -points,
-      type: 'redeem',
+      type: TX.REDEEM,
       reason: body.reason || 'Redeemed at checkout',
       order_id: body.order_id || '',
       actor_email: user.email,
       idempotency_key: key,
       expires_at: expiryDate(settings),
     });
-    if (res.duplicate) return Response.json({ success: true, points, amount, duplicate: true });
+    if (res.duplicate) {
+      return Response.json({ success: true, points, amount, duplicate: true, transaction_id: res.transaction.id });
+    }
 
-    return Response.json({ success: true, points, amount, balance: res.wallet.balance });
+    return Response.json({
+      success: true,
+      points,
+      amount,
+      balance: res.wallet.balance,
+      transaction_id: res.transaction.id,
+    });
   } catch (error) {
     const insufficient = error.code === 'insufficient';
     return Response.json(

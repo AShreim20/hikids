@@ -1,8 +1,9 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { loadLoyaltySettings, getOrCreateWallet, maxRedeemable, earnableForOrder } from '../../shared/loyalty.ts';
+import { loadLoyaltySettings, getOrCreateWallet, maxRedeemable, isWalletBlocked } from '../../shared/loyalty.ts';
 
-// Returns the logged-in customer's wallet: balance, totals, pending points,
-// recent ledger entries and the redemption limits for the cart being checked out.
+// The customer's own wallet: identity, balances, ledger history and the
+// redemption limits for the cart currently being checked out. The frontend never
+// computes any of this itself.
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -21,39 +22,32 @@ export default async function(req) {
       );
     } catch { transactions = []; }
 
-    // Pending = points from placed orders that haven't been awarded yet.
-    let pending = 0;
-    try {
-      const orders = await base44.asServiceRole.entities.Order.filter(
-        { customer_email: user.email, loyalty_awarded: false }, '-created_date', 50
-      );
-      (orders || []).forEach((o) => {
-        if (['cancelled', 'returned', 'return_approved'].includes(o.status)) return;
-        pending += earnableForOrder(settings, o);
-      });
-    } catch { pending = 0; }
-
     const limits = maxRedeemable(settings, {
       subtotal: Number(body.subtotal) || 0,
       delivery_cost: Number(body.delivery_cost) || 0,
       discount_amount: Number(body.discount_amount) || 0,
     });
+    const blocked = isWalletBlocked(wallet);
     const blockedByDiscount = !settings.loyalty_redeem_with_discount && Number(body.discount_amount) > 0;
+    const redeemable = blocked || blockedByDiscount ? 0 : Math.min(limits.max_points, wallet.balance || 0);
 
     return Response.json({
       success: true,
+      wallet_code: wallet.wallet_code || '',
+      status: wallet.status || (wallet.frozen ? 'frozen' : 'active'),
       balance: wallet.balance || 0,
-      frozen: !!wallet.frozen,
+      frozen: blocked,
+      pending_points: wallet.pending_points || 0,
       lifetime_earned: wallet.lifetime_earned || 0,
       lifetime_spent: wallet.lifetime_spent || 0,
+      lifetime_redeemed: wallet.lifetime_spent || 0,
       lifetime_removed: wallet.lifetime_removed || 0,
       expired_points: wallet.expired_points || 0,
-      pending_points: pending,
       earn_rate: settings.loyalty_earn_rate,
       redeem_rate: settings.loyalty_redeem_rate,
       min_redeem: settings.loyalty_min_redeem,
-      max_redeem_points: blockedByDiscount ? 0 : Math.min(limits.max_points, wallet.balance || 0),
-      max_redeem_amount: blockedByDiscount ? 0 : limits.max_amount,
+      max_redeem_points: redeemable,
+      max_redeem_amount: blocked || blockedByDiscount ? 0 : limits.max_amount,
       blocked_by_discount: blockedByDiscount,
       settings,
       transactions,

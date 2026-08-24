@@ -2,31 +2,44 @@
   "name": "LoyaltyAccount",
   "type": "object",
   "properties": {
+    "wallet_code": {
+      "type": "string",
+      "title": "Wallet ID"
+    },
     "user_id": {
       "type": "string",
-      "title": "User ID"
+      "title": "Customer ID"
     },
     "user_email": {
       "type": "string",
-      "title": "User email"
+      "title": "Customer email"
     },
     "user_name": {
       "type": "string",
-      "title": "User name"
+      "title": "Customer name"
+    },
+    "user_phone": {
+      "type": "string",
+      "title": "Customer phone"
     },
     "balance": {
       "type": "integer",
-      "title": "Available balance",
+      "title": "Available points",
+      "default": 0
+    },
+    "pending_points": {
+      "type": "integer",
+      "title": "Pending points",
       "default": 0
     },
     "lifetime_earned": {
       "type": "integer",
-      "title": "Total earned",
+      "title": "Lifetime earned",
       "default": 0
     },
     "lifetime_spent": {
       "type": "integer",
-      "title": "Total spent",
+      "title": "Lifetime redeemed",
       "default": 0
     },
     "lifetime_removed": {
@@ -39,9 +52,19 @@
       "title": "Total expired",
       "default": 0
     },
+    "status": {
+      "type": "string",
+      "title": "Wallet status",
+      "enum": [
+        "active",
+        "frozen",
+        "suspended"
+      ],
+      "default": "active"
+    },
     "frozen": {
       "type": "boolean",
-      "title": "Wallet frozen",
+      "title": "Blocked (legacy flag)",
       "default": false
     },
     "last_activity_at": {

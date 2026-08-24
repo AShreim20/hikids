@@ -16,8 +16,15 @@ const NUMBER_FIELDS = [
   { key: 'loyalty_expiry_days', labelKey: 'wallet.setExpiry', step: '1' },
 ];
 
+// When earned points become spendable.
+const AWARD_STAGES = [
+  { value: 0, labelKey: 'wallet.stagePlaced' },
+  { value: 1, labelKey: 'wallet.stagePaid' },
+  { value: 2, labelKey: 'wallet.stageConfirmed' },
+  { value: 3, labelKey: 'wallet.stageDelivered' },
+];
+
 const TOGGLE_FIELDS = [
-  { key: 'loyalty_award_on_delivery', labelKey: 'wallet.setAwardOnDelivery' },
   { key: 'loyalty_earn_on_delivery_fee', labelKey: 'wallet.setEarnDelivery' },
   { key: 'loyalty_earn_on_discounted', labelKey: 'wallet.setEarnDiscounted' },
   { key: 'loyalty_redeem_with_discount', labelKey: 'wallet.setCombineDiscount' },
@@ -32,11 +39,11 @@ const DEFAULTS = {
   loyalty_max_redeem_percent: 100,
   loyalty_max_redeem_value: 0,
   loyalty_expiry_days: 0,
-  loyalty_award_on_delivery: 1,
+  loyalty_award_stage: 3,
   loyalty_earn_on_delivery_fee: 0,
   loyalty_earn_on_discounted: 1,
   loyalty_redeem_with_discount: 1,
-  loyalty_redeem_delivery: 1,
+  loyalty_redeem_delivery: 0,
 };
 
 export default function LoyaltySettingsForm({ canEdit }) {
@@ -98,6 +105,21 @@ export default function LoyaltySettingsForm({ canEdit }) {
           </label>
         ))}
       </div>
+
+      <label className="mt-4 block max-w-sm">
+        <span className="text-sm font-medium text-foreground/80">{t('wallet.setAwardStage')}</span>
+        <select
+          disabled={!canEdit}
+          value={Number(settings.loyalty_award_stage)}
+          onChange={(e) => setSettings((s) => ({ ...s, loyalty_award_stage: Number(e.target.value) }))}
+          className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic disabled:opacity-60"
+        >
+          {AWARD_STAGES.map((s) => (
+            <option key={s.value} value={s.value}>{t(s.labelKey)}</option>
+          ))}
+        </select>
+        <span className="mt-1 block text-xs text-muted-foreground">{t('wallet.setAwardStageDesc')}</span>
+      </label>
 
       <div className="mt-5 space-y-3">
         {TOGGLE_FIELDS.map((f) => (

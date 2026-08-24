@@ -1,9 +1,10 @@
 import { createClientFromRequest } from 'npm:@base44/sdk@0.8.40';
-import { getOrCreateWallet, postLedger } from '../../shared/loyalty.ts';
+import { getOrCreateWallet, postLedger, TX } from '../../shared/loyalty.ts';
 import { can } from '../../shared/permissions.ts';
 
-// Staff/owner manual wallet actions: add points, remove points, freeze/unfreeze.
-// A reason is mandatory for every balance change and is stored on the ledger.
+// Manual staff wallet actions: credit points, debit points, change wallet status.
+// A reason is mandatory for every balance change and is stored on the ledger —
+// staff can never change a balance silently.
 export default async function(req) {
   try {
     const base44 = createClientFromRequest(req);
@@ -18,10 +19,21 @@ export default async function(req) {
     let wallet = rows && rows[0];
     if (!wallet) wallet = await getOrCreateWallet(base44, { id: '', email, full_name: body.user_name || '' });
 
-    if (body.action === 'freeze' || body.action === 'unfreeze') {
+    // Wallet status: active / frozen / suspended.
+    if (body.status) {
       if (!can(user, 'loyalty.settings')) return Response.json({ success: false, message: 'Forbidden' }, { status: 403 });
-      await base44.asServiceRole.entities.LoyaltyAccount.update(wallet.id, { frozen: body.action === 'freeze' });
-      return Response.json({ success: true, frozen: body.action === 'freeze' });
+      const status = ['active', 'frozen', 'suspended'].includes(body.status) ? body.status : 'active';
+      await base44.asServiceRole.entities.LoyaltyAccount.update(wallet.id, {
+        status,
+        frozen: status !== 'active',
+      });
+      await base44.functions.invoke('logAuditActivity', {
+        action: `loyalty.wallet_${status}`,
+        target_type: 'loyalty_wallet',
+        target_id: wallet.id,
+        details: email,
+      }).catch(() => {});
+      return Response.json({ success: true, status });
     }
 
     const delta = Math.trunc(Number(body.points) || 0);
@@ -35,10 +47,16 @@ export default async function(req) {
     const res = await postLedger(base44, {
       wallet,
       points: delta,
-      type: 'adjust',
+      type: delta > 0 ? TX.CREDIT : TX.DEBIT,
       reason,
       actor_email: user.email,
     });
+    await base44.functions.invoke('logAuditActivity', {
+      action: delta > 0 ? 'loyalty.credit' : 'loyalty.debit',
+      target_type: 'loyalty_wallet',
+      target_id: wallet.id,
+      details: `${email}: ${delta > 0 ? '+' : ''}${delta} — ${reason}`,
+    }).catch(() => {});
     return Response.json({ success: true, balance: res.wallet.balance, points: delta });
   } catch (error) {
     const insufficient = error.code === 'insufficient';

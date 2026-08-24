@@ -4,6 +4,10 @@
   "properties": {
     "account_id": {
       "type": "string",
+      "title": "Wallet record ID"
+    },
+    "wallet_code": {
+      "type": "string",
       "title": "Wallet ID"
     },
     "user_id": {
@@ -22,6 +26,15 @@
       "type": "string",
       "title": "Type",
       "enum": [
+        "PURCHASE_REWARD",
+        "REDEMPTION",
+        "ADMIN_CREDIT",
+        "ADMIN_DEBIT",
+        "REFUND",
+        "RETURN_REVERSAL",
+        "CANCELLATION_REVERSAL",
+        "EXPIRED",
+        "ADJUSTMENT",
         "earn",
         "redeem",
         "refund",
@@ -30,6 +43,15 @@
         "expire"
       ]
     },
+    "status": {
+      "type": "string",
+      "title": "Status",
+      "enum": [
+        "completed",
+        "reversed"
+      ],
+      "default": "completed"
+    },
     "reason": {
       "type": "string",
       "title": "Reason"
@@ -37,6 +59,10 @@
     "order_id": {
       "type": "string",
       "title": "Related order"
+    },
+    "reference_transaction_id": {
+      "type": "string",
+      "title": "Original transaction"
     },
     "balance_before": {
       "type": "integer",
@@ -48,7 +74,7 @@
     },
     "actor_email": {
       "type": "string",
-      "title": "Performed by"
+      "title": "Created by"
     },
     "idempotency_key": {
       "type": "string",

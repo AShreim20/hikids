@@ -86,6 +86,7 @@ export default function Checkout() {
       return;
     }
     setPlacing(true);
+    let reserved = false;
     try {
       let loyaltyPoints = 0;
       let loyaltyAmount = 0;
@@ -110,6 +111,7 @@ export default function Checkout() {
           }
           loyaltyPoints = res.points;
           loyaltyAmount = res.amount;
+          reserved = true;
         }
       } else if (loyaltyRedeem && user) {
         const res = await base44.functions.invoke('redeemLoyaltyPoints', {
@@ -126,6 +128,7 @@ export default function Checkout() {
         }
         loyaltyPoints = res.points;
         loyaltyAmount = res.amount;
+        reserved = true;
       }
       const order = await base44.entities.Order.create({
         items: items.map((i) => ({
@@ -141,6 +144,7 @@ export default function Checkout() {
         discount_amount: discountAmount,
         loyalty_points: loyaltyPoints,
         loyalty_discount: loyaltyAmount,
+        loyalty_redeem_key: loyaltyPoints > 0 ? checkoutKey : undefined,
         total: Math.max(0, total + deliveryCost - discountAmount - loyaltyAmount),
         city: selectedCity.name,
         customer_name: form.name,
@@ -172,6 +176,12 @@ export default function Checkout() {
       if (user) base44.functions.invoke('awardLoyaltyPoints', { order_id: order.id }).catch(() => {});
       toast({ title: lang === 'ar' ? 'تم تأكيد الطلب' : 'Order placed' });
     } catch (err) {
+      // The order never made it — give the reserved loyalty points straight back.
+      if (reserved) {
+        await base44.functions
+          .invoke('releaseLoyaltyPoints', { idempotency_key: checkoutKey })
+          .catch(() => {});
+      }
       toast({ title: lang === 'ar' ? 'حدث خطأ' : 'Something went wrong', variant: 'destructive' });
     } finally {
       setPlacing(false);

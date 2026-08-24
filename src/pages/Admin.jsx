@@ -36,6 +36,7 @@ const EMPTY = {
   rating: '',
   stock: '',
   featured: false,
+  loyalty_exempt: false,
   tags: [],
   options: [],
   variants: [],
@@ -107,6 +108,7 @@ export default function Admin() {
       rating: p.rating ?? '',
       stock: p.stock ?? '',
       featured: !!p.featured,
+      loyalty_exempt: !!p.loyalty_exempt,
       tags: Array.isArray(p.tags) ? p.tags : [],
       options: Array.isArray(p.options) ? p.options : [],
       variants: Array.isArray(p.variants) ? p.variants : [],
@@ -188,6 +190,7 @@ export default function Admin() {
       rating: form.rating ? Number(form.rating) : 0,
       stock: form.stock !== '' ? Number(form.stock) : 0,
       featured: !!form.featured,
+      loyalty_exempt: !!form.loyalty_exempt,
       tags: form.tags || [],
       options: (form.options || []).filter((o) => o.name),
       variants: (form.variants || []).map((v) => ({
@@ -458,6 +461,19 @@ export default function Admin() {
                   className="w-5 h-5 rounded accent-cosmic"
                 />
                 <span className="font-medium">{t('admin.featured')}</span>
+              </label>
+
+              <label className="sm:col-span-2 flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!!form.loyalty_exempt}
+                  onChange={(e) => set('loyalty_exempt', e.target.checked)}
+                  className="mt-0.5 w-5 h-5 rounded accent-cosmic"
+                />
+                <span>
+                  <span className="font-medium">{t('admin.loyaltyExempt')}</span>
+                  <span className="block text-xs text-muted-foreground">{t('admin.loyaltyExemptDesc')}</span>
+                </span>
               </label>
             </div>
 

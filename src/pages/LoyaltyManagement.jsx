@@ -5,6 +5,7 @@ import { base44 } from '@/api/base44Client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import LoyaltySettingsForm from '@/components/loyalty/LoyaltySettingsForm';
+import WalletDashboard from '@/components/loyalty/WalletDashboard';
 import WalletAdminRow from '@/components/loyalty/WalletAdminRow';
 import { useLanguage } from '@/context/LanguageContext';
 import { usePermissions } from '@/lib/permissions';
@@ -62,10 +63,12 @@ export default function LoyaltyManagement() {
     );
   }
 
+  // Search by customer name, email, phone, customer id or wallet id.
+  const q = query.trim().toLowerCase();
   const filtered = accounts.filter((a) =>
-    !query ||
-    (a.user_email || '').toLowerCase().includes(query.toLowerCase()) ||
-    (a.user_name || '').toLowerCase().includes(query.toLowerCase())
+    !q ||
+    [a.user_email, a.user_name, a.user_phone, a.user_id, a.wallet_code]
+      .some((f) => String(f || '').toLowerCase().includes(q))
   );
 
   return (
@@ -79,6 +82,10 @@ export default function LoyaltyManagement() {
         </div>
 
         <div className="mt-8">
+          <WalletDashboard />
+        </div>
+
+        <div className="mt-8">
           <LoyaltySettingsForm canEdit={perms.canSettings} />
         </div>
 
@@ -87,7 +94,7 @@ export default function LoyaltyManagement() {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('loyalty.search')}
+            placeholder={t('wallet.searchPlaceholder')}
             className="w-full h-12 ps-10 pe-4 rounded-full bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic"
           />
         </div>

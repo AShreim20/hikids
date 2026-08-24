@@ -41,6 +41,15 @@
       "title": "Loyalty discount",
       "default": 0
     },
+    "loyalty_redeem_key": {
+      "type": "string",
+      "title": "Redemption idempotency key"
+    },
+    "loyalty_pending_points": {
+      "type": "integer",
+      "title": "Pending points accrued",
+      "default": 0
+    },
     "loyalty_awarded": {
       "type": "boolean",
       "title": "Loyalty awarded",
@@ -49,6 +58,11 @@
     "loyalty_reversed": {
       "type": "boolean",
       "title": "Loyalty reversed",
+      "default": false
+    },
+    "loyalty_released": {
+      "type": "boolean",
+      "title": "Reserved points released",
       "default": false
     },
     "discount_counted": {

@@ -69,6 +69,11 @@
       "title": "Featured",
       "default": false
     },
+    "loyalty_exempt": {
+      "type": "boolean",
+      "title": "Does not earn loyalty points",
+      "default": false
+    },
     "tags": {
       "type": "array",
       "title": "Tags",
