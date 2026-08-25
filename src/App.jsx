@@ -50,6 +50,7 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Bundles = lazy(() => import('./pages/Bundles'));
 const BundleEditor = lazy(() => import('./pages/BundleEditor'));
 const BundleDetail = lazy(() => import('./pages/BundleDetail'));
+const ProductSearch = lazy(() => import('./pages/ProductSearch'));
 import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -83,6 +84,7 @@ function AnimatedRoutes() {
       <Route path="/admin/bundles" element={<Bundles />} />
       <Route path="/admin/bundle/new" element={<BundleEditor />} />
       <Route path="/admin/bundle/:id" element={<BundleEditor />} />
+      <Route path="/admin/product-search" element={<ProductSearch />} />
       <Route path="/admin/reports" element={<Reports />} />
       <Route path="/admin/product/new" element={<ProductEditor />} />
       <Route path="/admin/product/:id" element={<ProductEditor />} />

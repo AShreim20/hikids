@@ -12,6 +12,11 @@ export const translations = {
     'nav.cart': 'Cart',
     'nav.wishlist': 'Wishlist',
     'nav.admin': 'Manage Products',
+    'nav.managementProducts': 'Product Management',
+    'nav.managementProductSearch': 'Product Search',
+    'nav.managementDelivery': 'Delivery Pricing',
+    'nav.managementOrders': 'Orders & Sales',
+    'nav.managementBundles': 'Bundles & Packages',
     'nav.search': 'Search toys…',
     'nav.orders': 'My Orders',
 
@@ -627,6 +632,11 @@ export const translations = {
     'nav.cart': 'السلة',
     'nav.wishlist': 'المفضلة',
     'nav.admin': 'إدارة المنتجات',
+    'nav.managementProducts': 'إدارة المنتجات',
+    'nav.managementProductSearch': 'البحث عن المنتجات',
+    'nav.managementDelivery': 'تسعير التوصيل',
+    'nav.managementOrders': 'الطلبات والمبيعات',
+    'nav.managementBundles': 'الحزم والباقات',
     'nav.search': 'ابحث عن لعبة…',
     'nav.orders': 'طلباتي',
 
