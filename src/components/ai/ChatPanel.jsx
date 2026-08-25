@@ -13,7 +13,30 @@ export default function ChatPanel({ onClose }) {
   const { addItem } = useCart();
   // Assistant messages are stored as structured objects: { text, products, showCart }.
   // The greeting starts as a plain string and is rendered gracefully below.
-  const [messages, setMessages] = useState([{ role: 'assistant', content: t('ai.greeting') }]);
+  const STORAGE_KEY = 'hikids_chat_v1';
+  const TTL_MS = 60 * 60 * 1000; // conversation kept for 1 hour after last activity
+  const lastActivityRef = useRef(Date.now());
+
+  // Restore an in-window conversation (persists across navigation/refresh);
+  // expire anything older than 1 hour of inactivity.
+  const loadChat = () => {
+    const fresh = [{ role: 'assistant', content: t('ai.greeting') }];
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return fresh;
+      const parsed = JSON.parse(raw);
+      if (!parsed || !Array.isArray(parsed.messages)) return fresh;
+      if (Date.now() - (parsed.ts || 0) > TTL_MS) {
+        localStorage.removeItem(STORAGE_KEY);
+        return fresh;
+      }
+      lastActivityRef.current = parsed.ts || Date.now();
+      return parsed.messages;
+    } catch {
+      return fresh;
+    }
+  };
+  const [messages, setMessages] = useState(loadChat);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [products, setProducts] = useState([]);
@@ -42,6 +65,15 @@ export default function ChatPanel({ onClose }) {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
   }, [messages, busy]);
 
+  // Persist the conversation with the last-activity timestamp. Navigation,
+  // refresh, or opening a product link never touches lastActivity — only
+  // sending a message does — so the 1-hour idle window is preserved.
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ messages, ts: lastActivityRef.current }));
+    } catch { /* ignore */ }
+  }, [messages]);
+
   const send = async (text) => {
     const content = text.trim();
     if (!content || busy) return;
@@ -49,6 +81,7 @@ export default function ChatPanel({ onClose }) {
     setMessages(next);
     setInput('');
     setBusy(true);
+    lastActivityRef.current = Date.now(); // user interaction resets the 1h idle timer
     try {
       const sys = `You are the HiKids toy store personal shopping assistant. Help customers choose toys and answer questions about ages, categories, pricing, discounts, shipping, loyalty points, returns, and payment (card or cash on delivery). Be friendly, warm and concise. Reply in ${ar ? 'Arabic' : 'English'}.
 
