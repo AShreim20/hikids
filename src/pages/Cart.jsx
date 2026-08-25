@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Minus, Plus, Trash2, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Minus, Plus, Trash2, ArrowRight, ArrowLeft, Package } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
@@ -10,7 +10,8 @@ import { useLanguage } from '@/context/LanguageContext';
 export default function Cart() {
   const { items, updateQty, removeItem, total, count } = useCart();
   const navigate = useNavigate();
-  const { t, formatPrice } = useLanguage();
+  const { t, formatPrice, lang } = useLanguage();
+  const ar = lang === 'ar';
 
   if (items.length === 0) {
     return (
@@ -45,7 +46,7 @@ export default function Cart() {
           <div className="lg:col-span-2 space-y-4">
             {items.map((i) => (
               <div key={i.lineId || i.id} className="flex gap-4 p-4 rounded-3xl bg-card border border-border/60">
-                <Link to={`/product/${i.id}`} className="shrink-0">
+                <Link to={i.is_bundle ? `/bundles/${i.id}` : `/product/${i.id}`} className="shrink-0">
                   <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-mist">
                     <Image src={i.image_url} alt={i.name} fittingType="fill" className="w-full h-full object-cover" />
                   </div>
@@ -53,11 +54,21 @@ export default function Cart() {
                 <div className="flex-1 flex flex-col">
                   <div className="flex justify-between gap-4">
                     <div>
-                      <Link to={`/product/${i.id}`} className="font-heading font-bold text-lg hover:text-cosmic">
+                      {i.is_bundle && (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-cosmic/10 text-cosmic text-[11px] font-heading font-bold mb-1">
+                          <Package className="w-3 h-3" /> {ar ? 'حزمة' : 'Bundle'}
+                        </span>
+                      )}
+                      <Link to={i.is_bundle ? `/bundles/${i.id}` : `/product/${i.id}`} className="font-heading font-bold text-lg hover:text-cosmic">
                         {i.name}
                       </Link>
                       {i.variant_label && (
                         <p className="text-sm font-heading font-bold text-cosmic mt-1">{i.variant_label}</p>
+                      )}
+                      {i.is_bundle && Array.isArray(i.bundle_items) && i.bundle_items.length > 0 && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {i.bundle_items.map((c) => `${c.quantity}× ${c.name}`).join(' · ')}
+                        </p>
                       )}
                       <p className="text-sm text-muted-foreground mt-1">{formatPrice(i.price)}</p>
                     </div>

@@ -6,12 +6,14 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHeader from '@/components/PageHeader';
 import ProductCard from '@/components/ProductCard';
+import BundleCard from '@/components/bundles/BundleCard';
 import ProductFilters, {
   TOY_CATEGORIES, AGE_OPTIONS, ageRange, overlaps,
 } from '@/components/shop/ProductFilters';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import { priceInfo } from '@/lib/pricing';
+import { isBundleActive } from '@/lib/bundles';
 
 const SORTS = [
   { id: 'featured', label: 'plp.sortFeatured' },
@@ -26,6 +28,7 @@ export default function Shop() {
   const effectivePrice = (p) => priceInfo(p, discountPctFor(p.category)).final;
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
+  const [bundles, setBundles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cats, setCats] = useState([]);
   const [ages, setAges] = useState([]);
@@ -49,6 +52,9 @@ export default function Shop() {
       })
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
+    base44.entities.Bundle.list('-updated_date', 100)
+      .then((list) => setBundles((list || []).filter(isBundleActive)))
+      .catch(() => setBundles([]));
   }, []);
 
   // Preselect category/age from URL (deep links from homepage category cards).
@@ -136,6 +142,17 @@ export default function Shop() {
             )}
           </button>
         </div>
+
+        {bundles.length > 0 && !hasActive && (
+          <section className="mb-10">
+            <h2 className="font-heading font-extrabold text-2xl md:text-3xl mb-5">{t('bundle.sectionTitle')}</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+              {bundles.slice(0, 4).map((b) => (
+                <BundleCard key={b.id} bundle={b} products={products} />
+              ))}
+            </div>
+          </section>
+        )}
 
         <div className="grid md:grid-cols-[260px_1fr] gap-8">
           <aside className="hidden md:block">

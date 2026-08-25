@@ -47,6 +47,33 @@ export function CartProvider({ children }) {
     });
   };
 
+  // A bundle is one purchasable package from the customer's perspective.
+  // Internally the cart keeps the component products (with their quantities)
+  // so the order can deduct component inventory on completion.
+  const addBundle = (bundle, qty = 1, price, components) => {
+    const lineId = `bundle::${bundle.id}`;
+    setItems((prev) => {
+      const existing = prev.find((i) => i.lineId === lineId);
+      if (existing) {
+        return prev.map((i) => (i.lineId === lineId ? { ...i, qty: i.qty + qty } : i));
+      }
+      return [
+        ...prev,
+        {
+          lineId,
+          id: bundle.id,
+          bundle_id: bundle.id,
+          is_bundle: true,
+          name: bundle.name,
+          price,
+          image_url: bundle.image_url,
+          qty,
+          bundle_items: components,
+        },
+      ];
+    });
+  };
+
   const removeItem = (lineId) =>
     setItems((prev) => prev.filter((i) => (i.lineId || i.id) !== lineId));
 
@@ -64,7 +91,7 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, removeItem, updateQty, clear, count, total }}
+      value={{ items, addItem, addBundle, removeItem, updateQty, clear, count, total }}
     >
       {children}
     </CartContext.Provider>

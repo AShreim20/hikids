@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, MapPin, Ticket, Award, ClipboardList, Menu, GalleryHorizontal, Truck, ShoppingCart, Tags, BarChart3 } from 'lucide-react';
+import { ChevronDown, Menu } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
+import { getAdminNav } from '@/lib/adminNav';
 
 // Admin navigation for phones and tablets: a floating button that opens a
-// bottom-sheet drawer, since the icon rail is desktop-only.
+// bottom-sheet drawer with the grouped management menu.
 export default function AdminMobileMenu() {
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -16,19 +17,7 @@ export default function AdminMobileMenu() {
 
   if (user?.role !== 'admin') return null;
 
-  const links = [
-    { to: '/admin', label: t('nav.admin'), icon: LayoutDashboard },
-    { to: '/admin/carousel', label: 'Carousel', icon: GalleryHorizontal },
-    { to: '/admin/suppliers', label: t('nav.suppliers'), icon: Truck },
-    { to: '/admin/po', label: t('nav.po'), icon: ShoppingCart },
-    { to: '/admin/categories', label: t('nav.categories'), icon: Tags },
-    { to: '/orders-admin', label: t('nav.ordersAdmin'), icon: ClipboardList },
-    { to: '/admin/reports', label: t('nav.reports'), icon: BarChart3 },
-    { to: '/delivery', label: t('delivery.title'), icon: MapPin },
-    { to: '/discounts', label: t('discount.title'), icon: Ticket },
-    { to: '/loyalty-admin', label: t('loyalty.nav'), icon: Award },
-  ];
-
+  const nav = getAdminNav(t);
   const go = (to) => {
     setOpen(false);
     navigate(to);
@@ -47,28 +36,78 @@ export default function AdminMobileMenu() {
         </button>
       </DrawerTrigger>
       <DrawerContent className="max-h-[85vh]">
-        <div className="px-4 pt-2 pb-6 safe-bottom">
+        <div className="px-4 pt-2 pb-6 safe-bottom max-h-[85vh] overflow-y-auto">
           <DrawerTitle className="px-2 font-heading font-extrabold text-lg">{t('nav.admin')}</DrawerTitle>
-          <div className="mt-3 grid gap-2">
-            {links.map((l) => {
-              const active = pathname === l.to;
-              return (
-                <button
-                  key={l.to}
-                  type="button"
-                  onClick={() => go(l.to)}
-                  className={`flex items-center gap-3 h-14 px-4 rounded-2xl text-start font-heading font-bold transition-colors ${
-                    active ? 'bg-cosmic text-white' : 'bg-mist text-foreground'
-                  }`}
-                >
-                  <l.icon className="w-5 h-5 shrink-0" />
-                  <span className="truncate">{l.label}</span>
-                </button>
-              );
-            })}
+          <div className="mt-3 grid gap-1.5">
+            {nav.map((item) =>
+              item.type === 'group' ? (
+                <Group key={item.id} group={item} pathname={pathname} go={go} />
+              ) : (
+                <Row key={item.to} item={item} active={pathname === item.to} onClick={() => go(item.to)} />
+              )
+            )}
           </div>
         </div>
       </DrawerContent>
     </Drawer>
+  );
+}
+
+function Row({ item, active, onClick }) {
+  const Icon = item.icon;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex items-center gap-3 h-14 px-4 rounded-2xl text-start font-heading font-bold transition-colors ${
+        active ? 'bg-cosmic text-white' : 'bg-mist text-foreground'
+      }`}
+    >
+      <Icon className="w-5 h-5 shrink-0" />
+      <span className="truncate">{item.label}</span>
+    </button>
+  );
+}
+
+function Group({ group, pathname, go }) {
+  const [expanded, setExpanded] = useState(() => group.children.some((c) => c.to === pathname));
+  const Icon = group.icon;
+  const anyActive = group.children.some((c) => c.to === pathname);
+
+  return (
+    <div className="rounded-2xl bg-mist/60 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className={`w-full flex items-center gap-3 h-14 px-4 text-start font-heading font-bold transition-colors ${
+          anyActive ? 'text-cosmic' : 'text-foreground'
+        }`}
+      >
+        <Icon className="w-5 h-5 shrink-0" />
+        <span className="truncate flex-1">{group.label}</span>
+        <ChevronDown className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
+      </button>
+      {expanded && (
+        <div className="px-2 pb-2 grid gap-1">
+          {group.children.map((c) => {
+            const CIcon = c.icon;
+            const active = pathname === c.to;
+            return (
+              <button
+                key={`${c.to}-${c.label}`}
+                type="button"
+                onClick={() => go(c.to)}
+                className={`flex items-center gap-3 h-12 ps-9 pe-4 rounded-2xl text-start font-heading font-bold text-sm transition-colors ${
+                  active ? 'bg-cosmic text-white' : 'bg-card text-foreground hover:bg-mist'
+                }`}
+              >
+                <CIcon className="w-4 h-4 shrink-0" />
+                <span className="truncate">{c.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

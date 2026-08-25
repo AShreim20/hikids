@@ -138,6 +138,9 @@ export default function Checkout() {
           variant_label: i.variant_label || null,
           variant_attributes: i.variant_attributes || null,
           sku: i.sku || null,
+          is_bundle: !!i.is_bundle,
+          bundle_id: i.bundle_id || null,
+          bundle_items: i.bundle_items || null,
         })),
         subtotal: total,
         delivery_cost: deliveryCost,
@@ -410,6 +413,7 @@ export default function Checkout() {
               {items.map((i) => (
                 <div key={i.lineId || i.id} className="flex justify-between gap-3 text-sm">
                   <span className="text-muted-foreground">
+                    {i.is_bundle && <span className="font-heading font-bold text-cosmic">{lang === 'ar' ? 'حزمة · ' : 'Bundle · '}</span>}
                     {i.name}{i.variant_label ? ` — ${i.variant_label}` : ''} × {i.qty}
                   </span>
                   <span className="font-heading font-bold">{formatPrice(i.price * i.qty)}</span>

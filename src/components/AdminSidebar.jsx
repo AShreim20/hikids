@@ -1,8 +1,9 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, MapPin, Ticket, Award, ClipboardList, GalleryHorizontal, Truck, ShoppingCart, Tags, BarChart3 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
+import { getAdminNav } from '@/lib/adminNav';
+import AdminNavGroup from '@/components/AdminNavGroup';
 
 export default function AdminSidebar() {
   const { t } = useLanguage();
@@ -12,39 +13,35 @@ export default function AdminSidebar() {
 
   if (user?.role !== 'admin') return null;
 
-  const links = [
-    { to: '/admin', label: t('nav.admin'), icon: LayoutDashboard },
-    { to: '/admin/carousel', label: t('nav.admin') + ' · Carousel', icon: GalleryHorizontal },
-    { to: '/admin/suppliers', label: t('nav.suppliers'), icon: Truck },
-    { to: '/admin/po', label: t('nav.po'), icon: ShoppingCart },
-    { to: '/admin/categories', label: t('nav.categories'), icon: Tags },
-    { to: '/orders-admin', label: t('nav.ordersAdmin'), icon: ClipboardList },
-    { to: '/admin/reports', label: t('nav.reports'), icon: BarChart3 },
-    { to: '/delivery', label: t('delivery.title'), icon: MapPin },
-    { to: '/discounts', label: t('discount.title'), icon: Ticket },
-    { to: '/loyalty-admin', label: t('loyalty.nav'), icon: Award },
-  ];
+  const nav = getAdminNav(t);
 
   return (
-    <aside className="hidden md:flex fixed left-0 top-16 md:top-20 bottom-0 z-40 flex-col items-center gap-1.5 w-14 py-6 border-r border-border/60 bg-background/80 backdrop-blur-xl">
-      {links.map((l) => {
-        const active = pathname === l.to;
-        return (
-          <button
-            key={l.to}
-            onClick={() => navigate(l.to)}
-            title={l.label}
-            aria-label={l.label}
-            className={`grid place-items-center w-11 h-11 rounded-xl transition-colors ${
-              active
-                ? 'bg-cosmic text-white'
-                : 'bg-mist text-foreground/70 hover:bg-cosmic hover:text-white'
-            }`}
-          >
-            <l.icon className="w-5 h-5" />
-          </button>
-        );
-      })}
+    <aside className="hidden md:flex fixed left-0 top-16 md:top-20 bottom-0 z-40 flex-col items-center gap-1.5 w-14 py-6 border-r border-border/60 bg-background/80 backdrop-blur-xl overflow-visible">
+      {nav.map((item) =>
+        item.type === 'group' ? (
+          <AdminNavGroup key={item.id} group={item} activePaths={item.children.map((c) => c.to)} />
+        ) : (
+          <NavButton key={item.to} item={item} active={pathname === item.to} onSelect={() => navigate(item.to)} />
+        )
+      )}
     </aside>
+  );
+}
+
+function NavButton({ item, active, onSelect }) {
+  const Icon = item.icon;
+  return (
+    <button
+      onClick={onSelect}
+      title={item.label}
+      aria-label={item.label}
+      className={`grid place-items-center w-11 h-11 rounded-xl transition-colors ${
+        active
+          ? 'bg-cosmic text-white'
+          : 'bg-mist text-foreground/70 hover:bg-cosmic hover:text-white'
+      }`}
+    >
+      <Icon className="w-5 h-5" />
+    </button>
   );
 }
