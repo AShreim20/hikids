@@ -116,7 +116,7 @@ export default function HeroCarousel() {
           <button
           onClick={() => go(-1)}
           aria-label="Previous slide"
-          className="hidden sm:grid absolute left-4 top-1/2 -translate-y-1/2 place-items-center w-12 h-12 rounded-full bg-white/20 backdrop-blur text-white hover:bg-white hover:text-foreground transition squish mx-10">
+          className="hidden sm:grid absolute left-4 top-1/2 -translate-y-1/2 place-items-center w-12 h-12 rounded-full bg-white/20 backdrop-blur text-white hover:bg-white hover:text-foreground transition squish mx-10 px-1">
           
             <ChevronLeft className="w-6 h-6" />
           </button>
