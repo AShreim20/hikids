@@ -51,6 +51,12 @@ const Bundles = lazy(() => import('./pages/Bundles'));
 const BundleEditor = lazy(() => import('./pages/BundleEditor'));
 const BundleDetail = lazy(() => import('./pages/BundleDetail'));
 const ProductSearch = lazy(() => import('./pages/ProductSearch'));
+const ChallengesAdmin = lazy(() => import('./pages/ChallengesAdmin'));
+const MysteryWheelAdmin = lazy(() => import('./pages/MysteryWheelAdmin'));
+const Challenges = lazy(() => import('./pages/Challenges'));
+const MysteryWheel = lazy(() => import('./pages/MysteryWheel'));
+const RewardsHistory = lazy(() => import('./pages/RewardsHistory'));
+const ShareLanding = lazy(() => import('./pages/ShareLanding'));
 import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -85,6 +91,12 @@ function AnimatedRoutes() {
       <Route path="/admin/bundle/new" element={<BundleEditor />} />
       <Route path="/admin/bundle/:id" element={<BundleEditor />} />
       <Route path="/admin/product-search" element={<ProductSearch />} />
+      <Route path="/admin/challenges" element={<ChallengesAdmin />} />
+      <Route path="/admin/wheel" element={<MysteryWheelAdmin />} />
+      <Route path="/challenges" element={<Challenges />} />
+      <Route path="/wheel" element={<MysteryWheel />} />
+      <Route path="/rewards" element={<RewardsHistory />} />
+      <Route path="/share" element={<ShareLanding />} />
       <Route path="/admin/reports" element={<Reports />} />
       <Route path="/admin/product/new" element={<ProductEditor />} />
       <Route path="/admin/product/:id" element={<ProductEditor />} />

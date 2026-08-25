@@ -1,0 +1,95 @@
+{
+  "name": "WheelSpin",
+  "type": "object",
+  "properties": {
+    "user_id": {
+      "type": "string",
+      "title": "Customer ID"
+    },
+    "user_email": {
+      "type": "string",
+      "title": "Customer email"
+    },
+    "source": {
+      "type": "string",
+      "title": "Source",
+      "enum": [
+        "purchase",
+        "firsttime"
+      ],
+      "default": "purchase"
+    },
+    "order_id": {
+      "type": "string",
+      "title": "Order"
+    },
+    "reward_id": {
+      "type": "string",
+      "title": "Wheel reward"
+    },
+    "reward_type": {
+      "type": "string",
+      "title": "Reward type"
+    },
+    "reward_label": {
+      "type": "string",
+      "title": "Reward label"
+    },
+    "reward_value": {
+      "type": "number",
+      "title": "Reward value",
+      "default": 0
+    },
+    "product_id": {
+      "type": "string",
+      "title": "Product"
+    },
+    "points_awarded": {
+      "type": "integer",
+      "title": "Points awarded",
+      "default": 0
+    },
+    "discount_code": {
+      "type": "string",
+      "title": "Discount code"
+    },
+    "fulfillment": {
+      "type": "string",
+      "title": "Fulfillment",
+      "enum": [
+        "auto",
+        "manual"
+      ],
+      "default": "auto"
+    }
+  },
+  "required": [
+    "user_email",
+    "reward_type"
+  ],
+  "rls": {
+    "read": {
+      "$or": [
+        {
+          "data.user_email": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
+    "create": null,
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

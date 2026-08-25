@@ -1,6 +1,6 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home as HomeIcon, Heart, ShoppingBag, Package } from 'lucide-react';
+import { Home as HomeIcon, Heart, ShoppingBag, Package, Trophy } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -9,6 +9,7 @@ const tabs = [
   { to: '/', labelKey: 'nav.home', icon: HomeIcon, exact: true },
   { to: '/wishlist', labelKey: 'nav.wishlist', icon: Heart, badge: 'wish' },
   { to: '/cart', labelKey: 'nav.cart', icon: ShoppingBag, badge: 'cart' },
+  { to: '/challenges', labelKey: 'nav.challenges', icon: Trophy },
   { to: '/orders', labelKey: 'nav.orders', icon: Package },
 ];
 
@@ -20,7 +21,7 @@ export default function MobileNav() {
 
   return (
     <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border/60 safe-bottom">
-      <div className="grid grid-cols-4">
+      <div className="grid grid-cols-5">
         {tabs.map((tab) => (
           <NavLink
             key={tab.to}

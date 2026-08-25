@@ -1,0 +1,97 @@
+{
+  "name": "WheelConfig",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Name",
+      "default": "Mystery Unboxing"
+    },
+    "min_amount": {
+      "type": "number",
+      "title": "Min amount to unlock a spin",
+      "default": 200
+    },
+    "basis": {
+      "type": "string",
+      "title": "Progress basis",
+      "enum": [
+        "total",
+        "single_order",
+        "period"
+      ],
+      "default": "total"
+    },
+    "period_start": {
+      "type": "string",
+      "format": "date",
+      "title": "Period start"
+    },
+    "period_end": {
+      "type": "string",
+      "format": "date",
+      "title": "Period end"
+    },
+    "start_date": {
+      "type": "string",
+      "format": "date",
+      "title": "Start date"
+    },
+    "end_date": {
+      "type": "string",
+      "format": "date",
+      "title": "End date"
+    },
+    "active": {
+      "type": "boolean",
+      "title": "Active",
+      "default": true
+    },
+    "max_spins": {
+      "type": "integer",
+      "title": "Max spins (0 = unlimited)",
+      "default": 0
+    },
+    "spins_expire": {
+      "type": "boolean",
+      "title": "Unused spins expire",
+      "default": false
+    },
+    "accumulate": {
+      "type": "boolean",
+      "title": "Accumulate spins",
+      "default": true
+    },
+    "first_time_enabled": {
+      "type": "boolean",
+      "title": "First-time free spin",
+      "default": false
+    },
+    "first_time_new_only": {
+      "type": "boolean",
+      "title": "New customers only",
+      "default": false
+    }
+  },
+  "required": [
+    "min_amount"
+  ],
+  "rls": {
+    "read": null,
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}
