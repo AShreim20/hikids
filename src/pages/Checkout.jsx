@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Banknote, ShieldCheck, Check, Lock, Sparkles } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
@@ -12,7 +12,10 @@ import CitySelect from '@/components/checkout/CitySelect';
 import SavedAddressPicker from '@/components/checkout/SavedAddressPicker';
 import DiscountInput from '@/components/checkout/DiscountInput';
 import LoyaltyRedeem from '@/components/checkout/LoyaltyRedeem';
+import CountryCodeSelect, { dialFor } from '@/components/checkout/CountryCodeSelect';
+import OrderConfirmDialog from '@/components/checkout/OrderConfirmDialog';
 import { unwrap } from '@/lib/invoke';
+import { getSetting } from '@/lib/storeSettings';
 
 const CARD_TYPES = [
   { key: 'visa', label: 'Visa', badge: 'bg-[#1A1F71]', dot: 'bg-[#1A1F71]' },
@@ -27,8 +30,10 @@ export default function Checkout() {
   const { t, lang, formatPrice } = useLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const ar = lang === 'ar';
 
   const [form, setForm] = useState({ name: '', email: '', address: '', phone: '' });
+  const [phoneCountry, setPhoneCountry] = useState('ps');
   const [giftMessage, setGiftMessage] = useState('');
   const [payment, setPayment] = useState('card');
   const [cardType, setCardType] = useState('visa');
@@ -45,8 +50,14 @@ export default function Checkout() {
   const [loyaltyRedeem, setLoyaltyRedeem] = useState(null);
   const [loyaltyBalance, setLoyaltyBalance] = useState(0);
   const [loyaltyRate, setLoyaltyRate] = useState(0.1);
+  const [visaEnabled, setVisaEnabled] = useState(true);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   // Stable per-checkout key so a retried submit can never spend points twice.
   const [checkoutKey] = useState(() => `co-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
+
+  // Visa chip is hidden entirely when the admin disables it; other card types
+  // and the card payment method itself are unaffected.
+  const availableCardTypes = useMemo(() => CARD_TYPES.filter((c) => c.key !== 'visa' || visaEnabled), [visaEnabled]);
 
   const selectedCity = cities.find((c) => c.id === cityId);
   const deliveryCost = selectedCity ? selectedCity.price : 0;
@@ -56,10 +67,21 @@ export default function Checkout() {
   const requiredPoints = grandTotal > 0 ? Math.ceil(grandTotal / loyaltyRate) : 0;
   const loyaltyShort = payment === 'loyalty' && grandTotal > 0 && loyaltyBalance < requiredPoints;
 
+  const fullPhone = `${dialFor(phoneCountry)} ${form.phone}`.trim();
+
   useEffect(() => {
     base44.entities.DeliveryCity.filter({ active: true }).then(setCities).catch(() => {});
     if (user) base44.entities.Address.list('-created_date', 50).then(setAddresses).catch(() => {});
+    getSetting('visa_payment_enabled', 1).then((v) => setVisaEnabled(!!v)).catch(() => {});
   }, [user]);
+
+  // If the selected card type is no longer available (e.g. Visa disabled),
+  // fall back to the first available type.
+  useEffect(() => {
+    if (!availableCardTypes.some((c) => c.key === cardType)) {
+      setCardType((availableCardTypes[0] || { key: 'mastercard' }).key);
+    }
+  }, [availableCardTypes, cardType]);
 
   useEffect(() => {
     if (!user) return;
@@ -79,13 +101,39 @@ export default function Checkout() {
 
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const placeOrder = async (e) => {
-    e.preventDefault();
-    if (items.length === 0) return;
+  const validate = () => {
+    if (items.length === 0) return false;
     if (!selectedCity) {
-      toast({ title: lang === 'ar' ? 'اختر المدينة' : 'Please select a city', variant: 'destructive' });
+      toast({ title: ar ? 'اختر المدينة' : 'Please select a city', variant: 'destructive' });
+      return false;
+    }
+    if (!form.name || !form.email || !form.address) {
+      toast({ title: ar ? 'أكمل الحقول المطلوبة' : 'Please complete required fields', variant: 'destructive' });
+      return false;
+    }
+    const phoneDigits = (form.phone || '').replace(/\D/g, '');
+    if (phoneDigits.length < 7) {
+      toast({ title: ar ? 'رقم هاتف غير صالح' : 'Invalid phone number', variant: 'destructive' });
+      return false;
+    }
+    return true;
+  };
+
+  // The Place Order button submits the form, which validates and opens the
+  // confirmation modal — the actual order is only created on Confirm.
+  const openConfirm = (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+    if (loyaltyShort) {
+      toast({ title: t('checkout.insufficientPoints'), variant: 'destructive' });
       return;
     }
+    setConfirmOpen(true);
+  };
+
+  const placeOrder = async () => {
+    if (placing) return; // guard against duplicate submission
+    if (!validate()) return;
     setPlacing(true);
     let reserved = false;
     try {
@@ -154,7 +202,7 @@ export default function Checkout() {
         customer_name: form.name,
         customer_email: form.email,
         address: `${form.address}, ${selectedCity.name}`,
-        phone: form.phone,
+        phone: fullPhone,
         payment_method: payment,
         status: 'new',
         payment_status: payment === 'card' || payment === 'loyalty' ? 'paid' : 'unpaid',
@@ -164,7 +212,7 @@ export default function Checkout() {
         base44.entities.Address.create({
           label: 'Home',
           recipient_name: form.name,
-          phone: form.phone,
+          phone: fullPhone,
           city: selectedCity.name,
           street: form.address,
           is_default: addresses.length === 0,
@@ -173,6 +221,7 @@ export default function Checkout() {
       if (appliedDiscount) {
         base44.functions.invoke('redeemDiscount', { code_id: appliedDiscount.id, order_id: order.id }).catch(() => {});
       }
+      setConfirmOpen(false);
       setOrderId(order.id);
       clear();
       setDone(true);
@@ -234,6 +283,10 @@ export default function Checkout() {
     );
   }
 
+  const paymentLabel = payment === 'card'
+    ? `${t('checkout.card')} · ${availableCardTypes.find((c) => c.key === cardType)?.label || 'Card'}`
+    : payment === 'cod' ? t('checkout.cod') : t('checkout.payWithPoints');
+
   return (
     <div className="min-h-screen bg-background">
       <PageHeader title={t('checkout.title')} />
@@ -243,7 +296,7 @@ export default function Checkout() {
         </Link>
         <h1 className="mt-6 font-heading font-extrabold text-4xl md:text-5xl">{t('checkout.title')}</h1>
 
-        <form onSubmit={placeOrder} className="mt-10 grid lg:grid-cols-3 gap-10">
+        <form onSubmit={openConfirm} className="mt-10 grid lg:grid-cols-3 gap-10">
           <div className="lg:col-span-2 space-y-8">
             {/* Contact & delivery */}
             <div className="rounded-3xl bg-card border border-border/60 p-6 md:p-8">
@@ -256,7 +309,8 @@ export default function Checkout() {
               <div className="mt-5 grid sm:grid-cols-2 gap-4">
                 <Field label={t('checkout.name')} required value={form.name} onChange={set('name')} />
                 <Field label={t('checkout.email')} type="email" required value={form.email} onChange={set('email')} />
-                <Field label={t('checkout.phone')} required value={form.phone} onChange={set('phone')} />
+                <CountryCodeSelect value={phoneCountry} onChange={setPhoneCountry} />
+                <Field label={t('checkout.phone')} required value={form.phone} onChange={set('phone')} placeholder="59XXXXXXX" />
                 <CitySelect cities={cities} value={cityId} onChange={setCityId} />
                 <div className="sm:col-span-2">
                   <Field label={t('checkout.address')} required value={form.address} onChange={set('address')} placeholder={t('checkout.addressPlaceholder')} />
@@ -357,7 +411,7 @@ export default function Checkout() {
                   <div>
                     <span className="text-sm font-medium text-foreground/80">{t('checkout.cardType')}</span>
                     <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-2">
-                      {CARD_TYPES.map((c) => {
+                      {availableCardTypes.map((c) => {
                         const active = cardType === c.key;
                         return (
                           <button
@@ -478,6 +532,23 @@ export default function Checkout() {
           </div>
         </form>
       </div>
+
+      <OrderConfirmDialog
+        open={confirmOpen}
+        onClose={() => !placing && setConfirmOpen(false)}
+        onConfirm={placeOrder}
+        placing={placing}
+        items={items}
+        total={total}
+        discountAmount={discountAmount}
+        loyaltyDiscount={loyaltyDiscount}
+        deliveryCost={deliveryCost}
+        grandTotal={grandTotal}
+        form={{ ...form, phone: fullPhone }}
+        cityName={selectedCity?.name}
+        paymentLabel={paymentLabel}
+      />
+
       <Footer />
     </div>
   );

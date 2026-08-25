@@ -3,9 +3,7 @@ import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
 import { useLanguage } from '@/context/LanguageContext';
 import { useLocation } from 'react-router-dom';
 import { subscribeChatOpen, getChatOpen } from '@/lib/chatOpenStore';
-
-// Replace with the store's WhatsApp number (international format, digits only, no +).
-const WHATSAPP_NUMBER = '970599000000';
+import { WHATSAPP_NUMBER } from '@/lib/businessContact';
 const DEFAULT_MESSAGE = {
   en: "Hi HiKids! I have a question about your toys.",
   ar: "مرحبًا هاي كيدز! لدي سؤال عن ألعابكم."

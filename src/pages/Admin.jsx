@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Loader2, Lock, LayoutGrid, List, Copy, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Lock, LayoutGrid, List, Copy, X, Link2 } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import ProductListRow from '@/components/admin/ProductListRow';
+import VisaPaymentToggle from '@/components/admin/VisaPaymentToggle';
 
 export default function Admin() {
   const { user } = useAuth();
@@ -61,6 +62,10 @@ export default function Admin() {
 
   const openNew = () => navigate('/admin/product/new');
   const openEdit = (p) => navigate(`/admin/product/${p.id}`);
+  const copyLink = (p) => {
+    const url = `${window.location.origin}/product/${p.id}`;
+    navigator.clipboard.writeText(url).then(() => toast({ title: t('admin.linkCopied') })).catch(() => {});
+  };
 
   const toggle = (id) =>
     setSelected((s) => {
@@ -173,6 +178,10 @@ export default function Admin() {
           </div>
         </div>
 
+        <div className="mt-6 max-w-sm">
+          <VisaPaymentToggle />
+        </div>
+
         {selected.size > 0 && (
           <div className="mt-6 flex items-center gap-3 flex-wrap rounded-3xl bg-cosmic/10 border border-cosmic/20 p-3 sm:p-4">
             <span className="font-heading font-bold text-sm">
@@ -267,6 +276,14 @@ export default function Admin() {
                           className="squish flex-1 h-10 rounded-full bg-mist font-heading font-bold text-sm inline-flex items-center justify-center gap-1.5"
                         >
                           <Pencil className="w-4 h-4" /> {t('admin.edit')}
+                        </button>
+                        <button
+                          onClick={() => copyLink(p)}
+                          className="squish grid place-items-center w-10 h-10 rounded-full bg-mist text-foreground hover:bg-cosmic hover:text-white transition-colors"
+                          aria-label={t('admin.copyLink')}
+                          title={t('admin.copyLink')}
+                        >
+                          <Link2 className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => remove(p)}

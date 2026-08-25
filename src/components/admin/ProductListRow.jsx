@@ -1,9 +1,10 @@
 import React from 'react';
-import { Pencil, Trash2 } from 'lucide-react';
+import { Pencil, Trash2, Link2 } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import { priceInfo } from '@/lib/pricing';
+import { useToast } from '@/components/ui/use-toast';
 
 const productSku = (p) => {
   const sku = (p.variants || []).map((v) => v.sku).find(Boolean);
@@ -11,8 +12,14 @@ const productSku = (p) => {
 };
 
 export default function ProductListRow({ product: p, onEdit, onDelete, selected, onToggleSelect }) {
-  const { t, formatPrice } = useLanguage();
+  const { t, lang, formatPrice } = useLanguage();
   const { discountPctFor } = useCategories();
+  const { toast } = useToast();
+  const copyLink = async () => {
+    const url = `${window.location.origin}/product/${p.id}`;
+    try { await navigator.clipboard.writeText(url); toast({ title: t('admin.linkCopied') }); }
+    catch { toast({ title: lang === 'ar' ? 'تعذّر النسخ' : 'Copy failed', variant: 'destructive' }); }
+  };
   const { original, final, hasDiscount, source } = priceInfo(p, discountPctFor(p.category));
   const stock = Number(p.stock ?? 0);
   const outOfStock = stock <= 0;
@@ -72,6 +79,9 @@ export default function ProductListRow({ product: p, onEdit, onDelete, selected,
       </div>
 
       <div className="flex items-center gap-2 shrink-0 ms-auto sm:ms-0">
+        <button onClick={copyLink} className="squish grid place-items-center w-10 h-10 rounded-full bg-mist text-foreground hover:bg-cosmic hover:text-white transition-colors" aria-label={t('admin.copyLink')} title={t('admin.copyLink')}>
+          <Link2 className="w-4 h-4" />
+        </button>
         <button onClick={() => onEdit(p)} className="squish h-10 px-4 rounded-full bg-mist font-heading font-bold text-sm inline-flex items-center gap-1.5">
           <Pencil className="w-4 h-4" /> <span className="hidden sm:inline">{t('admin.edit')}</span>
         </button>
