@@ -46,6 +46,11 @@ export default function POEditor() {
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
+  const selectedSupplierBalance = useMemo(
+    () => supplierBalance(txs.filter((x) => x.supplier_id === form.supplier_id)),
+    [txs, form.supplier_id]
+  );
+
   const loadMeta = async () => {
     const [s, p, tx] = await Promise.all([
       base44.entities.Supplier.list('name', 200),
@@ -93,11 +98,6 @@ export default function POEditor() {
   const remaining = Math.max(0, subtotal - paid);
   const paymentStatus = computePaymentStatus(subtotal, paid);
   const readOnly = !isNew && form.status && form.status !== 'draft';
-
-  const selectedSupplierBalance = useMemo(
-    () => supplierBalance(txs.filter((x) => x.supplier_id === form.supplier_id)),
-    [txs, form.supplier_id]
-  );
 
   const addProduct = (p) => {
     const existingIdx = form.items.findIndex((it) => it.product_id === p.id);

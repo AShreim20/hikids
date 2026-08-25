@@ -11,7 +11,7 @@ const CAT_KEYS = {
 };
 
 export const TOY_CATEGORIES = Object.keys(CAT_KEYS);
-export const catLabelKey = (c) => `cat.${CAT_KEYS[c]}`;
+export const catLabelKey = (c) => (CAT_KEYS[c] ? `cat.${CAT_KEYS[c]}` : null);
 
 export const AGE_OPTIONS = [
   { id: '0_2', min: 0, max: 2 },
@@ -42,10 +42,13 @@ const Chip = ({ active, onClick, children }) => (
 
 export default function ProductFilters({
   cats, setCats, ages, setAges, priceBounds, price, setPrice, onClear, hasActive,
+  extraCategories = [],
 }) {
   const { t } = useLanguage();
   const toggleArr = (arr, val, setter) =>
     setter(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
+
+  const allCats = Array.from(new Set([...TOY_CATEGORIES, ...extraCategories.map((c) => c.name).filter(Boolean)]));
 
   const [minBound, maxBound] = priceBounds;
   const [pmin, pmax] = price;
@@ -67,11 +70,14 @@ export default function ProductFilters({
       <div>
         <p className="text-sm font-heading font-bold mb-3">{t('plp.category')}</p>
         <div className="flex flex-wrap gap-2">
-          {TOY_CATEGORIES.map((c) => (
-            <Chip key={c} active={cats.includes(c)} onClick={() => toggleArr(cats, c, setCats)}>
-              {t(catLabelKey(c))}
-            </Chip>
-          ))}
+          {allCats.map((c) => {
+            const lk = catLabelKey(c);
+            return (
+              <Chip key={c} active={cats.includes(c)} onClick={() => toggleArr(cats, c, setCats)}>
+                {lk ? t(lk) : c}
+              </Chip>
+            );
+          })}
         </div>
       </div>
 

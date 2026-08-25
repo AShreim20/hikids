@@ -5,6 +5,8 @@ import { Image } from '@/components/ui/image';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useCategories } from '@/context/CategoryContext';
+import { priceInfo } from '@/lib/pricing';
 import { hasVariants, getVariants, isSellable } from '@/lib/variants';
 
 const CAT_LABEL = {
@@ -21,7 +23,9 @@ export default function ProductCard({ product, large = false }) {
   const { addItem } = useCart();
   const { toggle, isSaved } = useWishlist();
   const { t, formatPrice } = useLanguage();
+  const { discountPctFor } = useCategories();
   const [added, setAdded] = useState(false);
+  const { original, final, hasDiscount } = priceInfo(product, discountPctFor(product.category));
   const saved = isSaved(product.id);
   const variantMode = hasVariants(product);
   const outOfStock = variantMode
@@ -102,7 +106,10 @@ export default function ProductCard({ product, large = false }) {
           {product.name}
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">{t('pd.ages')} {product.age_range}</p>
-        <p className="mt-2 font-heading font-extrabold text-xl">{formatPrice(product.price)}</p>
+        <p className="mt-2 font-heading font-extrabold text-xl">
+          {formatPrice(final)}
+          {hasDiscount && <span className="ml-2 text-sm text-muted-foreground line-through">{formatPrice(original)}</span>}
+        </p>
         {outOfStock && (
           <p className="mt-1 text-sm font-heading font-bold text-destructive">{t('pd.outOfStock')}</p>
         )}

@@ -9,6 +9,8 @@ import { useCart } from '@/context/CartContext';
 import Reviews from '@/components/Reviews';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useCategories } from '@/context/CategoryContext';
+import { priceInfo } from '@/lib/pricing';
 import VariantSelector from '@/components/product/VariantSelector';
 import {
   hasVariants, findVariant, defaultSelection, selectionImages,
@@ -26,6 +28,7 @@ export default function ProductDetail() {
   const [added, setAdded] = useState(false);
   const [selection, setSelection] = useState({});
   const { t, formatPrice } = useLanguage();
+  const { discountPctFor } = useCategories();
 
   useEffect(() => {
     setLoading(true);
@@ -69,7 +72,12 @@ export default function ProductDetail() {
 
   const variantMode = hasVariants(product);
   const variant = variantMode ? findVariant(product, selection) : null;
-  const price = variantMode ? variantPrice(product, variant) : product.price;
+  const basePrice = variantMode ? variantPrice(product, variant) : product.price;
+  const pi = variantMode ? null : priceInfo(product, discountPctFor(product.category));
+  const price = variantMode ? basePrice : (pi ? pi.final : basePrice);
+  const compareOriginal = variantMode
+    ? (variant?.compare_price != null && Number(variant.compare_price) > price ? Number(variant.compare_price) : null)
+    : (pi && pi.hasDiscount ? pi.original : null);
   const stock = variantMode ? Number(variant?.stock || 0) : Number(product.stock || 0);
   const canBuy = variantMode ? isSellable(variant) : stock > 0;
   const galleryImages = variantMode ? selectionImages(product, selection) : null;
@@ -144,8 +152,8 @@ export default function ProductDetail() {
 
           <div className="mt-8 flex items-center gap-4">
             <p className="font-heading font-extrabold text-4xl">{formatPrice(price)}</p>
-            {variant?.compare_price != null && Number(variant.compare_price) > price && (
-              <span className="text-lg text-muted-foreground line-through">{formatPrice(Number(variant.compare_price))}</span>
+            {compareOriginal != null && (
+              <span className="text-lg text-muted-foreground line-through">{formatPrice(compareOriginal)}</span>
             )}
             <button
               onClick={() => toggle(product)}

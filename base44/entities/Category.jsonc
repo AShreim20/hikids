@@ -1,0 +1,56 @@
+{
+  "name": "Category",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string",
+      "title": "Name"
+    },
+    "description": {
+      "type": "string",
+      "title": "Description",
+      "maxLength": 1000
+    },
+    "discount_percent": {
+      "type": "number",
+      "title": "Discount percent",
+      "default": 0
+    },
+    "discount_active": {
+      "type": "boolean",
+      "title": "Discount active",
+      "default": false
+    },
+    "sort_order": {
+      "type": "integer",
+      "title": "Sort order",
+      "default": 0
+    },
+    "image_url": {
+      "type": "string",
+      "title": "Image URL",
+      "format": "uri"
+    }
+  },
+  "required": [
+    "name"
+  ],
+  "rls": {
+    "read": null,
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

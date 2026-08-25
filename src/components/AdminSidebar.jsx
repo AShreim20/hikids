@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, MapPin, Ticket, Award, ClipboardList, GalleryHorizontal, Truck, ShoppingCart } from 'lucide-react';
+import { LayoutDashboard, MapPin, Ticket, Award, ClipboardList, GalleryHorizontal, Truck, ShoppingCart, Tags, BarChart3 } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 
@@ -17,7 +17,9 @@ export default function AdminSidebar() {
     { to: '/admin/carousel', label: t('nav.admin') + ' · Carousel', icon: GalleryHorizontal },
     { to: '/admin/suppliers', label: t('nav.suppliers'), icon: Truck },
     { to: '/admin/po', label: t('nav.po'), icon: ShoppingCart },
+    { to: '/admin/categories', label: t('nav.categories'), icon: Tags },
     { to: '/orders-admin', label: t('nav.ordersAdmin'), icon: ClipboardList },
+    { to: '/admin/reports', label: t('nav.reports'), icon: BarChart3 },
     { to: '/delivery', label: t('delivery.title'), icon: MapPin },
     { to: '/discounts', label: t('discount.title'), icon: Ticket },
     { to: '/loyalty-admin', label: t('loyalty.nav'), icon: Award },

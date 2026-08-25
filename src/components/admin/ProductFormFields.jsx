@@ -9,6 +9,7 @@ import TagInput from '@/components/TagInput';
 import OptionsEditor from '@/components/admin/OptionsEditor';
 import VariantTable from '@/components/admin/VariantTable';
 import FormInput from '@/components/admin/FormInput';
+import { useCategories } from '@/context/CategoryContext';
 
 export const CATEGORIES = [
   'Build & Create',
@@ -22,6 +23,8 @@ export const CATEGORIES = [
 export default function ProductFormFields({ form, set }) {
   const { t, lang } = useLanguage();
   const { toast } = useToast();
+  const { categories } = useCategories();
+  const categoryOptions = (categories && categories.length ? categories.map((c) => c.name) : CATEGORIES);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef(null);
   const galleryRef = useRef(null);
@@ -80,7 +83,7 @@ export default function ProductFormFields({ form, set }) {
           label={t('admin.category')}
           includeEmpty={false}
           className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40"
-          options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+          options={categoryOptions.map((c) => ({ value: c, label: c }))}
         />
       </label>
       <FormInput label={t('admin.ageRange')} value={form.age_range} onChange={(e) => set('age_range', e.target.value)} placeholder="3-5" />

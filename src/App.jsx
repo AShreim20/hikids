@@ -32,6 +32,8 @@ const HeroSlides = lazy(() => import('./pages/HeroSlides'));
 const PurchaseOrders = lazy(() => import('./pages/PurchaseOrders'));
 const POEditor = lazy(() => import('./pages/POEditor'));
 const Suppliers = lazy(() => import('./pages/Suppliers'));
+const Categories = lazy(() => import('./pages/Categories'));
+const Reports = lazy(() => import('./pages/Reports'));
 const MyOrders = lazy(() => import('./pages/MyOrders'));
 const StaffManagement = lazy(() => import('./pages/StaffManagement'));
 const OrdersManagement = lazy(() => import('./pages/OrdersManagement'));
@@ -49,6 +51,7 @@ import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
+import { CategoryProvider } from '@/context/CategoryContext';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -72,6 +75,8 @@ function AnimatedRoutes() {
       <Route path="/admin/po" element={<PurchaseOrders />} />
       <Route path="/admin/po/new" element={<POEditor />} />
       <Route path="/admin/po/:id" element={<POEditor />} />
+      <Route path="/admin/categories" element={<Categories />} />
+      <Route path="/admin/reports" element={<Reports />} />
       <Route path="/admin/product/new" element={<ProductEditor />} />
       <Route path="/admin/product/:id" element={<ProductEditor />} />
       <Route path="/staff" element={<StaffManagement />} />
@@ -160,10 +165,12 @@ function App() {
       <QueryClientProvider client={queryClientInstance}>
         <ThemeProvider>
         <LanguageProvider>
+        <CategoryProvider>
         <Router>
           <ScrollToTop />
           <AuthenticatedApp />
         </Router>
+        </CategoryProvider>
         </LanguageProvider>
         </ThemeProvider>
         <Toaster />

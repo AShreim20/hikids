@@ -24,15 +24,7 @@
     },
     "category": {
       "type": "string",
-      "title": "Category",
-      "enum": [
-        "Build & Create",
-        "Plush & Soft",
-        "Vehicles & Motion",
-        "Early Years",
-        "Pretend Play",
-        "Arts & Crafts"
-      ]
+      "title": "Category"
     },
     "age_range": {
       "type": "string",

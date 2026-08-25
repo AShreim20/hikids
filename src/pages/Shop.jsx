@@ -10,9 +10,8 @@ import ProductFilters, {
   TOY_CATEGORIES, AGE_OPTIONS, ageRange, overlaps,
 } from '@/components/shop/ProductFilters';
 import { useLanguage } from '@/context/LanguageContext';
-
-const effectivePrice = (p) =>
-  p.sale_price != null && p.sale_price < p.price ? p.sale_price : p.price;
+import { useCategories } from '@/context/CategoryContext';
+import { priceInfo } from '@/lib/pricing';
 
 const SORTS = [
   { id: 'featured', label: 'plp.sortFeatured' },
@@ -23,6 +22,8 @@ const SORTS = [
 
 export default function Shop() {
   const { t } = useLanguage();
+  const { discountPctFor, categories } = useCategories();
+  const effectivePrice = (p) => priceInfo(p, discountPctFor(p.category)).final;
   const [searchParams, setSearchParams] = useSearchParams();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -103,6 +104,7 @@ export default function Shop() {
       cats={cats} setCats={setCats} ages={ages} setAges={setAges}
       priceBounds={priceBounds} price={price} setPrice={setPrice}
       onClear={clearAll} hasActive={hasActive}
+      extraCategories={categories}
     />
   );
 
