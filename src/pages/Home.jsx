@@ -5,7 +5,6 @@ import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import ProductExplorer from '@/components/ProductExplorer';
 import Recommendations from '@/components/Recommendations';
 import HeroCarousel from '@/components/HeroCarousel';
 import SaleBanner from '@/components/SaleBanner';
@@ -80,9 +79,9 @@ export default function Home() {
           {categories.map((c, i) => {
             const img = catImage(c.key);
             return (
-              <a
+              <Link
                 key={c.name}
-                href="#explore"
+                to={`/shop?category=${encodeURIComponent(CAT_ENUM[c.key])}`}
                 className="group relative overflow-hidden rounded-3xl bg-mist aspect-[4/3] sm:aspect-[5/3] flex flex-col justify-end squish float-in"
                 style={{ animationDelay: `${i * 0.05}s` }}
               >
@@ -102,7 +101,7 @@ export default function Home() {
                   <p className="text-xs sm:text-sm text-white/80 mt-1">{c.desc}</p>
                   <ArrowRight className="w-5 h-5 mt-2 sm:mt-3 text-white opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                 </div>
-              </a>
+              </Link>
             );
           })}
         </div>
@@ -110,9 +109,6 @@ export default function Home() {
 
       {/* Recommendations */}
       <Recommendations />
-
-      {/* Product grid */}
-      <ProductExplorer products={products} loading={loading} />
 
       {/* About */}
       <section id="about" className="max-w-7xl mx-auto px-5 sm:px-8 py-12 md:py-16">

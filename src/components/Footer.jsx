@@ -21,7 +21,7 @@ export default function Footer() {
           <div>
             <h4 className="font-heading font-bold text-sm uppercase tracking-wider text-white/50">{t('footer.shop')}</h4>
             <ul className="mt-4 space-y-3 text-sm text-white/70">
-              <li><a href="/#explore" className="hover:text-white">{t('footer.allToys')}</a></li>
+              <li><Link to="/shop" className="hover:text-white">{t('footer.allToys')}</Link></li>
               <li><a href="/#categories" className="hover:text-white">{t('footer.worlds')}</a></li>
               <li><a href="/#promise" className="hover:text-white">{t('footer.promise')}</a></li>
             </ul>

@@ -17,6 +17,7 @@ import AdminMobileMenu from './components/AdminMobileMenu';
 import NewOrderNotifier from './components/orders/NewOrderNotifier';
 // Add page imports here
 const Home = lazy(() => import('./pages/Home'));
+const Shop = lazy(() => import('./pages/Shop'));
 const ProductDetail = lazy(() => import('./pages/ProductDetail'));
 const Cart = lazy(() => import('./pages/Cart'));
 const Checkout = lazy(() => import('./pages/Checkout'));
@@ -53,6 +54,7 @@ function AnimatedRoutes() {
     <Routes location={location}>
       {/* Add your page Route elements here */}
       <Route path="/" element={<Home />} />
+      <Route path="/shop" element={<Shop />} />
       <Route path="/product/:id" element={<ProductDetail />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/wishlist" element={<Wishlist />} />

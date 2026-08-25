@@ -12,7 +12,7 @@ export default function SearchBar({ className = '', autoFocus = false, onSubmitt
     e.preventDefault();
     const term = q.trim();
     if (!term) return;
-    navigate(`/?search=${encodeURIComponent(term)}#explore`);
+    navigate(`/shop?search=${encodeURIComponent(term)}`);
     onSubmitted?.();
   };
 

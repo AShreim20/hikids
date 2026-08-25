@@ -22,7 +22,7 @@ export default function Navbar() {
   const { user } = useAuth();
 
   const links = [
-    { label: t('nav.explore'), to: '/#explore' },
+    { label: t('nav.explore'), to: '/shop' },
     { label: t('nav.worlds'), to: '/#categories' },
     { label: t('nav.about'), to: '/about' },
     { label: t('nav.faq'), to: '/faq' },

@@ -89,9 +89,9 @@ export default function Recommendations() {
             {t('rec.subtitle')}
           </p>
         </div>
-        <a href="#explore" className="text-cosmic font-heading font-bold hover:underline hidden sm:inline-flex items-center gap-1">
+        <Link to="/shop" className="text-cosmic font-heading font-bold hover:underline hidden sm:inline-flex items-center gap-1">
           {t('rec.browse')} <ArrowRight className="w-4 h-4" />
-        </a>
+        </Link>
       </div>
 
       {loading ? (
