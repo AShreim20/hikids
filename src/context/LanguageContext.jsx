@@ -1,7 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { translations } from './translations';
 
-const LanguageContext = createContext(null);
+// Preserve the context instance across Vite HMR updates. Without this, a
+// hot-reload of this module creates a *new* context object while the already
+// mounted <LanguageProvider> still references the old one — consumers then
+// read null and throw "useLanguage must be used within LanguageProvider".
+const LanguageContext = import.meta.hot?.data?.LanguageContext ?? createContext(null);
+if (import.meta.hot) import.meta.hot.data.LanguageContext = LanguageContext;
 const STORAGE_KEY = 'hikids-lang';
 
 export function LanguageProvider({ children }) {
