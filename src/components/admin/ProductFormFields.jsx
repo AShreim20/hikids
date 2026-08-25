@@ -70,6 +70,7 @@ export default function ProductFormFields({ form, set }) {
       <FormInput label={t('admin.description')} value={form.description} onChange={(e) => set('description', e.target.value)} textarea className="sm:col-span-2" />
       <FormInput label={t('admin.price')} type="number" value={form.price} onChange={(e) => set('price', e.target.value)} required />
       <FormInput label={t('admin.salePrice')} type="number" value={form.sale_price} onChange={(e) => set('sale_price', e.target.value)} />
+      <FormInput label={t('admin.unitCost')} type="number" value={form.unit_cost} onChange={(e) => set('unit_cost', e.target.value)} />
       <label className="block">
         <span className="text-sm font-medium text-foreground/80">{t('admin.category')}</span>
         <SheetSelect

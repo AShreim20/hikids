@@ -10,7 +10,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import ProductFormFields, { CATEGORIES } from '@/components/admin/ProductFormFields';
 
 const EMPTY = {
-  name: '', description: '', price: '', sale_price: '', category: CATEGORIES[0], age_range: '',
+  name: '', description: '', price: '', sale_price: '', unit_cost: '', category: CATEGORIES[0], age_range: '',
   image_url: '', images: [], video_url: '', material: '', rating: '', stock: '',
   featured: false, loyalty_exempt: false, tags: [], options: [], variants: [],
 };
@@ -35,6 +35,7 @@ export default function ProductEditor() {
         description: p.description || '',
         price: p.price ?? '',
         sale_price: p.sale_price ?? '',
+        unit_cost: p.unit_cost ?? '',
         category: p.category || CATEGORIES[0],
         age_range: p.age_range || '',
         image_url: p.image_url || '',
@@ -83,6 +84,7 @@ export default function ProductEditor() {
       description: form.description,
       price: Number(form.price) || 0,
       sale_price: form.sale_price ? Number(form.sale_price) : null,
+      unit_cost: form.unit_cost ? Number(form.unit_cost) : null,
       category: form.category,
       age_range: form.age_range,
       image_url: form.image_url,
@@ -99,6 +101,7 @@ export default function ProductEditor() {
         key: v.key,
         attributes: v.attributes,
         price: v.price === '' || v.price == null ? null : Number(v.price),
+        cost: v.cost === '' || v.cost == null ? null : Number(v.cost),
         compare_price: v.compare_price === '' || v.compare_price == null ? null : Number(v.compare_price),
         stock: Number(v.stock) || 0,
         sku: v.sku || '',

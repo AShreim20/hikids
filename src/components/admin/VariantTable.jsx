@@ -54,6 +54,7 @@ export default function VariantTable({ options, variants, onChange }) {
               </div>
               <div className="mt-3 grid grid-cols-2 gap-3">
                 <Field label={t('variants.price')} type="number" value={v.price} onChange={(x) => update(i, { price: x })} />
+                <Field label={t('variants.cost')} type="number" value={v.cost} onChange={(x) => update(i, { cost: x })} />
                 <Field label={t('variants.comparePrice')} type="number" value={v.compare_price} onChange={(x) => update(i, { compare_price: x })} />
                 <Field label={t('variants.stock')} type="number" value={v.stock} onChange={(x) => update(i, { stock: x })} />
                 <Field label={t('variants.weight')} type="number" value={v.weight} onChange={(x) => update(i, { weight: x })} />
@@ -72,6 +73,7 @@ export default function VariantTable({ options, variants, onChange }) {
                   <th key={n} className="text-start py-2 pe-3">{n}</th>
                 ))}
                 <th className="text-start py-2 pe-3">{t('variants.price')}</th>
+                <th className="text-start py-2 pe-3">{t('variants.cost')}</th>
                 <th className="text-start py-2 pe-3">{t('variants.comparePrice')}</th>
                 <th className="text-start py-2 pe-3">{t('variants.stock')}</th>
                 <th className="text-start py-2 pe-3">{t('variants.sku')}</th>
@@ -88,6 +90,9 @@ export default function VariantTable({ options, variants, onChange }) {
                   ))}
                   <td className="py-2 pe-3">
                     <Cell type="number" value={v.price} onChange={(x) => update(i, { price: x })} />
+                  </td>
+                  <td className="py-2 pe-3">
+                    <Cell type="number" value={v.cost} onChange={(x) => update(i, { cost: x })} />
                   </td>
                   <td className="py-2 pe-3">
                     <Cell type="number" value={v.compare_price} onChange={(x) => update(i, { compare_price: x })} />

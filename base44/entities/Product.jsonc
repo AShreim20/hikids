@@ -18,6 +18,10 @@
       "type": "number",
       "title": "Sale Price"
     },
+    "unit_cost": {
+      "type": "number",
+      "title": "Unit Cost"
+    },
     "category": {
       "type": "string",
       "title": "Category",
@@ -127,6 +131,9 @@
             "additionalProperties": true
           },
           "price": {
+            "type": "number"
+          },
+          "cost": {
             "type": "number"
           },
           "compare_price": {
