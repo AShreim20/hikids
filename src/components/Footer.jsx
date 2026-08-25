@@ -11,7 +11,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-8">
         <div className="grid md:grid-cols-12 gap-6 items-start">
           {/* Brand */}
-          <div className="md:col-span-4">
+          <div className="md:col-span-4 rounded-sm">
             <Link to="/" className="inline-flex items-center">
               <Logo className="h-20 md:h-24 w-auto" />
             </Link>
@@ -55,6 +55,6 @@ export default function Footer() {
           </div>
         </div>
       </div>
-    </footer>
-  );
+    </footer>);
+
 }
