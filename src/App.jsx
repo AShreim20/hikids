@@ -47,6 +47,9 @@ const Login = lazy(() => import('./pages/Login'));
 const Register = lazy(() => import('./pages/Register'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
+const Bundles = lazy(() => import('./pages/Bundles'));
+const BundleEditor = lazy(() => import('./pages/BundleEditor'));
+const BundleDetail = lazy(() => import('./pages/BundleDetail'));
 import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -61,6 +64,7 @@ function AnimatedRoutes() {
       {/* Add your page Route elements here */}
       <Route path="/" element={<Home />} />
       <Route path="/shop" element={<Shop />} />
+      <Route path="/bundles/:id" element={<BundleDetail />} />
       <Route path="/product/:id" element={<ProductDetail />} />
       <Route path="/cart" element={<Cart />} />
       <Route path="/wishlist" element={<Wishlist />} />
@@ -76,6 +80,9 @@ function AnimatedRoutes() {
       <Route path="/admin/po/new" element={<POEditor />} />
       <Route path="/admin/po/:id" element={<POEditor />} />
       <Route path="/admin/categories" element={<Categories />} />
+      <Route path="/admin/bundles" element={<Bundles />} />
+      <Route path="/admin/bundle/new" element={<BundleEditor />} />
+      <Route path="/admin/bundle/:id" element={<BundleEditor />} />
       <Route path="/admin/reports" element={<Reports />} />
       <Route path="/admin/product/new" element={<ProductEditor />} />
       <Route path="/admin/product/:id" element={<ProductEditor />} />
