@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function FormInput({ label, value, onChange, required, type = 'text', placeholder, textarea, className = '' }) {
+export default function FormInput({ label, value, onChange, required, type = 'text', placeholder, textarea, className = '', readOnly }) {
   return (
     <label className={`block ${className}`}>
       <span className="text-sm font-medium text-foreground/80">
@@ -11,6 +11,7 @@ export default function FormInput({ label, value, onChange, required, type = 'te
           value={value}
           onChange={onChange}
           rows={3}
+          readOnly={readOnly}
           placeholder={placeholder}
           className="mt-1.5 w-full p-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 resize-none"
         />
@@ -20,6 +21,7 @@ export default function FormInput({ label, value, onChange, required, type = 'te
           required={required}
           value={value}
           onChange={onChange}
+          readOnly={readOnly}
           placeholder={placeholder}
           className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40"
         />

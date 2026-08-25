@@ -1,0 +1,150 @@
+{
+  "name": "PurchaseOrder",
+  "type": "object",
+  "properties": {
+    "po_number": {
+      "type": "string",
+      "title": "PO number"
+    },
+    "purchase_date": {
+      "type": "string",
+      "title": "Purchase date",
+      "format": "date"
+    },
+    "supplier_id": {
+      "type": "string",
+      "title": "Supplier ID"
+    },
+    "supplier_name": {
+      "type": "string",
+      "title": "Supplier name"
+    },
+    "supplier_invoice_ref": {
+      "type": "string",
+      "title": "Supplier invoice / reference"
+    },
+    "notes": {
+      "type": "string",
+      "title": "Notes",
+      "maxLength": 2000
+    },
+    "payment_method": {
+      "type": "string",
+      "title": "Payment method",
+      "enum": [
+        "cash",
+        "card",
+        "bank_transfer",
+        "cheque"
+      ]
+    },
+    "payment_status": {
+      "type": "string",
+      "title": "Payment status",
+      "enum": [
+        "unpaid",
+        "partial",
+        "paid"
+      ],
+      "default": "unpaid"
+    },
+    "status": {
+      "type": "string",
+      "title": "Status",
+      "enum": [
+        "draft",
+        "posted",
+        "cancelled"
+      ],
+      "default": "draft"
+    },
+    "posted": {
+      "type": "boolean",
+      "title": "Posted",
+      "default": false
+    },
+    "posted_at": {
+      "type": "string",
+      "title": "Posted at"
+    },
+    "items": {
+      "type": "array",
+      "title": "Line items",
+      "default": [],
+      "items": {
+        "type": "object",
+        "properties": {
+          "product_id": {
+            "type": "string"
+          },
+          "sku": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "unit_cost": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "subtotal": {
+      "type": "number",
+      "title": "Subtotal",
+      "default": 0
+    },
+    "total": {
+      "type": "number",
+      "title": "Total",
+      "default": 0
+    },
+    "paid_amount": {
+      "type": "number",
+      "title": "Paid amount",
+      "default": 0
+    },
+    "remaining": {
+      "type": "number",
+      "title": "Remaining owed",
+      "default": 0
+    },
+    "created_by_email": {
+      "type": "string",
+      "title": "Created by"
+    }
+  },
+  "required": [
+    "po_number",
+    "purchase_date",
+    "supplier_id"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

@@ -1,0 +1,79 @@
+{
+  "name": "SupplierTransaction",
+  "type": "object",
+  "properties": {
+    "supplier_id": {
+      "type": "string",
+      "title": "Supplier ID"
+    },
+    "supplier_name": {
+      "type": "string",
+      "title": "Supplier name"
+    },
+    "type": {
+      "type": "string",
+      "title": "Type",
+      "enum": [
+        "PURCHASE",
+        "PAYMENT",
+        "REVERSAL",
+        "ADJUSTMENT"
+      ]
+    },
+    "amount": {
+      "type": "number",
+      "title": "Amount (signed, + = owed increases)"
+    },
+    "po_id": {
+      "type": "string",
+      "title": "Purchase order"
+    },
+    "po_number": {
+      "type": "string",
+      "title": "PO number"
+    },
+    "reason": {
+      "type": "string",
+      "title": "Reason"
+    },
+    "actor_email": {
+      "type": "string",
+      "title": "Created by"
+    },
+    "balance_before": {
+      "type": "number",
+      "title": "Balance before"
+    },
+    "balance_after": {
+      "type": "number",
+      "title": "Balance after"
+    }
+  },
+  "required": [
+    "supplier_id",
+    "amount",
+    "type"
+  ],
+  "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "read": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

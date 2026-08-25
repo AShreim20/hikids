@@ -267,6 +267,9 @@ export const translations = {
     'carousel.saveOrder': 'Save order',
     'carousel.orderSaved': 'Order saved',
     'carousel.orderSaveFailed': 'Could not save the order',
+    'nav.po': 'Purchase orders',
+    'nav.suppliers': 'Suppliers',
+    'admin.view': 'View',
 
     'staff.nav': 'Staff & Access',
     'staff.title': 'Staff & Access',
@@ -835,6 +838,9 @@ export const translations = {
     'carousel.saveOrder': 'حفظ الترتيب',
     'carousel.orderSaved': 'تم حفظ الترتيب',
     'carousel.orderSaveFailed': 'تعذّر حفظ الترتيب',
+    'nav.po': 'أوامر الشراء',
+    'nav.suppliers': 'المورّدون',
+    'admin.view': 'عرض',
 
     'staff.nav': 'الفريق والصلاحيات',
     'staff.title': 'الفريق والصلاحيات',
