@@ -22,6 +22,10 @@
       "type": "number",
       "title": "Unit Cost"
     },
+    "barcode": {
+      "type": "string",
+      "title": "Barcode"
+    },
     "category": {
       "type": "string",
       "title": "Category"

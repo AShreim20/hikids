@@ -24,6 +24,7 @@ function productSku(p) {
 
 function searchableText(p) {
   const parts = [p?.name || ''];
+  if (p?.barcode) parts.push(p.barcode);
   if (Array.isArray(p?.variants)) {
     p.variants.forEach((v) => {
       if (v?.sku) parts.push(v.sku);
@@ -138,7 +139,10 @@ export default function ProductSearch() {
                                 </Link>
                               </div>
                             </td>
-                            <td className="px-4 py-3 font-mono text-xs">{productSku(p)}</td>
+                            <td className="px-4 py-3 font-mono text-xs">
+                              <div>{productSku(p)}</div>
+                              {p.barcode && <div className="text-muted-foreground">{p.barcode}</div>}
+                            </td>
                             <td className="px-4 py-3">{p.category || '—'}</td>
                             <td className="px-4 py-3 text-end">
                               {onSale ? (

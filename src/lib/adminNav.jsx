@@ -8,9 +8,7 @@ import {
 // management pages under one icon without merging their functionality.
 export function getAdminNav(t) {
   return [
-    { type: 'link', to: '/admin', label: t('nav.admin'), icon: LayoutDashboard },
     { type: 'link', to: '/admin/carousel', label: t('nav.carousel'), icon: GalleryHorizontal },
-    { type: 'link', to: '/admin/bundles', label: t('nav.bundles'), icon: Package },
     {
       type: 'group', id: 'purchasing', label: t('nav.purchasing'), icon: ShoppingCart,
       children: [
