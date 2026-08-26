@@ -33,7 +33,11 @@
     },
     "reward_label": {
       "type": "string",
-      "title": "Reward label"
+      "title": "Reward label (Arabic)"
+    },
+    "reward_label_en": {
+      "type": "string",
+      "title": "Reward label (English)"
     },
     "reward_value": {
       "type": "number",
@@ -46,7 +50,11 @@
     },
     "product_name": {
       "type": "string",
-      "title": "Product name"
+      "title": "Product name (Arabic)"
+    },
+    "product_name_en": {
+      "type": "string",
+      "title": "Product name (English)"
     },
     "product_image": {
       "type": "string",

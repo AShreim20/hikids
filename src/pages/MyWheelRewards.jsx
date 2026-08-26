@@ -8,6 +8,7 @@ import { Image } from '@/components/ui/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { spinRewardName, spinProductName } from '@/lib/bilingual';
 import RewardsAuthGate from '@/components/RewardsAuthGate';
 
 const expired = (s) => s.expires_at && new Date(s.expires_at) < new Date();
@@ -89,7 +90,7 @@ export default function MyWheelRewards() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
-                      <p className="font-heading font-bold truncate">{s.reward_label}</p>
+                      <p className="font-heading font-bold truncate">{spinRewardName(s, lang)}</p>
                       <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-heading font-bold ${badge.cls}`}>{badge.label}</span>
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -102,14 +103,14 @@ export default function MyWheelRewards() {
                     {s.product_id && s.product_image && (
                       <div className="mt-2 flex items-center gap-2">
                         <div className="w-10 h-10 rounded-xl overflow-hidden bg-mist shrink-0"><Image src={s.product_image} alt="" fittingType="fill" className="w-full h-full" /></div>
-                        <span className="text-xs text-muted-foreground truncate">{s.product_name}</span>
+                        <span className="text-xs text-muted-foreground truncate">{spinProductName(s, lang)}</span>
                       </div>
                     )}
                     {canAddToCart && (
                       inCart(s.id) ? (
                         <Link to="/cart" className="mt-3 inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-emerald-600 text-white text-xs font-heading font-bold"><Check className="w-4 h-4" /> {ar ? 'في السلة' : 'In cart'} <ShoppingBag className="w-3.5 h-3.5" /></Link>
                       ) : (
-                        <button onClick={() => addWheelReward({ id: s.product_id, name: s.product_name, image_url: s.product_image }, s.id, s.product_price)} className="mt-3 inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-cosmic text-white text-xs font-heading font-bold"><Plus className="w-4 h-4" /> {ar ? 'أضف إلى السلة مجانًا' : 'Add to cart (free)'}</button>
+                        <button onClick={() => addWheelReward({ id: s.product_id, name: s.product_name, name_en: s.product_name_en, image_url: s.product_image }, s.id, s.product_price)} className="mt-3 inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-cosmic text-white text-xs font-heading font-bold"><Plus className="w-4 h-4" /> {ar ? 'أضف إلى السلة مجانًا' : 'Add to cart (free)'}</button>
                       )
                     )}
                     {s.fulfillment === 'manual' && s.reward_type !== 'product' && st === 'unused' && (

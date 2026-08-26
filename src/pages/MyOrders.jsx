@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { statusLabel, statusColor } from '@/lib/orderStatus';
+import { lineItemName } from '@/lib/bilingual';
 
 export default function MyOrders() {
   const { t, formatPrice, lang } = useLanguage();
@@ -87,7 +88,7 @@ export default function MyOrders() {
                 <div className="mt-4 pt-4 border-t border-border/60 space-y-2">
                   {(o.items || []).map((it, i) => (
                     <div key={i} className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">{it.name} × {it.qty}</span>
+                      <span className="text-muted-foreground">{lineItemName(it, lang)} × {it.qty}</span>
                       <span className="font-heading font-bold">{formatPrice(it.price * it.qty)}</span>
                     </div>
                   ))}

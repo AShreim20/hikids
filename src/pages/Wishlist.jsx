@@ -7,11 +7,12 @@ import Footer from '@/components/Footer';
 import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { productName } from '@/lib/bilingual';
 
 export default function Wishlist() {
   const { items, remove } = useWishlist();
   const { addItem } = useCart();
-  const { t, formatPrice } = useLanguage();
+  const { t, formatPrice, lang } = useLanguage();
 
   return (
     <div className="min-h-screen bg-background">
@@ -47,7 +48,7 @@ export default function Wishlist() {
                 <Link to={`/product/${p.id}`} className="relative aspect-square overflow-hidden bg-mist">
                   <Image
                     src={p.image_url}
-                    alt={p.name}
+                    alt={productName(p, lang)}
                     fittingType="fill"
                     className="w-full h-full transition-transform duration-700 group-hover:scale-105"
                   />
@@ -58,7 +59,7 @@ export default function Wishlist() {
                     to={`/product/${p.id}`}
                     className="mt-1 font-display font-semibold text-lg leading-tight hover:text-cosmic line-clamp-2"
                   >
-                    {p.name}
+                    {productName(p, lang)}
                   </Link>
                   <p className="mt-2 font-heading font-extrabold text-xl text-cosmic">
                     {formatPrice(p.price || 0)}

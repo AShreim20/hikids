@@ -4,6 +4,7 @@ import { Image } from '@/components/ui/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import { priceInfo } from '@/lib/pricing';
+import { productName } from '@/lib/bilingual';
 import { useToast } from '@/components/ui/use-toast';
 
 const productSku = (p) => {
@@ -38,11 +39,11 @@ export default function ProductListRow({ product: p, onEdit, onDelete, selected,
         />
       )}
       <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden bg-mist shrink-0">
-        <Image src={p.image_url} alt={p.name} fittingType="fill" className="w-full h-full" />
+        <Image src={p.image_url} alt={productName(p, lang)} fittingType="fill" className="w-full h-full" />
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="font-heading font-bold truncate">{p.name}</p>
+        <p className="font-heading font-bold truncate">{productName(p, lang)}</p>
         <p className="text-xs text-muted-foreground truncate">
           {p.category || '—'}{p.age_range ? ` · ${t('pd.ages')} ${p.age_range}` : ''}
         </p>

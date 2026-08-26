@@ -15,6 +15,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import { useToast } from '@/components/ui/use-toast';
 import { priceInfo } from '@/lib/pricing';
+import { productName } from '@/lib/bilingual';
 import VariantSelector from '@/components/product/VariantSelector';
 import {
   hasVariants, findVariant, defaultSelection, selectionImages,
@@ -121,7 +122,7 @@ export default function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title={product.name} />
+      <PageHeader title={productName(product, lang)} />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 pt-8">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
@@ -137,7 +138,7 @@ export default function ProductDetail() {
             {product.category}
           </p>
           <h1 className="mt-2 font-display font-semibold text-4xl md:text-5xl leading-tight">
-            {product.name}
+            {productName(product, lang)}
           </h1>
 
           <div className="mt-4 flex items-center gap-4">
@@ -271,7 +272,7 @@ export default function ProductDetail() {
       <div className="hidden md:block sticky bottom-0 z-40 border-t border-border/60 bg-background/90 backdrop-blur-xl safe-bottom">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
           <div className="hidden sm:block">
-            <p className="font-heading font-bold">{product.name}</p>
+            <p className="font-heading font-bold">{productName(product, lang)}</p>
             <p className="text-sm text-muted-foreground">
               {formatPrice(price)} · {qty}
               {variant ? ` · ${Object.values(variant.attributes || {}).join(' / ')}` : ''}

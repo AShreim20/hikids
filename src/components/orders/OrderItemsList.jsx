@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '@/context/LanguageContext';
+import { lineItemName } from '@/lib/bilingual';
 
 // Purchased items exactly as snapshotted at checkout time (name, variant, SKU,
 // unit price) — never re-read from the live product.
@@ -14,7 +15,7 @@ export default function OrderItemsList({ order }) {
         {(order.items || []).map((it, i) => (
           <div key={i} className="flex items-start justify-between gap-4 pt-3 first:pt-0 border-t first:border-0 border-border/60">
             <div>
-              <p className="font-heading font-bold">{it.name}</p>
+              <p className="font-heading font-bold">{lineItemName(it, lang)}</p>
               {it.variant_label && (
                 <p className="text-sm text-muted-foreground">{it.variant_label}</p>
               )}

@@ -4,7 +4,11 @@
   "properties": {
     "name": {
       "type": "string",
-      "title": "Name"
+      "title": "Name (Arabic)"
+    },
+    "name_en": {
+      "type": "string",
+      "title": "Name (English)"
     },
     "description": {
       "type": "string",
@@ -65,7 +69,11 @@
     },
     "reward_label": {
       "type": "string",
-      "title": "Reward label"
+      "title": "Reward label (Arabic)"
+    },
+    "reward_label_en": {
+      "type": "string",
+      "title": "Reward label (English)"
     },
     "product_id": {
       "type": "string",

@@ -1,6 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useLanguage } from '@/context/LanguageContext';
+import { rewardName } from '@/lib/bilingual';
 
 // Prize wheel rendered as an SVG pie chart: each reward is a slice sized by
 // its probability weight, labels radiate around the rim, a fixed pointer
@@ -28,6 +29,7 @@ function arcPath(cx, cy, R, start, end) {
 }
 
 export default function MysteryWheelChart({ rewards, available, onSpin, ar }) {
+  const lang = ar ? 'ar' : 'en';
   const slices = useMemo(() => {
     const total = rewards.reduce(
       (s, r) => s + (Number(r.weight) > 0 ? Number(r.weight) : 1),
@@ -119,7 +121,7 @@ export default function MysteryWheelChart({ rewards, available, onSpin, ar }) {
               const p = polar(cx, cy, labelR, s.center);
               let rot = s.center;
               if (s.center > 90 && s.center < 270) rot = s.center + 180;
-              const raw = s.reward.label || '';
+              const raw = rewardName(s.reward, lang) || '';
               const label = raw.length > 14 ? `${raw.slice(0, 13)}…` : raw;
               return (
                 <text
@@ -161,7 +163,7 @@ export default function MysteryWheelChart({ rewards, available, onSpin, ar }) {
       {result && (
         <div className="mt-6 text-center float-in max-w-sm">
           <p className="text-sm text-muted-foreground">{ar ? 'ربحت!' : 'You won'}</p>
-          <p className="mt-1 font-heading font-extrabold text-3xl text-cosmic">{result.label}</p>
+          <p className="mt-1 font-heading font-extrabold text-3xl text-cosmic">{rewardName(result, lang)}</p>
           {result.discount_code && (
             <p className="mt-2 text-sm">
               {ar ? 'كود الخصم' : 'Discount code'}: <b className="font-mono">{result.discount_code}</b>

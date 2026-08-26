@@ -9,6 +9,7 @@ import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import { priceInfo } from '@/lib/pricing';
+import { productName } from '@/lib/bilingual';
 import { hasVariants, getVariants, isSellable } from '@/lib/variants';
 
 const CAT_LABEL = {
@@ -75,7 +76,7 @@ export default function ProductCard({ product, large = false }) {
       >
         <Image
           src={product.image_url}
-          alt={product.name}
+          alt={productName(product, lang)}
           fittingType="fill"
           className="w-full h-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.07]"
         />
@@ -117,7 +118,7 @@ export default function ProductCard({ product, large = false }) {
           {t(CAT_LABEL[product.category] || product.category)}
         </p>
         <h3 className="mt-1 font-display font-semibold text-xl leading-tight tracking-tight">
-          {product.name}
+          {productName(product, lang)}
         </h3>
         <p className="mt-1 text-sm text-muted-foreground">{t('pd.ages')} {product.age_range}</p>
         <p className="mt-2 font-heading font-extrabold text-xl">

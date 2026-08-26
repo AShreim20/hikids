@@ -79,6 +79,7 @@ export default function Shop() {
       const searchOk =
         !term ||
         (p.name && p.name.toLowerCase().includes(term)) ||
+        (p.name_en && p.name_en.toLowerCase().includes(term)) ||
         (p.category && p.category.toLowerCase().includes(term)) ||
         (Array.isArray(p.tags) && p.tags.some((tg) => tg.toLowerCase().includes(term)));
       return catOk && priceOk && ageOk && searchOk;

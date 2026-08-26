@@ -22,6 +22,7 @@ export const CATEGORIES = [
 
 export default function ProductFormFields({ form, set }) {
   const { t, lang } = useLanguage();
+  const ar = lang === 'ar';
   const { toast } = useToast();
   const { categories } = useCategories();
   const categoryOptions = (categories && categories.length ? categories.map((c) => c.name) : CATEGORIES);
@@ -69,7 +70,8 @@ export default function ProductFormFields({ form, set }) {
 
   return (
     <div className="grid sm:grid-cols-2 gap-4">
-      <FormInput label={t('admin.name')} value={form.name} onChange={(e) => set('name', e.target.value)} required className="sm:col-span-2" />
+      <FormInput label={ar ? 'الاسم (عربي) — مطلوب' : 'Name (Arabic) — required'} value={form.name} onChange={(e) => set('name', e.target.value)} required className="sm:col-span-2" />
+      <FormInput label={ar ? 'الاسم (إنجليزي) — اختياري' : 'Name (English) — optional'} value={form.name_en || ''} onChange={(e) => set('name_en', e.target.value)} className="sm:col-span-2" />
       <FormInput label={t('admin.description')} value={form.description} onChange={(e) => set('description', e.target.value)} textarea className="sm:col-span-2" />
       <FormInput label={t('admin.price')} type="number" value={form.price} onChange={(e) => set('price', e.target.value)} required />
       <FormInput label={t('admin.salePrice')} type="number" value={form.sale_price} onChange={(e) => set('sale_price', e.target.value)} />

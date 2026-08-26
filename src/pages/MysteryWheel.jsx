@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { unwrap } from '@/lib/invoke';
 import { rewardLabel } from '@/lib/rewards';
+import { spinRewardName } from '@/lib/bilingual';
 import { useCart } from '@/context/CartContext';
 import RewardsAuthGate from '@/components/RewardsAuthGate';
 import MysteryWheelChart from '@/components/wheel/MysteryWheelChart';
@@ -139,7 +140,7 @@ export default function MysteryWheel() {
                   <div className="flex items-center gap-3">
                     <Trophy className="w-5 h-5 text-cosmic" />
                     <div>
-                      <p className="font-heading font-bold text-sm">{s.reward_label}</p>
+                      <p className="font-heading font-bold text-sm">{spinRewardName(s, lang)}</p>
                       {s.discount_code && <p className="text-xs text-muted-foreground font-mono">{s.discount_code}</p>}
                     </div>
                   </div>

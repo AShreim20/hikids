@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { unwrap } from '@/lib/invoke';
 import { rewardLabel } from '@/lib/rewards';
+import { challengeName } from '@/lib/bilingual';
 import RewardsAuthGate from '@/components/RewardsAuthGate';
 
 export default function Challenges() {
@@ -119,7 +120,7 @@ export default function Challenges() {
                 <div key={c.id} className="rounded-3xl bg-card border border-border/60 p-6 flex flex-col">
                   <div className="flex items-start justify-between gap-3">
                     <div>
-                      <p className="font-heading font-extrabold text-xl">{c.name}</p>
+                      <p className="font-heading font-extrabold text-xl">{challengeName(c, lang)}</p>
                       {c.description && <p className="mt-1 text-sm text-muted-foreground">{c.description}</p>}
                     </div>
                     <span className="shrink-0 inline-flex items-center gap-1 px-3 py-1 rounded-full bg-cosmic/10 text-cosmic font-heading font-bold text-sm">{rewardLabel(c, ar, formatPrice)}</span>

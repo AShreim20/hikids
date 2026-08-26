@@ -6,6 +6,7 @@ import { Image } from '@/components/ui/image';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { productName } from '@/lib/bilingual';
 
 function badgeFor(p, t) {
   if (p.onSale) return { label: t('rec.onSale'), icon: Tag, cls: 'bg-accent text-white' };
@@ -20,7 +21,7 @@ export default function Recommendations() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [added, setAdded] = useState({});
-  const { t, formatPrice } = useLanguage();
+  const { t, formatPrice, lang } = useLanguage();
 
   useEffect(() => {
     Promise.all([
@@ -122,12 +123,12 @@ export default function Recommendations() {
                   <Heart className={`w-5 h-5 ${isSaved(p.id) ? 'fill-current' : ''}`} />
                 </button>
                 <Link to={`/product/${p.id}`} className="relative aspect-square overflow-hidden bg-mist">
-                  <Image src={p.image_url} alt={p.name} fittingType="fill" className="w-full h-full transition-transform duration-700 group-hover:scale-105" />
+                  <Image src={p.image_url} alt={productName(p, lang)} fittingType="fill" className="w-full h-full transition-transform duration-700 group-hover:scale-105" />
                 </Link>
                 <div className="p-5 flex flex-col flex-1">
                   <p className="text-xs text-muted-foreground">{p.category}</p>
                   <Link to={`/product/${p.id}`} className="mt-1 font-display font-semibold text-xl leading-tight hover:text-cosmic line-clamp-2">
-                    {p.name}
+                    {productName(p, lang)}
                   </Link>
                   <div className="mt-2 flex items-center gap-1.5">
                     <div className="flex items-center gap-0.5">

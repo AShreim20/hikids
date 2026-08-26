@@ -3,6 +3,7 @@ import { Printer } from 'lucide-react';
 import { orderRef, orderTotals, statusLabel } from '@/lib/orderStatus';
 import { useLanguage } from '@/context/LanguageContext';
 import { BUSINESS_PHONE, BUSINESS_PHONE_DISPLAY } from '@/lib/businessContact';
+import { lineItemName } from '@/lib/bilingual';
 
 const STORE = {
   name: 'HiKids',
@@ -46,7 +47,7 @@ export function printInvoice(order, { lang = 'en' } = {}) {
       const rewardDiscount = isReward && original > 0 ? original * qty : 0;
 
       const nameCell =
-        esc(it.name) +
+        esc(lineItemName(it, lang)) +
         (it.variant_label ? `<br><small class="muted">${esc(it.variant_label)}</small>` : '') +
         (it.sku ? `<br><small class="muted">SKU: ${esc(it.sku)}</small>` : '') +
         (isReward ? `<br><small class="tag">${ar ? 'مكافأة مجانية' : 'Free reward'}</small>` : '');

@@ -23,7 +23,7 @@ export default async function (req) {
     if (hasActive) return Response.json({ success: false, message: 'You already submitted this challenge' });
 
     const submission = await base44.asServiceRole.entities.ChallengeSubmission.create({
-      challenge_id: challengeId, challenge_name: challenge.name,
+      challenge_id: challengeId, challenge_name: challenge.name, challenge_name_en: challenge.name_en || '',
       user_id: user.id || '', user_email: user.email,
       file_url: fileUrl, note: String(body.note || ''),
       status: challenge.requires_review ? 'pending' : 'approved',
@@ -49,7 +49,9 @@ export default async function (req) {
       });
       await recordReward(base44, {
         user_id: user.id, user_email: user.email, source: 'challenge', source_id: challengeId,
-        source_name: challenge.name, reward_type: challenge.reward_type, reward_label: challenge.reward_label || challenge.name,
+        source_name: challenge.name, source_name_en: challenge.name_en || '',
+        reward_type: challenge.reward_type, reward_label: challenge.reward_label || challenge.name,
+        reward_label_en: challenge.reward_label_en || '',
         points, discount_code: discountCode, product_id: challenge.product_id || '',
         amount: challenge.reward_type === 'credit' ? Number(challenge.reward_value) || 0 : 0, fulfillment: 'auto',
       });

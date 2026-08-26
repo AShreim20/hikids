@@ -27,7 +27,11 @@
     },
     "source_name": {
       "type": "string",
-      "title": "Source name"
+      "title": "Source name (Arabic)"
+    },
+    "source_name_en": {
+      "type": "string",
+      "title": "Source name (English)"
     },
     "reward_type": {
       "type": "string",
@@ -35,7 +39,11 @@
     },
     "reward_label": {
       "type": "string",
-      "title": "Reward label"
+      "title": "Reward label (Arabic)"
+    },
+    "reward_label_en": {
+      "type": "string",
+      "title": "Reward label (English)"
     },
     "points": {
       "type": "integer",

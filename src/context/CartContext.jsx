@@ -54,6 +54,7 @@ export function CartProvider({ children }) {
           lineId,
           id: product.id,
           name: product.name,
+          name_en: product.name_en || '',
           price: price != null ? price : (product.sale_price ?? product.price),
           image_url: product.image_url,
           qty: finalQty,

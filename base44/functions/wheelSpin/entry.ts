@@ -46,7 +46,8 @@ export default async function (req) {
     } else if (picked.type === 'product') {
       let product = null;
       if (productId) product = await base44.asServiceRole.entities.Product.get(productId).catch(() => null);
-      if (product && Number(product.stock) > 0) {
+      const productNameEn = product ? (product.name_en || '') : '';
+    if (product && Number(product.stock) > 0) {
         productName = product.name;
         productImage = product.image_url || '';
         productPrice = Number(product.sale_price ?? product.price) || 0;
@@ -83,8 +84,10 @@ export default async function (req) {
     const spin = await base44.asServiceRole.entities.WheelSpin.create({
       user_id: user.id || '', user_email: user.email, source: 'purchase',
       reward_id: picked.id, reward_type: picked.type, reward_label: picked.label,
+      reward_label_en: picked.label_en || '',
       reward_value: Number(picked.value) || 0,
-      product_id: productId, product_name: productName, product_image: productImage, product_price: productPrice,
+      product_id: productId, product_name: productName, product_name_en: productNameEn,
+      product_image: productImage, product_price: productPrice,
       points_awarded: points, discount_code: '', discount_code_id: '',
       customer_name: customerName, customer_phone: customerPhone,
       status, redeemed_order_id: '', expires_at: expiresAt, fulfillment,
@@ -114,6 +117,7 @@ export default async function (req) {
       user_id: user.id, user_email: user.email, source: 'wheel', source_id: spin.id,
       source_name: state.config.name || 'Mystery Wheel',
       reward_type: picked.type, reward_label: picked.label,
+      reward_label_en: picked.label_en || '',
       points, discount_code: discountCode, product_id: productId,
       amount: picked.type === 'credit' ? Number(picked.value) || 0 : 0, fulfillment,
     });
@@ -121,9 +125,10 @@ export default async function (req) {
     return Response.json({
       success: true,
       reward: {
-        id: spin.id, label: picked.label, type: picked.type, value: picked.value,
+        id: spin.id, label: picked.label, label_en: picked.label_en || '',
+        type: picked.type, value: picked.value,
         points, discount_code: discountCode, fulfillment, status, expires_at: expiresAt,
-        product: productId ? { id: productId, name: productName, image_url: productImage, price: productPrice } : null,
+        product: productId ? { id: productId, name: productName, name_en: productNameEn, image_url: productImage, price: productPrice } : null,
       },
     });
   } catch (error) {

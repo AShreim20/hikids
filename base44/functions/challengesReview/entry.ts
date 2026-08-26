@@ -55,7 +55,9 @@ export default async function (req) {
     }
     await recordReward(base44, {
       user_id: sub.user_id, user_email: sub.user_email, source: 'challenge', source_id: sub.challenge_id,
-      source_name: challenge.name, reward_type: challenge.reward_type, reward_label: challenge.reward_label || challenge.name,
+      source_name: challenge.name, source_name_en: challenge.name_en || '',
+      reward_type: challenge.reward_type, reward_label: challenge.reward_label || challenge.name,
+      reward_label_en: challenge.reward_label_en || '',
       points, discount_code: discountCode, product_id: challenge.product_id || '',
       amount: challenge.reward_type === 'credit' ? Number(challenge.reward_value) || 0 : 0, fulfillment: 'auto',
     });

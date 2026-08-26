@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { rewardLabel } from '@/lib/rewards';
+import { rewardHistoryName, rewardHistorySource } from '@/lib/bilingual';
 import RewardsAuthGate from '@/components/RewardsAuthGate';
 
 const sourceLabel = (s, ar) => {
@@ -56,8 +57,8 @@ export default function RewardsHistory() {
                 <div key={r.id} className="flex items-center gap-4 rounded-2xl bg-card border border-border/60 px-4 py-4">
                   <div className="grid place-items-center w-11 h-11 rounded-xl bg-cosmic/10 text-cosmic shrink-0"><Icon className="w-5 h-5" /></div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-heading font-bold">{r.reward_label || rewardLabel(r, ar, formatPrice)}</p>
-                    <p className="text-xs text-muted-foreground">{sourceLabel(r.source, ar)}{r.source_name ? ` · ${r.source_name}` : ''}</p>
+                    <p className="font-heading font-bold">{rewardHistoryName(r, lang) || rewardLabel(r, ar, formatPrice)}</p>
+                    <p className="text-xs text-muted-foreground">{sourceLabel(r.source, ar)}{r.source_name ? ` · ${rewardHistorySource(r, lang)}` : ''}</p>
                     {r.discount_code && <p className="text-xs font-mono mt-1 inline-flex items-center gap-1"><Ticket className="w-3 h-3" /> {r.discount_code}</p>}
                     {r.fulfillment === 'manual' && <p className="text-xs text-muted-foreground mt-0.5">{ar ? 'يتم التسليم يدويًا' : 'Manual fulfillment'}</p>}
                   </div>

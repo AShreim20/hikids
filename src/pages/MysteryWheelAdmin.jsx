@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { rewardLabel } from '@/lib/rewards';
+import { rewardName } from '@/lib/bilingual';
 import WheelProductPicker from '@/components/admin/WheelProductPicker';
 
 const REWARD_TYPES = ['points', 'discount_percent', 'discount_fixed', 'free_delivery', 'product', 'credit'];
@@ -17,7 +18,7 @@ const BASIS = [
   { key: 'period', label: { en: 'Specific period', ar: 'فترة محددة' } },
 ];
 const emptyConfig = { name: 'Mystery Unboxing', min_amount: 200, basis: 'total', period_start: '', period_end: '', start_date: '', end_date: '', active: true, max_spins: 0, spins_expire: false, accumulate: true, first_time_enabled: false, first_time_new_only: false };
-const emptyReward = { label: '', type: 'points', value: 50, product_id: '', weight: 1, active: true, sort_order: 0 };
+const emptyReward = { label: '', label_en: '', type: 'points', value: 50, product_id: '', weight: 1, active: true, sort_order: 0 };
 
 export default function MysteryWheelAdmin() {
   const { user } = useAuth();
@@ -134,7 +135,7 @@ export default function MysteryWheelAdmin() {
           {rewards.map((r) => (
             <div key={r.id} className="flex items-center gap-3 p-4 rounded-3xl bg-card border border-border/60">
               <div className="flex-1">
-                <p className="font-heading font-bold">{r.label} <span className="text-xs text-muted-foreground">· {rewardLabel(r, ar, formatPrice)}</span></p>
+                <p className="font-heading font-bold">{rewardName(r, lang)} <span className="text-xs text-muted-foreground">· {rewardLabel(r, ar, formatPrice)}</span></p>
                 <p className="text-xs text-muted-foreground">{ar ? 'الوزن' : 'Weight'}: {r.weight} · {r.active ? (ar ? 'نشط' : 'Active') : (ar ? 'متوقف' : 'Inactive')}</p>
               </div>
               <button onClick={() => setEditingReward({ ...r })} className="grid place-items-center w-9 h-9 rounded-full bg-mist"><Pencil className="w-4 h-4" /></button>
@@ -158,7 +159,8 @@ export default function MysteryWheelAdmin() {
           <div className="relative w-full max-w-md rounded-3xl bg-card p-6 shadow-2xl">
             <h2 className="font-heading font-extrabold text-xl">{editingReward.id ? (ar ? 'تعديل' : 'Edit') : (ar ? 'مكافأة جديدة' : 'New reward')}</h2>
             <div className="mt-4 space-y-3">
-              <L label={ar ? 'التسمية' : 'Label'}><input className={input} value={editingReward.label} onChange={(e) => setEditingReward({ ...editingReward, label: e.target.value })} /></L>
+              <L label={ar ? 'التسمية (عربي) — مطلوب' : 'Label (Arabic) — required'}><input className={input} value={editingReward.label} onChange={(e) => setEditingReward({ ...editingReward, label: e.target.value })} /></L>
+              <L label={ar ? 'التسمية (إنجليزي) — اختياري' : 'Label (English) — optional'}><input className={input} value={editingReward.label_en || ''} onChange={(e) => setEditingReward({ ...editingReward, label_en: e.target.value })} /></L>
               <L label={ar ? 'النوع' : 'Type'}><select className={input} value={editingReward.type} onChange={(e) => setEditingReward({ ...editingReward, type: e.target.value })}>{REWARD_TYPES.map((r) => <option key={r} value={r}>{r}</option>)}</select></L>
               <L label={ar ? 'القيمة' : 'Value'}><input type="number" className={input} value={editingReward.value} onChange={(e) => setEditingReward({ ...editingReward, value: Number(e.target.value) })} /></L>
               {editingReward.type === 'product' && (

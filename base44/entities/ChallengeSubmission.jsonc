@@ -8,7 +8,11 @@
     },
     "challenge_name": {
       "type": "string",
-      "title": "Challenge name"
+      "title": "Challenge name (Arabic)"
+    },
+    "challenge_name_en": {
+      "type": "string",
+      "title": "Challenge name (English)"
     },
     "user_id": {
       "type": "string",

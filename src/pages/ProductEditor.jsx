@@ -11,7 +11,7 @@ import ProductFormFields, { CATEGORIES } from '@/components/admin/ProductFormFie
 import { unwrap } from '@/lib/invoke';
 
 const EMPTY = {
-  name: '', description: '', price: '', sale_price: '', unit_cost: '', barcode: '', category: CATEGORIES[0], age_range: '',
+  name: '', name_en: '', description: '', price: '', sale_price: '', unit_cost: '', barcode: '', category: CATEGORIES[0], age_range: '',
   image_url: '', images: [], video_url: '', material: '', rating: '', stock: '',
   featured: false, loyalty_exempt: false, tags: [], options: [], variants: [],
 };
@@ -33,6 +33,7 @@ export default function ProductEditor() {
     base44.entities.Product.get(id)
       .then((p) => setForm({
         name: p.name || '',
+        name_en: p.name_en || '',
         description: p.description || '',
         price: p.price ?? '',
         sale_price: p.sale_price ?? '',
@@ -98,6 +99,7 @@ export default function ProductEditor() {
     }
     const payload = {
       name: form.name,
+      name_en: (form.name_en || '').trim() || null,
       description: form.description,
       price: Number(form.price) || 0,
       sale_price: form.sale_price ? Number(form.sale_price) : null,

@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { useToast } from '@/components/ui/use-toast';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { lineItemName } from '@/lib/bilingual';
 import ShareCartButton from '@/components/cart/ShareCartButton';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -200,7 +201,7 @@ export default function Cart() {
                 </div>
                 <Link to={i.is_bundle ? `/bundles/${i.id}` : `/product/${i.id}`} className="shrink-0">
                   <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-mist">
-                    <Image src={i.image_url} alt={i.name} fittingType="fill" className="w-full h-full object-cover" />
+                    <Image src={i.image_url} alt={lineItemName(i, lang)} fittingType="fill" className="w-full h-full object-cover" />
                   </div>
                 </Link>
                 <div className="flex-1 flex flex-col">
@@ -212,7 +213,7 @@ export default function Cart() {
                         </span>
                       )}
                       <Link to={i.is_bundle ? `/bundles/${i.id}` : `/product/${i.id}`} className="font-heading font-bold text-lg hover:text-cosmic">
-                        {i.name}
+                        {lineItemName(i, lang)}
                       </Link>
                       {i.variant_label && (
                         <p className="text-sm font-heading font-bold text-cosmic mt-1">{i.variant_label}</p>

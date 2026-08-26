@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { rewardLabel } from '@/lib/rewards';
+import { spinRewardName, spinProductName } from '@/lib/bilingual';
 
 const expired = (s) => s.expires_at && new Date(s.expires_at) < new Date();
 const statusOf = (s) => {
@@ -50,7 +51,7 @@ export default function WheelWinners() {
       if (from && new Date(s.created_date) < new Date(from)) return false;
       if (to && new Date(s.created_date) > new Date(to + 'T23:59:59')) return false;
       if (t) {
-        const hay = [s.customer_name, s.customer_phone, s.user_email, s.reward_label, s.discount_code, s.redeemed_order_id, String(s.id)].join(' ').toLowerCase();
+        const hay = [s.customer_name, s.customer_phone, s.user_email, s.reward_label, s.reward_label_en, s.discount_code, s.redeemed_order_id, String(s.id)].join(' ').toLowerCase();
         if (!hay.includes(t)) return false;
       }
       return true;
@@ -129,11 +130,11 @@ export default function WheelWinners() {
                       <td className="p-3">
                         <div className="flex items-center gap-2">
                           <RIcon className="w-4 h-4 text-cosmic shrink-0" />
-                          <div><p className="font-heading font-bold">{s.reward_label}</p><p className="text-xs text-muted-foreground">{s.reward_type}{s.points_awarded ? ` · +${s.points_awarded}` : ''}</p></div>
+                          <div><p className="font-heading font-bold">{spinRewardName(s, lang)}</p><p className="text-xs text-muted-foreground">{s.reward_type}{s.points_awarded ? ` · +${s.points_awarded}` : ''}</p></div>
                         </div>
                       </td>
                       <td className="p-3">
-                        {s.discount_code ? <span className="font-mono text-xs">{s.discount_code}</span> : s.product_name ? <span className="text-xs">{s.product_name}</span> : '—'}
+                        {s.discount_code ? <span className="font-mono text-xs">{s.discount_code}</span> : s.product_name ? <span className="text-xs">{spinProductName(s, lang)}</span> : '—'}
                       </td>
                       <td className="p-3 text-xs text-muted-foreground whitespace-nowrap">{new Date(s.created_date).toLocaleDateString(ar ? 'ar' : 'en')}</td>
                       <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-xs font-heading font-bold ${statusCls(statusOf(s))}`}>{statusLabel(statusOf(s), ar)}</span></td>

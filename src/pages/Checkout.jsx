@@ -16,6 +16,7 @@ import CountryCodeSelect, { dialFor } from '@/components/checkout/CountryCodeSel
 import OrderConfirmDialog from '@/components/checkout/OrderConfirmDialog';
 import { unwrap } from '@/lib/invoke';
 import { getSetting } from '@/lib/storeSettings';
+import { lineItemName } from '@/lib/bilingual';
 
 const CARD_TYPES = [
   { key: 'visa', label: 'Visa', badge: 'bg-[#1A1F71]', dot: 'bg-[#1A1F71]' },
@@ -202,7 +203,7 @@ export default function Checkout() {
       }
       const order = await base44.entities.Order.create({
         items: items.map((i) => ({
-          id: i.id, name: i.name, price: i.price, qty: i.qty,
+          id: i.id, name: i.name, name_en: i.name_en || null, price: i.price, qty: i.qty,
           variant_key: i.variant_key || null,
           variant_label: i.variant_label || null,
           variant_attributes: i.variant_attributes || null,
@@ -537,7 +538,7 @@ export default function Checkout() {
                 <div key={i.lineId || i.id} className="flex justify-between gap-3 text-sm">
                   <span className="text-muted-foreground">
                     {i.is_bundle && <span className="font-heading font-bold text-cosmic">{lang === 'ar' ? 'حزمة · ' : 'Bundle · '}</span>}
-                    {i.name}{i.variant_label ? ` — ${i.variant_label}` : ''} × {i.qty}
+                    {lineItemName(i, lang)}{i.variant_label ? ` — ${i.variant_label}` : ''} × {i.qty}
                   </span>
                   <span className="font-heading font-bold">{formatPrice(i.price * i.qty)}</span>
                 </div>

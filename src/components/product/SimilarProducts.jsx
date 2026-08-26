@@ -6,6 +6,7 @@ import { Image } from '@/components/ui/image';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { priceInfo } from '@/lib/pricing';
+import { productName } from '@/lib/bilingual';
 import { useCategories } from '@/context/CategoryContext';
 
 const overlap = (a, b) => {
@@ -96,12 +97,12 @@ export default function SimilarProducts({ product }) {
                 className="group relative rounded-[2rem] bg-card border border-border/60 overflow-hidden flex flex-col transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_-28px_rgba(26,26,30,0.35)]"
               >
                 <Link to={`/product/${p.id}`} className="relative aspect-square overflow-hidden bg-mist">
-                  <Image src={p.image_url} alt={p.name} fittingType="fill" className="w-full h-full transition-transform duration-700 group-hover:scale-105" />
+                  <Image src={p.image_url} alt={productName(p, lang)} fittingType="fill" className="w-full h-full transition-transform duration-700 group-hover:scale-105" />
                 </Link>
                 <div className="p-4 flex flex-col flex-1">
                   <p className="text-xs text-muted-foreground">{p.category}</p>
                   <Link to={`/product/${p.id}`} className="mt-1 font-display font-semibold text-lg leading-tight hover:text-cosmic line-clamp-2">
-                    {p.name}
+                    {productName(p, lang)}
                   </Link>
                   <div className="mt-1 flex items-center gap-1">
                     <Star className={`w-3.5 h-3.5 ${p.rating ? 'fill-accent text-accent' : 'text-border'}`} />

@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { unwrap } from '@/lib/invoke';
 import { rewardLabel } from '@/lib/rewards';
+import { challengeName, submissionChallengeName } from '@/lib/bilingual';
 import ProductPicker from '@/components/admin/ProductPicker';
 
 const TYPES = [
@@ -23,7 +24,7 @@ const TYPES = [
 const REWARD_TYPES = ['points', 'discount_percent', 'discount_fixed', 'free_delivery', 'product', 'credit'];
 const FREQ = ['once', 'daily', 'weekly', 'monthly', 'unlimited', 'custom'];
 
-const empty = { name: '', description: '', type: 'spend_amount', target: { amount: 200 }, reward_type: 'points', reward_value: 50, reward_label: '', product_id: '', start_date: '', end_date: '', active: true, frequency: 'once', limit_count: 1, requires_review: false, reward_code_prefix: 'CHL' };
+const empty = { name: '', name_en: '', description: '', type: 'spend_amount', target: { amount: 200 }, reward_type: 'points', reward_value: 50, reward_label: '', reward_label_en: '', product_id: '', start_date: '', end_date: '', active: true, frequency: 'once', limit_count: 1, requires_review: false, reward_code_prefix: 'CHL' };
 
 export default function ChallengesAdmin() {
   const { user } = useAuth();
@@ -121,7 +122,7 @@ export default function ChallengesAdmin() {
               {subs.map((s) => (
                 <div key={s.id} className="rounded-3xl bg-card border border-border/60 p-3">
                   <div className="aspect-square rounded-2xl overflow-hidden bg-mist"><Image src={s.file_url} alt="" fittingType="fill" className="w-full h-full" /></div>
-                  <p className="mt-2 text-sm font-heading font-bold">{s.challenge_name}</p>
+                  <p className="mt-2 text-sm font-heading font-bold">{submissionChallengeName(s, lang)}</p>
                   <p className="text-xs text-muted-foreground">{s.user_email}</p>
                   {s.note && <p className="text-xs text-muted-foreground mt-1">{s.note}</p>}
                   <div className="mt-3 flex gap-2">
@@ -141,7 +142,7 @@ export default function ChallengesAdmin() {
             {challenges.map((c) => (
               <div key={c.id} className="flex items-center gap-3 p-4 rounded-3xl bg-card border border-border/60 flex-wrap">
                 <div className="flex-1 min-w-0">
-                  <p className="font-heading font-bold truncate">{c.name}</p>
+                  <p className="font-heading font-bold truncate">{challengeName(c, lang)}</p>
                   <p className="text-xs text-muted-foreground">{TYPES.find((x) => x.key === c.type)?.label[lang] || c.type} · {rewardLabel(c, ar, formatPrice)} · {c.frequency}</p>
                 </div>
                 <span className={`px-2 py-0.5 rounded-full text-xs font-heading font-bold ${c.active ? 'bg-emerald-100 text-emerald-700' : 'bg-mist text-muted-foreground'}`}>{c.active ? (ar ? 'نشط' : 'Active') : (ar ? 'متوقف' : 'Inactive')}</span>
@@ -172,7 +173,8 @@ function ChallengeDialog({ value, onChange, onClose, onSave, ar }) {
       <div className="relative w-full max-w-lg max-h-[90vh] overflow-auto rounded-3xl bg-card p-6 shadow-2xl">
         <h2 className="font-heading font-extrabold text-2xl">{value.id ? (ar ? 'تعديل تحدي' : 'Edit challenge') : (ar ? 'تحدي جديد' : 'New challenge')}</h2>
         <div className="mt-4 space-y-3">
-          <L label={ar ? 'الاسم' : 'Name'}><input className={input} value={value.name} onChange={(e) => set('name', e.target.value)} /></L>
+          <L label={ar ? 'الاسم (عربي) — مطلوب' : 'Name (Arabic) — required'}><input className={input} value={value.name} onChange={(e) => set('name', e.target.value)} /></L>
+          <L label={ar ? 'الاسم (إنجليزي) — اختياري' : 'Name (English) — optional'}><input className={input} value={value.name_en || ''} onChange={(e) => set('name_en', e.target.value)} /></L>
           <L label={ar ? 'الوصف' : 'Description'}><textarea className={input} rows={2} value={value.description} onChange={(e) => set('description', e.target.value)} /></L>
           <L label={ar ? 'النوع' : 'Type'}><select className={input} value={value.type} onChange={(e) => set('type', e.target.value)}>{TYPES.map((x) => <option key={x.key} value={x.key}>{x.label[ar ? 'ar' : 'en']}</option>)}</select></L>
           {value.type === 'product_purchase' && (
@@ -192,7 +194,8 @@ function ChallengeDialog({ value, onChange, onClose, onSave, ar }) {
             <L label={ar ? 'نوع المكافأة' : 'Reward type'}><select className={input} value={value.reward_type} onChange={(e) => set('reward_type', e.target.value)}>{REWARD_TYPES.map((r) => <option key={r} value={r}>{r}</option>)}</select></L>
             <L label={ar ? 'قيمة المكافأة' : 'Reward value'}><input type="number" className={input} value={value.reward_value} onChange={(e) => set('reward_value', Number(e.target.value))} /></L>
           </div>
-          <L label={ar ? 'تسمية المكافأة' : 'Reward label'}><input className={input} value={value.reward_label} onChange={(e) => set('reward_label', e.target.value)} /></L>
+          <L label={ar ? 'تسمية المكافأة (عربي)' : 'Reward label (Arabic)'}><input className={input} value={value.reward_label || ''} onChange={(e) => set('reward_label', e.target.value)} /></L>
+          <L label={ar ? 'تسمية المكافأة (إنجليزي) — اختياري' : 'Reward label (English) — optional'}><input className={input} value={value.reward_label_en || ''} onChange={(e) => set('reward_label_en', e.target.value)} /></L>
           <div className="grid grid-cols-2 gap-3">
             <L label={ar ? 'تاريخ البداية' : 'Start date'}><input type="date" className={input} value={value.start_date || ''} onChange={(e) => set('start_date', e.target.value)} /></L>
             <L label={ar ? 'تاريخ النهاية' : 'End date'}><input type="date" className={input} value={value.end_date || ''} onChange={(e) => set('end_date', e.target.value)} /></L>
