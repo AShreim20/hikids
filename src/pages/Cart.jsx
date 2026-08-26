@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Minus, Plus, Trash2, ArrowRight, ArrowLeft, Package } from 'lucide-react';
 import { Image } from '@/components/ui/image';
@@ -8,13 +8,74 @@ import { useToast } from '@/components/ui/use-toast';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
 import ShareCartButton from '@/components/cart/ShareCartButton';
+import { Checkbox } from '@/components/ui/checkbox';
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel,
+  AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
+  AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+
+const lineIdOf = (i) => i.lineId || i.id;
 
 export default function Cart() {
-  const { items, updateQty, removeItem, total, count, revalidateStock } = useCart();
+  const { items, updateQty, removeItem, removeItems, clear, total, count, revalidateStock } = useCart();
   const navigate = useNavigate();
   const { t, formatPrice, lang } = useLanguage();
   const ar = lang === 'ar';
   const { toast } = useToast();
+
+  // Per-line selection (a Set of lineIds) for the bulk delete actions.
+  const [selected, setSelected] = useState(() => new Set());
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const allIds = items.map(lineIdOf);
+  const allSelected = allIds.length > 0 && allIds.every((id) => selected.has(id));
+  const someSelected = selected.size > 0 && !allSelected;
+
+  // Keep the selection set in sync with the cart — drop ids whose lines no
+  // longer exist (e.g. after stock revalidation removes a sold-out item) so
+  // the "N selected" count and "Select All" state never go stale.
+  useEffect(() => {
+    setSelected((prev) => {
+      const live = new Set(allIds);
+      let changed = false;
+      const next = new Set();
+      prev.forEach((id) => {
+        if (live.has(id)) next.add(id);
+        else changed = true;
+      });
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items]);
+
+  const toggleOne = (id) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
+  const toggleAll = () => {
+    if (allSelected) setSelected(new Set());
+    else setSelected(new Set(allIds));
+  };
+
+  const deleteSelected = () => {
+    if (selected.size === 0) return;
+    const n = selected.size;
+    removeItems(Array.from(selected));
+    setSelected(new Set());
+    toast({ title: ar ? `تم حذف ${n} عنصر` : `Removed ${n} ${n === 1 ? 'item' : 'items'}` });
+  };
+
+  const deleteAll = () => {
+    clear();
+    setSelected(new Set());
+    setConfirmOpen(false);
+    toast({ title: ar ? 'تم إفراغ السلة' : 'Cart cleared' });
+  };
 
   // Re-check inventory when the cart opens and adjust any lines that sold out
   // or dropped below the requested quantity while the customer was away.
@@ -75,8 +136,68 @@ export default function Cart() {
 
         <div className="mt-10 grid lg:grid-cols-3 gap-10">
           <div className="lg:col-span-2 space-y-4">
-            {items.map((i) => (
-              <div key={i.lineId || i.id} className="flex gap-4 p-4 rounded-3xl bg-card border border-border/60">
+            {/* Select-all + bulk actions bar */}
+            <div className="flex flex-wrap items-center gap-3 p-4 rounded-3xl bg-mist border border-border/60">
+              <label className="inline-flex items-center gap-2.5 cursor-pointer select-none">
+                <Checkbox checked={allSelected} onCheckedChange={toggleAll} aria-label={ar ? 'تحديد الكل' : 'Select all'} />
+                <span className="font-heading font-bold text-sm">
+                  {ar ? 'تحديد الكل' : 'Select All'}
+                </span>
+              </label>
+              {selected.size > 0 && (
+                <span className="text-xs text-muted-foreground">
+                  {ar ? `${selected.size} محدد` : `${selected.size} selected`}
+                </span>
+              )}
+              <div className="ms-auto flex items-center gap-2">
+                <button
+                  onClick={deleteSelected}
+                  disabled={selected.size === 0}
+                  className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-sm font-heading font-bold border border-border bg-card hover:bg-destructive hover:text-destructive-foreground disabled:opacity-40 disabled:hover:bg-card disabled:hover:text-current transition-colors"
+                >
+                  <Trash2 className="w-4 h-4" /> {ar ? 'حذف المحدد' : 'Delete Selected'}
+                </button>
+                <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+                  <AlertDialogTrigger asChild>
+                    <button
+                      className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full text-sm font-heading font-bold border border-destructive/40 bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" /> {ar ? 'حذف الكل' : 'Delete All'}
+                    </button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>{ar ? 'إفراغ السلة' : 'Delete all items?'}</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        {ar
+                          ? 'هل أنت متأكد أنك تريد إزالة جميع العناصر من سلتك؟'
+                          : 'Are you sure you want to remove all items from your cart?'}
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>{ar ? 'إلغاء' : 'Cancel'}</AlertDialogCancel>
+                      <AlertDialogAction onClick={deleteAll} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                        {ar ? 'حذف الكل' : 'Delete All'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </div>
+
+            {items.map((i) => {
+              const id = lineIdOf(i);
+              const checked = selected.has(id);
+              return (
+              <div
+                key={id}
+                className={`flex gap-4 p-4 rounded-3xl bg-card border transition-colors ${
+                  checked ? 'border-cosmic bg-cosmic/5 ring-1 ring-cosmic/30' : 'border-border/60'
+                }`}
+              >
+                <div className="flex flex-col items-center gap-2 justify-center">
+                  <Checkbox checked={checked} onCheckedChange={() => toggleOne(id)} aria-label={ar ? 'تحديد العنصر' : 'Select item'} />
+                </div>
                 <Link to={i.is_bundle ? `/bundles/${i.id}` : `/product/${i.id}`} className="shrink-0">
                   <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-mist">
                     <Image src={i.image_url} alt={i.name} fittingType="fill" className="w-full h-full object-cover" />
@@ -104,7 +225,7 @@ export default function Cart() {
                       <p className="text-sm text-muted-foreground mt-1">{formatPrice(i.price)}</p>
                     </div>
                     <button
-                      onClick={() => removeItem(i.lineId || i.id)}
+                      onClick={() => removeItem(id)}
                       className="text-muted-foreground hover:text-destructive"
                       aria-label={t('admin.delete')}
                     >
@@ -113,11 +234,11 @@ export default function Cart() {
                   </div>
                   <div className="mt-auto flex items-center justify-between">
                     <div className="flex items-center rounded-full bg-mist">
-                      <button onClick={() => updateQty(i.lineId || i.id, i.qty - 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card" aria-label="-">
+                      <button onClick={() => updateQty(id, i.qty - 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card" aria-label="-">
                         <Minus className="w-4 h-4" />
                       </button>
                       <span className="w-8 text-center font-heading font-bold text-sm">{i.qty}</span>
-                      <button onClick={() => inc(i.lineId || i.id, i.qty + 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card" aria-label="+">
+                      <button onClick={() => inc(id, i.qty + 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card" aria-label="+">
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>
@@ -125,7 +246,8 @@ export default function Cart() {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
 
           <div className="lg:sticky lg:top-28 h-fit rounded-3xl bg-mist p-6 md:p-8">

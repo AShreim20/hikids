@@ -98,6 +98,14 @@ export function CartProvider({ children }) {
   const removeItem = (lineId) =>
     setItems((prev) => prev.filter((i) => (i.lineId || i.id) !== lineId));
 
+  // Bulk-remove several cart lines at once (by their lineId). Used by the
+  // cart's "Delete Selected" action — lines not in the set are left intact.
+  const removeItems = (lineIds) => {
+    const set = new Set(lineIds);
+    if (set.size === 0) return;
+    setItems((prev) => prev.filter((i) => !set.has(i.lineId || i.id)));
+  };
+
   const updateQty = (lineId, qty) => {
     const line = items.find((i) => (i.lineId || i.id) === lineId);
     const max = line && typeof line.stock === 'number' && Number.isFinite(line.stock) ? line.stock : Infinity;
@@ -187,7 +195,7 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, addBundle, addWheelReward, removeItem, updateQty, clear, count, total, revalidateStock, adjustForInsufficient }}
+      value={{ items, addItem, addBundle, addWheelReward, removeItem, removeItems, updateQty, clear, count, total, revalidateStock, adjustForInsufficient }}
     >
       {children}
     </CartContext.Provider>
