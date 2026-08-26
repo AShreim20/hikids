@@ -9,7 +9,7 @@ import { animate } from 'motion';
 const CartFlyContext = createContext(null);
 
 const TOY_SVG =
-  '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="12" x="3" y="9" rx="2"/><path d="M6 9V6"/><path d="M10 9V6"/><path d="M14 9V6"/><path d="M18 9V6"/></svg>';
+  '<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="12" x="3" y="8" rx="1"/><path d="M10 8V5c0-.6-.4-1-1-1H6a1 1 0 0 0-1 1v3"/><path d="M19 8V5c0-.6-.4-1-1-1h-3a1 1 0 0 0-1 1v3"/></svg>';
 
 // The cart icon exists in two places: the desktop navbar button and the
 // mobile bottom-nav tab. Only one is on screen at a time; pick the visible.
