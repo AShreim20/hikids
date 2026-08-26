@@ -7,6 +7,8 @@ import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import Reviews from '@/components/Reviews';
+import ShareProduct from '@/components/product/ShareProduct';
+import SimilarProducts from '@/components/product/SimilarProducts';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
@@ -164,6 +166,8 @@ export default function ProductDetail() {
             </button>
           </div>
 
+          <ShareProduct product={product} />
+
           <VariantSelector product={product} selection={selection} onSelect={selectValue} />
 
           {variant?.sku && (
@@ -216,6 +220,8 @@ export default function ProductDetail() {
       </div>
 
       <Reviews productId={product.id} />
+
+      <SimilarProducts product={product} />
 
       {/* Sticky add-to-cart bar */}
       <div className="sticky bottom-0 z-40 border-t border-border/60 bg-background/90 backdrop-blur-xl safe-bottom">

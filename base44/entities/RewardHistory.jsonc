@@ -16,7 +16,8 @@
       "enum": [
         "challenge",
         "wheel",
-        "firsttime"
+        "firsttime",
+        "photo_review"
       ],
       "default": "challenge"
     },

@@ -29,6 +29,7 @@ export const translations = {
     'rewards.loginDesc': 'Log in to join challenges and spin the mystery wheel.',
     'nav.wheelRewards': 'My Rewards',
     'nav.wheelWinners': 'Wheel Winners',
+    'nav.photoReviews': 'Photo Reviews',
 
     'footer.tagline': 'A gallery of wonder. Premium toys for sophisticated play, made to be treasured.',
     'footer.shop': 'Shop',
@@ -669,6 +670,7 @@ export const translations = {
     'rewards.loginDesc': 'سجّل الدخول للمشاركة في التحديات وإدراج عجلة المفاجآت.',
     'nav.wheelRewards': 'مكافآتي',
     'nav.wheelWinners': 'فائزو العجلة',
+    'nav.photoReviews': 'مراجعات الصور',
 
     'footer.tagline': 'معرض من العجائب. ألعاب فاخرة للعب الراقي، مصنوعة لتُصان.',
     'footer.shop': 'تسوّق',

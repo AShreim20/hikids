@@ -6,6 +6,7 @@ import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
+import ShareCartButton from '@/components/cart/ShareCartButton';
 
 export default function Cart() {
   const { items, updateQty, removeItem, total, count } = useCart();
@@ -112,6 +113,9 @@ export default function Cart() {
             <div className="mt-5 pt-5 border-t border-border/60 flex justify-between items-center">
               <span className="font-heading font-bold">{t('common.total')}</span>
               <span className="font-heading font-extrabold text-2xl">{formatPrice(total)}</span>
+            </div>
+            <div className="mt-4">
+              <ShareCartButton />
             </div>
             <button
               onClick={() => navigate('/checkout')}

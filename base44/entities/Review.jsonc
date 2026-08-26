@@ -20,6 +20,42 @@
       "type": "string",
       "title": "Comment"
     },
+    "photo_url": {
+      "type": "string",
+      "title": "Customer photo URL",
+      "format": "uri"
+    },
+    "status": {
+      "type": "string",
+      "title": "Photo approval status",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ]
+    },
+    "user_id": {
+      "type": "string",
+      "title": "Customer ID"
+    },
+    "user_email": {
+      "type": "string",
+      "title": "Customer email"
+    },
+    "reward_granted": {
+      "type": "boolean",
+      "title": "Loyalty reward granted",
+      "default": false
+    },
+    "reviewed_by": {
+      "type": "string",
+      "title": "Reviewed by"
+    },
+    "review_note": {
+      "type": "string",
+      "title": "Admin review note",
+      "maxLength": 1000
+    },
     "description": {
       "type": "string",
       "title": "Description",
