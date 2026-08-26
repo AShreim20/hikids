@@ -60,7 +60,7 @@ export default function Shop() {
   // Preselect category/age from URL (deep links from homepage category cards).
   useEffect(() => {
     const c = searchParams.get('category');
-    if (c && TOY_CATEGORIES.includes(c)) setCats([c]);
+    if (c && (TOY_CATEGORIES.includes(c) || categories.some((cat) => cat.name === c))) setCats([c]);
     const a = searchParams.get('age');
     if (a && AGE_OPTIONS.some((g) => g.id === a)) setAges([a]);
     // eslint-disable-next-line react-hooks/exhaustive-deps

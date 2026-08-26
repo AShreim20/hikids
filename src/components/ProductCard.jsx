@@ -29,7 +29,7 @@ export default function ProductCard({ product, large = false }) {
   const { t, formatPrice, lang } = useLanguage();
   const ar = lang === 'ar';
   const { toast } = useToast();
-  const { discountPctFor } = useCategories();
+  const { discountPctFor, byName, categoryName } = useCategories();
   const [added, setAdded] = useState(false);
   const { original, final, hasDiscount } = priceInfo(product, discountPctFor(product.category));
   const saved = isSaved(product.id);
@@ -115,7 +115,11 @@ export default function ProductCard({ product, large = false }) {
 
       <div className="px-1 pt-4">
         <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
-          {t(CAT_LABEL[product.category] || product.category)}
+          {(() => {
+            const cat = byName(product.category);
+            if (cat) return categoryName(cat, lang);
+            return t(CAT_LABEL[product.category] || product.category);
+          })()}
         </p>
         <h3 className="mt-1 font-display font-semibold text-xl leading-tight tracking-tight">
           {productName(product, lang)}

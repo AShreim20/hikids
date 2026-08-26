@@ -9,6 +9,8 @@ import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import FormInput from '@/components/admin/FormInput';
+import WorldOfPlaySelector from '@/components/admin/WorldOfPlaySelector';
+import { categoryName } from '@/lib/bilingual';
 
 export default function Categories() {
   const { user } = useAuth();
@@ -43,7 +45,7 @@ export default function Categories() {
     const term = q.trim().toLowerCase();
     return [...categories]
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || String(a.name).localeCompare(String(b.name)))
-      .filter((c) => !term || String(c.name).toLowerCase().includes(term));
+      .filter((c) => !term || String(c.name).toLowerCase().includes(term) || String(c.name_en || '').toLowerCase().includes(term));
   }, [categories, q]);
 
   if (user?.role !== 'admin') {
@@ -101,6 +103,8 @@ export default function Categories() {
           </button>
         </div>
 
+        <WorldOfPlaySelector />
+
         <div className="relative mt-8 max-w-md">
           <Search className="absolute top-1/2 -translate-y-1/2 start-3 w-4 h-4 text-muted-foreground" />
           <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={ar ? 'بحث عن فئة' : 'Search categories'} className="w-full h-11 ps-9 pe-3 rounded-2xl bg-mist border border-border text-sm" />
@@ -121,7 +125,8 @@ export default function Categories() {
             {filtered.map((c) => (
               <div key={c.id} className="rounded-3xl bg-card border border-border/60 p-4 sm:p-5 flex flex-wrap items-center gap-4">
                 <div className="min-w-0 flex-1">
-                  <p className="font-heading font-bold truncate">{c.name}</p>
+                  <p className="font-heading font-bold truncate">{categoryName(c, lang)}</p>
+                  {c.name_en ? <p className="text-xs text-muted-foreground truncate">{c.name_en}</p> : null}
                   <p className="text-xs text-muted-foreground">{counts[c.name] || 0} {ar ? 'منتج' : 'products'}</p>
                 </div>
 
@@ -186,6 +191,7 @@ function CategoryDialog({ initial, onClose, onSaved }) {
   const ar = lang === 'ar';
   const [form, setForm] = useState(() => ({
     name: initial?.name || '',
+    name_en: initial?.name_en || '',
     description: initial?.description || '',
     sort_order: initial?.sort_order ?? 0,
     discount_percent: initial?.discount_percent ?? 0,
@@ -201,6 +207,7 @@ function CategoryDialog({ initial, onClose, onSaved }) {
     try {
       const payload = {
         name: form.name.trim(),
+        name_en: form.name_en.trim(),
         description: form.description,
         sort_order: Number(form.sort_order) || 0,
         discount_percent: Math.max(0, Math.min(100, Number(form.discount_percent) || 0)),
@@ -226,7 +233,8 @@ function CategoryDialog({ initial, onClose, onSaved }) {
           <button type="button" onClick={onClose} className="grid place-items-center w-10 h-10 rounded-full bg-mist"><X className="w-5 h-5" /></button>
         </div>
         <div className="mt-5 grid gap-4">
-          <FormInput label={ar ? 'الاسم' : 'Name'} value={form.name} onChange={(e) => set('name', e.target.value)} required />
+          <FormInput label={ar ? 'الاسم (عربي)' : 'Name (Arabic)'} value={form.name} onChange={(e) => set('name', e.target.value)} required />
+          <FormInput label={ar ? 'الاسم (إنجليزي) — اختياري' : 'Name (English) — optional'} value={form.name_en} onChange={(e) => set('name_en', e.target.value)} />
           <FormInput label={ar ? 'الوصف' : 'Description'} value={form.description} onChange={(e) => set('description', e.target.value)} textarea />
           <FormInput label={ar ? 'ترتيب الفرز' : 'Sort order'} type="number" value={form.sort_order} onChange={(e) => set('sort_order', e.target.value)} />
           <div className="grid grid-cols-2 gap-4">

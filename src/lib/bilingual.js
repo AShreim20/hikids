@@ -14,6 +14,10 @@ export const pickName = (ar, en, lang) => {
 // Entity-specific wrappers — keep call sites readable and consistent.
 export const productName = (p, lang) => pickName(p?.name, p?.name_en, lang);
 
+// Category: Arabic name is mandatory, English is optional. Products link to
+// categories by their Arabic `name`, so this only affects display.
+export const categoryName = (c, lang) => pickName(c?.name, c?.name_en, lang);
+
 // WheelReward uses `label` as its primary (Arabic) name.
 export const rewardName = (r, lang) => pickName(r?.label, r?.label_en, lang);
 

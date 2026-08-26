@@ -1,5 +1,6 @@
 import React from 'react';
 import { useLanguage } from '@/context/LanguageContext';
+import { categoryName } from '@/lib/bilingual';
 
 const CAT_KEYS = {
   'Build & Create': 'build',
@@ -44,11 +45,17 @@ export default function ProductFilters({
   cats, setCats, ages, setAges, priceBounds, price, setPrice, onClear, hasActive,
   extraCategories = [],
 }) {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const toggleArr = (arr, val, setter) =>
     setter(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
 
   const allCats = Array.from(new Set([...TOY_CATEGORIES, ...extraCategories.map((c) => c.name).filter(Boolean)]));
+  const labelFor = (name) => {
+    const lk = catLabelKey(name);
+    if (lk) return t(lk);
+    const cat = extraCategories.find((c) => c.name === name);
+    return cat ? categoryName(cat, lang) : name;
+  };
 
   const [minBound, maxBound] = priceBounds;
   const [pmin, pmax] = price;
@@ -70,14 +77,11 @@ export default function ProductFilters({
       <div>
         <p className="text-sm font-heading font-bold mb-3">{t('plp.category')}</p>
         <div className="flex flex-wrap gap-2">
-          {allCats.map((c) => {
-            const lk = catLabelKey(c);
-            return (
-              <Chip key={c} active={cats.includes(c)} onClick={() => toggleArr(cats, c, setCats)}>
-                {lk ? t(lk) : c}
-              </Chip>
-            );
-          })}
+          {allCats.map((c) => (
+            <Chip key={c} active={cats.includes(c)} onClick={() => toggleArr(cats, c, setCats)}>
+              {labelFor(c)}
+            </Chip>
+          ))}
         </div>
       </div>
 
