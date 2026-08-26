@@ -37,7 +37,7 @@ export default function AdminNavGroup({ group, open, onToggle, onClose, activePa
       if (menuRef.current?.contains(e.target)) return;
       onClose();
     };
-    const onKey = (e) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e) => {if (e.key === 'Escape') onClose();};
     const onScrollOrResize = () => onClose();
 
     document.addEventListener('mousedown', onDown);
@@ -66,12 +66,12 @@ export default function AdminNavGroup({ group, open, onToggle, onClose, activePa
         title={group.label}
         aria-label={group.label}
         aria-expanded={open}
-        className={`grid place-items-center w-11 h-11 rounded-xl transition-colors cursor-pointer ${
-          open || anyActive
-            ? 'bg-cosmic text-white'
-            : 'bg-mist text-foreground/70 hover:bg-cosmic hover:text-white'
-        }`}
-      >
+        className={`grid place-items-center w-11 h-11 rounded-xl transition-colors cursor-pointer mx-1 ${
+        open || anyActive ?
+        'bg-cosmic text-white' :
+        'bg-mist text-foreground/70 hover:bg-cosmic hover:text-white'}`
+        }>
+        
         <Icon className="w-5 h-5" />
       </button>
       {open && createPortal(
@@ -79,8 +79,8 @@ export default function AdminNavGroup({ group, open, onToggle, onClose, activePa
           ref={menuRef}
           role="menu"
           style={{ position: 'fixed', top: `${pos.top}px`, left: `${pos.left}px`, zIndex: 9999 }}
-          className="w-52 rounded-2xl bg-card border border-border/70 shadow-xl p-1.5"
-        >
+          className="w-52 rounded-2xl bg-card border border-border/70 shadow-xl p-1.5">
+          
           <p className="px-3 pt-2 pb-1.5 text-[11px] uppercase tracking-wider font-heading font-bold text-muted-foreground">
             {group.label}
           </p>
@@ -94,17 +94,17 @@ export default function AdminNavGroup({ group, open, onToggle, onClose, activePa
                 onClick={() => go(c.to)}
                 role="menuitem"
                 className={`w-full flex items-center gap-3 h-11 px-3 rounded-xl text-start font-heading font-bold text-sm transition-colors cursor-pointer ${
-                  active ? 'bg-cosmic text-white' : 'text-foreground hover:bg-mist'
-                }`}
-              >
+                active ? 'bg-cosmic text-white' : 'text-foreground hover:bg-mist'}`
+                }>
+                
                 <CIcon className="w-4 h-4 shrink-0" />
                 <span className="truncate">{c.label}</span>
-              </button>
-            );
+              </button>);
+
           })}
         </div>,
         document.body
       )}
-    </>
-  );
+    </>);
+
 }
