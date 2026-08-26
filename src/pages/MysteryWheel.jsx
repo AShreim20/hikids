@@ -121,8 +121,15 @@ export default function MysteryWheel() {
 
             {/* Wheel */}
             <div className="mt-6 rounded-3xl bg-mist/40 border border-border/60 p-8 flex flex-col items-center">
-              <div className={`grid place-items-center w-44 h-44 rounded-full bg-cosmic text-white shadow-2xl ${spinning ? 'animate-spin' : ''}`} style={spinning ? { animationDuration: '0.6s' } : undefined}>
+              <div className="relative grid place-items-center">
+                {/* Fixed pointer — stays still while the wheel spins, brand-pink on the aubergine wheel */}
+                <div
+                  className="absolute top-[-6px] left-1/2 -translate-x-1/2 z-10 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[16px] border-t-accent drop-shadow-md"
+                  aria-hidden="true"
+                />
+                <div className={`grid place-items-center w-44 h-44 rounded-full bg-cosmic text-white shadow-2xl ${spinning ? 'animate-spin' : ''}`} style={spinning ? { animationDuration: '0.6s' } : undefined}>
                 {spinning ? <Loader2 className="w-12 h-12 animate-spin" /> : <Sparkles className="w-16 h-16" />}
+                </div>
               </div>
               <button onClick={spin} disabled={spinning || state.available <= 0} className="mt-6 squish h-14 px-10 rounded-full bg-cosmic text-white font-heading font-extrabold inline-flex items-center justify-center gap-2 disabled:opacity-50">
                 {spinning ? (ar ? 'يدور...' : 'Spinning...') : (ar ? 'أدر العجلة' : 'Spin the Wheel')}
