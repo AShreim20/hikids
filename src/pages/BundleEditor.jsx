@@ -172,7 +172,7 @@ export default function BundleEditor() {
   return (
     <div className="min-h-screen bg-background pb-32">
       <Navbar />
-      <div className="max-w-5xl mx-auto px-5 sm:px-8 py-12">
+      <div className="max-w-5xl mx-auto px-5 sm:px-8 py-12 md:pl-16">
         <Link to="/admin/bundles" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4 ltr:rotate-180 rtl:rotate-0" /> {ar ? 'الحزم' : 'Bundles'}
         </Link>

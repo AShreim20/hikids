@@ -21,7 +21,7 @@ export default function AdminSidebar() {
   const nav = getAdminNav(t);
 
   return (
-    <aside className="hidden md:flex fixed left-0 top-16 md:top-20 bottom-0 z-40 flex-col items-center gap-1.5 w-14 py-6 border-r border-border/60 bg-background/80 backdrop-blur-xl overflow-visible">
+    <aside className="hidden md:flex fixed left-0 top-28 md:top-34 bottom-0 z-40 flex-col items-center gap-1.5 w-14 py-6 border-r border-border/60 bg-background/80 backdrop-blur-xl overflow-visible">
       {nav.map((item) =>
         item.type === 'group' ? (
           <AdminNavGroup

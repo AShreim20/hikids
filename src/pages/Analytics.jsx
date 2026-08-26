@@ -39,7 +39,7 @@ export default function Analytics() {
     <div className="min-h-screen bg-background pb-32">
       <PageHeader title={t('nav.insights')} />
 
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 md:pl-16">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4" /> Back to store
         </Link>

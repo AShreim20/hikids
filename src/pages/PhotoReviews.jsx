@@ -102,7 +102,7 @@ export default function PhotoReviews() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 md:pl-16">
         <Link to="/" className="text-sm text-muted-foreground">← {ar ? 'العودة' : 'Back'}</Link>
         <div className="mt-4 flex items-center gap-3">
           <div className="grid place-items-center w-12 h-12 rounded-2xl bg-cosmic/10 text-cosmic"><Camera className="w-6 h-6" /></div>

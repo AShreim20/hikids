@@ -161,7 +161,7 @@ export default function OrderDetail() {
   return (
     <div className="min-h-screen bg-background">
       <PageHeader title={`#${orderRef(order)}`} />
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-8 md:pl-16">
         <Link to="/orders-admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4 ltr:rotate-180 rtl:rotate-0" /> {ar ? 'كل الطلبات' : 'All orders'}
         </Link>

@@ -63,7 +63,7 @@ export default function Suppliers() {
   return (
     <div className="min-h-screen bg-background pb-32">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-12 md:pl-16">
         <Link to="/admin" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           ← {t('admin.title')}
         </Link>

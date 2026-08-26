@@ -95,7 +95,7 @@ export default function ChallengesAdmin() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 md:pl-16">
         <Link to="/" className="text-sm text-muted-foreground">← {ar ? 'العودة' : 'Back'}</Link>
         <div className="mt-4 flex items-end justify-between flex-wrap gap-4">
           <div className="flex items-center gap-3">

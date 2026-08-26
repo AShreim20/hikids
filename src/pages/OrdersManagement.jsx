@@ -107,7 +107,7 @@ export default function OrdersManagement() {
   return (
     <div className="min-h-screen bg-background">
       <PageHeader title={ar ? 'الطلبات والمبيعات' : 'Orders & Sales'} />
-      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10">
+      <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 md:pl-16">
         <h1 className="font-heading font-extrabold text-3xl md:text-4xl">
           {ar ? 'الطلبات والمبيعات' : 'Orders & Sales'}
         </h1>

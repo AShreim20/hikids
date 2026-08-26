@@ -116,7 +116,7 @@ export default function DiscountManagement() {
   return (
     <div className="min-h-screen bg-background pb-32">
       <PageHeader title={t('discount.title')} />
-      <div className="max-w-5xl mx-auto px-5 sm:px-8 py-12">
+      <div className="max-w-5xl mx-auto px-5 sm:px-8 py-12 md:pl-16">
         <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">← {t('pd.back')}</Link>
         <div className="mt-6 flex items-end justify-between flex-wrap gap-4">
           <div>

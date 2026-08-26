@@ -199,7 +199,7 @@ export default function POEditor() {
   return (
     <div className="min-h-screen bg-background pb-32">
       <Navbar />
-      <div className="max-w-5xl mx-auto px-5 sm:px-8 py-10">
+      <div className="max-w-5xl mx-auto px-5 sm:px-8 py-10 md:pl-16">
         <Link to="/admin/po" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
           <ArrowLeft className="w-4 h-4 rtl:rotate-180" /> {ar ? 'أوامر الشراء' : 'Purchase orders'}
         </Link>
