@@ -92,8 +92,8 @@ export default function Navbar() {
   // Wheel, Rewards, Insights). Links that don't fit collapse into "More".
   const mobileLinks = useMemo(() => {
     const arr = [
-      { key: 'explore', label: t('nav.explore'), to: '/shop', external: false },
       { key: 'worlds', label: t('nav.home'), to: '/#categories', external: true },
+      { key: 'explore', label: t('nav.explore'), to: '/shop', external: false },
     ];
     if (user) {
       arr.push({ key: 'orders', label: t('orders.title'), to: '/orders', external: false });
