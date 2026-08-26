@@ -41,23 +41,23 @@ export function CartFlyProvider({ children }) {
     document.body.appendChild(el);
 
     const midX = (fromX + toX) / 2;
-    const midY = Math.min(fromY, toY) - 140;
+    const midY = Math.min(fromY, toY) - 70;
 
     const controls = animate(
       el,
       {
-        x: [0, midX - fromX, toX - fromX],
-        y: [0, midY - fromY, toY - fromY],
-        scale: [1, 1.08, 0.2],
-        rotate: [0, -90, -180],
-        opacity: [1, 1, 0],
+        left: [`${fromX - size / 2}px`, `${midX - size / 2}px`, `${toX - size / 2}px`],
+        top: [`${fromY - size / 2}px`, `${midY - size / 2}px`, `${toY - size / 2}px`],
+        scale: [1, 1.1, 0.25],
+        rotate: [0, -120, -220],
+        opacity: [1, 1, 1, 0],
       },
-      { duration: 0.85, ease: [0.22, 1, 0.36, 1] }
+      { duration: 1.7, ease: [0.22, 1, 0.36, 1] }
     );
 
     controls.then(() => {
       el.remove();
-      animate(target, { scale: [1, 1.25, 1] }, { duration: 0.4, ease: 'easeOut' });
+      animate(target, { scale: [1, 1.35, 1] }, { duration: 0.45, ease: 'easeOut' });
     });
   }, []);
 
