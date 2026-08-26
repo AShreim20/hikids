@@ -6,6 +6,7 @@ import ProductGallery from '@/components/ProductGallery';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
+import { useCartFly } from '@/context/CartFlyContext';
 import Reviews from '@/components/Reviews';
 import ShareProduct from '@/components/product/ShareProduct';
 import SimilarProducts from '@/components/product/SimilarProducts';
@@ -23,6 +24,7 @@ export default function ProductDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem } = useCart();
+  const { flyToCart } = useCartFly();
   const { toggle, isSaved } = useWishlist();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -98,8 +100,9 @@ export default function ProductDetail() {
     setSelection(match ? { ...match.attributes } : next);
   };
 
-  const addToCart = () => {
+  const addToCart = (e) => {
     if (!canBuy) return;
+    flyToCart(e?.currentTarget);
     addItem(product, qty, variant, price);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);

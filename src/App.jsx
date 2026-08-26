@@ -66,6 +66,7 @@ import { WishlistProvider } from '@/context/WishlistContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { CategoryProvider } from '@/context/CategoryContext';
+import { CartFlyProvider } from '@/context/CartFlyContext';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -171,6 +172,7 @@ const AuthenticatedApp = () => {
 
   // Render the main app
   return (
+    <CartFlyProvider>
     <CartProvider>
       <WishlistProvider>
       <Suspense fallback={<div className="fixed inset-0 flex items-center justify-center"><div className="w-8 h-8 border-4 border-slate-200 border-t-slate-800 rounded-full animate-spin"></div></div>}>
@@ -184,6 +186,7 @@ const AuthenticatedApp = () => {
       <WhatsAppButton />
       </WishlistProvider>
     </CartProvider>
+    </CartFlyProvider>
   );
 };
 

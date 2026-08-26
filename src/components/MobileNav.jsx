@@ -32,6 +32,7 @@ export default function MobileNav() {
                 isActive ? 'text-cosmic' : 'text-muted-foreground'
               }`
             }
+            {...(tab.badge === 'cart' ? { 'data-cart-anchor': '' } : {})}
           >
             <span className="relative">
               <tab.icon className="w-6 h-6" />

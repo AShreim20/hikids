@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Heart } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { useCart } from '@/context/CartContext';
+import { useCartFly } from '@/context/CartFlyContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
@@ -21,6 +22,7 @@ const CAT_LABEL = {
 export default function ProductCard({ product, large = false }) {
   const navigate = useNavigate();
   const { addItem } = useCart();
+  const { flyToCart } = useCartFly();
   const { toggle, isSaved } = useWishlist();
   const { t, formatPrice } = useLanguage();
   const { discountPctFor } = useCategories();
@@ -41,6 +43,7 @@ export default function ProductCard({ product, large = false }) {
       navigate(`/product/${product.id}`);
       return;
     }
+    flyToCart(e.currentTarget);
     addItem(product, 1);
     setAdded(true);
     setTimeout(() => setAdded(false), 1200);
