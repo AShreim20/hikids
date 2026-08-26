@@ -36,23 +36,23 @@ export default function Newsletter() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@email.com"
-            className="flex-1 h-12 px-5 rounded-full bg-card border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40"
-          />
+            className="flex-1 h-12 px-5 rounded-full bg-card border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40" />
+          
           <button
             type="submit"
-            className="squish h-12 px-7 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-primary transition-colors"
-          >
+            className="squish h-12 px-7 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-primary transition-colors">
+            
             {sent ? <><Check className="w-5 h-5" /> {t('nl.subscribed')}</> : t('nl.subscribe')}
           </button>
         </form>
         <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Phone className="w-4 h-4 text-cosmic" />
-          <a href={`tel:${BUSINESS_PHONE}`} className="font-heading font-bold text-foreground hover:text-cosmic transition-colors" dir="ltr">
+          <Phone className="w-4 h-4 text-cosmic hidden" />
+          <a href={`tel:${BUSINESS_PHONE}`} className="font-heading font-bold text-foreground hover:text-cosmic transition-colors hidden" dir="ltr">
             {BUSINESS_PHONE_DISPLAY}
           </a>
         </div>
         <p className="mt-2 text-xs text-muted-foreground">{t('nl.spam')}</p>
       </div>
-    </section>
-  );
+    </section>);
+
 }
