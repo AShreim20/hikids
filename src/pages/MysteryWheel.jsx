@@ -32,7 +32,7 @@ export default function MysteryWheel() {
     try {
       const res = unwrap(await base44.functions.invoke('wheelState', {}));
       if (res.success) setState(res);
-      const s = await base44.entities.WheelSpin.filter({ user_email: user.email }, '-created_date', 50);
+      const s = await base44.entities.WheelSpin.filter({ user_email: user.email }, '-created_date', 5);
       setSpins(s || []);
     } catch {} finally { setLoading(false); }
   };
@@ -134,7 +134,7 @@ export default function MysteryWheel() {
             <div className="mt-4 space-y-3">
               {spins.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{ar ? 'لم تُدِر العجلة بعد' : 'No spins yet'}</p>
-              ) : spins.map((s) => (
+              ) : spins.slice(0, 5).map((s) => (
                 <div key={s.id} className="flex items-center justify-between rounded-2xl bg-card border border-border/60 px-4 py-3">
                   <div className="flex items-center gap-3">
                     <Trophy className="w-5 h-5 text-cosmic" />
