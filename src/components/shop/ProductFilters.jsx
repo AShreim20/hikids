@@ -2,18 +2,6 @@ import React from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { categoryName } from '@/lib/bilingual';
 
-const CAT_KEYS = {
-  'Build & Create': 'build',
-  'Plush & Soft': 'plush',
-  'Vehicles & Motion': 'vehicles',
-  'Early Years': 'early',
-  'Pretend Play': 'pretend',
-  'Arts & Crafts': 'arts'
-};
-
-export const TOY_CATEGORIES = Object.keys(CAT_KEYS);
-export const catLabelKey = (c) => CAT_KEYS[c] ? `cat.${CAT_KEYS[c]}` : null;
-
 export const AGE_OPTIONS = [
 { id: '0_2', min: 0, max: 2 },
 { id: '3_5', min: 3, max: 5 },
@@ -33,7 +21,7 @@ const Chip = ({ active, onClick, children }) =>
 <button
   type="button"
   onClick={onClick}
-  className={`squish h-10 px-4 rounded-full text-sm font-medium transition-colors hidden ${
+  className={`squish h-10 px-4 rounded-full text-sm font-medium transition-colors ${
   active ? 'bg-cosmic text-white' : 'bg-background text-foreground/70 hover:bg-accent/20'}`
   }>
   
@@ -43,19 +31,22 @@ const Chip = ({ active, onClick, children }) =>
 
 export default function ProductFilters({
   cats, setCats, ages, setAges, priceBounds, price, setPrice, onClear, hasActive,
-  extraCategories = []
+  extraCategories = [], usedCategoryNames = []
 }) {
   const { t, lang } = useLanguage();
   const toggleArr = (arr, val, setter) =>
   setter(arr.includes(val) ? arr.filter((x) => x !== val) : [...arr, val]);
 
-  const allCats = Array.from(new Set([...TOY_CATEGORIES, ...extraCategories.map((c) => c.name).filter(Boolean)]));
-  const labelFor = (name) => {
-    const lk = catLabelKey(name);
-    if (lk) return t(lk);
-    const cat = extraCategories.find((c) => c.name === name);
-    return cat ? categoryName(cat, lang) : name;
-  };
+  // Single source of truth: only categories that exist in the DB, are active,
+  // and currently have at least one product are shown — no hard-coded list.
+  const usedSet = React.useMemo(() => new Set(usedCategoryNames), [usedCategoryNames]);
+  const visibleCats = React.useMemo(
+    () =>
+      extraCategories
+        .filter((c) => c && c.active !== false && usedSet.has(c.name))
+        .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || String(a.name).localeCompare(String(b.name))),
+    [extraCategories, usedSet]
+  );
 
   const [minBound, maxBound] = priceBounds;
   const [pmin, pmax] = price;
@@ -77,9 +68,9 @@ export default function ProductFilters({
       <div>
         <p className="text-sm font-heading font-bold mb-3">{t('plp.category')}</p>
         <div className="flex flex-wrap gap-2">
-          {allCats.map((c) =>
-          <Chip key={c} active={cats.includes(c)} onClick={() => toggleArr(cats, c, setCats)}>
-              {labelFor(c)}
+          {visibleCats.map((c) =>
+          <Chip key={c.id} active={cats.includes(c.name)} onClick={() => toggleArr(cats, c.name, setCats)}>
+              {categoryName(c, lang)}
             </Chip>
           )}
         </div>

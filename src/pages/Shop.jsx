@@ -8,7 +8,7 @@ import PageHeader from '@/components/PageHeader';
 import ProductCard from '@/components/ProductCard';
 import BundleCard from '@/components/bundles/BundleCard';
 import ProductFilters, {
-  TOY_CATEGORIES, AGE_OPTIONS, ageRange, overlaps,
+  AGE_OPTIONS, ageRange, overlaps,
 } from '@/components/shop/ProductFilters';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
@@ -60,11 +60,13 @@ export default function Shop() {
   // Preselect category/age from URL (deep links from homepage category cards).
   useEffect(() => {
     const c = searchParams.get('category');
-    if (c && (TOY_CATEGORIES.includes(c) || categories.some((cat) => cat.name === c))) setCats([c]);
+    if (c && categories.some((cat) => cat.name === c)) setCats([c]);
     const a = searchParams.get('age');
     if (a && AGE_OPTIONS.some((g) => g.id === a)) setAges([a]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const usedCategoryNames = useMemo(() => products.map((p) => p.category).filter(Boolean), [products]);
 
   const filtered = useMemo(() => {
     const term = search.toLowerCase();
@@ -112,6 +114,7 @@ export default function Shop() {
       priceBounds={priceBounds} price={price} setPrice={setPrice}
       onClear={clearAll} hasActive={hasActive}
       extraCategories={categories}
+      usedCategoryNames={usedCategoryNames}
     />
   );
 

@@ -15,6 +15,11 @@
       "title": "Description",
       "maxLength": 1000
     },
+    "active": {
+      "type": "boolean",
+      "title": "Active (visible in store)",
+      "default": true
+    },
     "discount_percent": {
       "type": "number",
       "title": "Discount percent",

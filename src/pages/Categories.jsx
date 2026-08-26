@@ -123,11 +123,23 @@ export default function Categories() {
         ) : (
           <div className="mt-8 grid gap-3">
             {filtered.map((c) => (
-              <div key={c.id} className="rounded-3xl bg-card border border-border/60 p-4 sm:p-5 flex flex-wrap items-center gap-4">
+              <div key={c.id} className={`rounded-3xl bg-card border border-border/60 p-4 sm:p-5 flex flex-wrap items-center gap-4 ${c.active === false ? 'opacity-50' : ''}`}>
                 <div className="min-w-0 flex-1">
                   <p className="font-heading font-bold truncate">{categoryName(c, lang)}</p>
                   {c.name_en ? <p className="text-xs text-muted-foreground truncate">{c.name_en}</p> : null}
                   <p className="text-xs text-muted-foreground">{counts[c.name] || 0} {ar ? 'منتج' : 'products'}</p>
+                </div>
+
+                <div className="flex items-center gap-2 shrink-0">
+                  <label className="flex items-center gap-2 text-sm cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={c.active !== false}
+                      onChange={(e) => saveDiscount(c, { active: e.target.checked })}
+                      className="w-5 h-5 rounded accent-cosmic"
+                    />
+                    <span className="text-muted-foreground">{ar ? 'نشط' : 'Active'}</span>
+                  </label>
                 </div>
 
                 {/* Category discount controls */}
@@ -196,6 +208,7 @@ function CategoryDialog({ initial, onClose, onSaved }) {
     sort_order: initial?.sort_order ?? 0,
     discount_percent: initial?.discount_percent ?? 0,
     discount_active: !!initial?.discount_active,
+    active: initial?.active !== false,
   }));
   const [saving, setSaving] = useState(false);
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
@@ -212,6 +225,7 @@ function CategoryDialog({ initial, onClose, onSaved }) {
         sort_order: Number(form.sort_order) || 0,
         discount_percent: Math.max(0, Math.min(100, Number(form.discount_percent) || 0)),
         discount_active: !!form.discount_active,
+        active: form.active !== false,
       };
       if (initial?.id) await base44.entities.Category.update(initial.id, payload);
       else await base44.entities.Category.create(payload);
@@ -244,6 +258,10 @@ function CategoryDialog({ initial, onClose, onSaved }) {
               <span className="font-medium text-sm">{ar ? 'تفعيل الخصم' : 'Enable discount'}</span>
             </label>
           </div>
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={form.active} onChange={(e) => set('active', e.target.checked)} className="w-5 h-5 rounded accent-cosmic" />
+            <span className="font-medium text-sm">{ar ? 'الفئة نشطة (تظهر في المتجر)' : 'Active (visible in store)'}</span>
+          </label>
         </div>
         <div className="mt-6 flex gap-3">
           <button type="submit" disabled={saving} className="flex-1 h-12 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 disabled:opacity-60">
