@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import ProductFormFields, { CATEGORIES } from '@/components/admin/ProductFormFields';
+import { unwrap } from '@/lib/invoke';
 
 const EMPTY = {
   name: '', description: '', price: '', sale_price: '', unit_cost: '', barcode: '', category: CATEGORIES[0], age_range: '',
@@ -80,6 +81,21 @@ export default function ProductEditor() {
       return;
     }
     setSaving(true);
+    const barcodeValue = (form.barcode || '').trim();
+    if (barcodeValue) {
+      try {
+        const res = unwrap(await base44.functions.invoke('validateBarcode', { barcode: barcodeValue, exclude_id: isNew ? '' : id }));
+        if (res && res.unique === false) {
+          toast({ title: t('admin.barcodeInUse'), description: res.conflict?.name || '', variant: 'destructive' });
+          setSaving(false);
+          return;
+        }
+      } catch (e) {
+        toast({ title: lang === 'ar' ? 'تعذّر التحقق من الباركود' : 'Could not verify barcode', variant: 'destructive' });
+        setSaving(false);
+        return;
+      }
+    }
     const payload = {
       name: form.name,
       description: form.description,

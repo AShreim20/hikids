@@ -50,7 +50,6 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Bundles = lazy(() => import('./pages/Bundles'));
 const BundleEditor = lazy(() => import('./pages/BundleEditor'));
 const BundleDetail = lazy(() => import('./pages/BundleDetail'));
-const ProductSearch = lazy(() => import('./pages/ProductSearch'));
 const ChallengesAdmin = lazy(() => import('./pages/ChallengesAdmin'));
 const MysteryWheelAdmin = lazy(() => import('./pages/MysteryWheelAdmin'));
 const Challenges = lazy(() => import('./pages/Challenges'));
@@ -92,7 +91,6 @@ function AnimatedRoutes() {
       <Route path="/admin/bundles" element={<Bundles />} />
       <Route path="/admin/bundle/new" element={<BundleEditor />} />
       <Route path="/admin/bundle/:id" element={<BundleEditor />} />
-      <Route path="/admin/product-search" element={<ProductSearch />} />
       <Route path="/admin/challenges" element={<ChallengesAdmin />} />
       <Route path="/admin/wheel" element={<MysteryWheelAdmin />} />
       <Route path="/challenges" element={<Challenges />} />

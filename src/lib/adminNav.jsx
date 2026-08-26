@@ -20,7 +20,6 @@ export function getAdminNav(t) {
       type: 'group', id: 'management', label: t('nav.management'), icon: Layers,
       children: [
         { to: '/admin', label: t('nav.managementProducts'), icon: LayoutDashboard },
-        { to: '/admin/product-search', label: t('nav.managementProductSearch'), icon: Search },
         { to: '/delivery', label: t('nav.managementDelivery'), icon: Truck },
         { to: '/orders-admin', label: t('nav.managementOrders'), icon: ClipboardList },
         { to: '/admin/bundles', label: t('nav.managementBundles'), icon: Package },

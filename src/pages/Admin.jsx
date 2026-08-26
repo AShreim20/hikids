@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Loader2, Lock, LayoutGrid, List, Copy, X, Link2 } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Lock, LayoutGrid, List, Copy, X, Link2, Search } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
@@ -22,6 +22,8 @@ export default function Admin() {
   const [selected, setSelected] = useState(new Set());
   const [busy, setBusy] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [q, setQ] = useState('');
+  const [mode, setMode] = useState('all');
 
   const setViewMode = (v) => {
     setView(v);
@@ -30,7 +32,7 @@ export default function Admin() {
 
   const load = () => {
     setLoading(true);
-    base44.entities.Product.list('-updated_date', 100)
+    base44.entities.Product.list('-updated_date', 500)
       .then(setProducts)
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
@@ -74,8 +76,24 @@ export default function Admin() {
       else n.add(id);
       return n;
     });
-  const allSelected = products.length > 0 && selected.size === products.length;
-  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(products.map((p) => p.id)));
+  const matches = (p) => {
+    const term = q.trim().toLowerCase();
+    if (!term) return true;
+    if (mode === 'name') return (p.name || '').toLowerCase().includes(term);
+    if (mode === 'sku') return Array.isArray(p.variants) && p.variants.some((v) => (v.sku || '').toLowerCase().includes(term));
+    if (mode === 'barcode') return (p.barcode || '') === q.trim() || (p.barcode || '').toLowerCase() === term;
+    const text = [p.name || '', p.barcode || '', ...(Array.isArray(p.variants) ? p.variants.flatMap((v) => [v.sku || '', v.barcode || '']) : [])].join(' ').toLowerCase();
+    return text.includes(term);
+  };
+  const filtered = products.filter(matches);
+  const allSelected = filtered.length > 0 && filtered.every((p) => selected.has(p.id));
+  const toggleAll = () =>
+    setSelected((s) => {
+      const n = new Set(s);
+      if (filtered.every((p) => n.has(p.id))) filtered.forEach((p) => n.delete(p.id));
+      else filtered.forEach((p) => n.add(p.id));
+      return n;
+    });
   const clearSel = () => setSelected(new Set());
 
   const remove = async (p) => {
@@ -104,6 +122,7 @@ export default function Admin() {
         await base44.entities.Product.create({
           ...rest,
           name: `${p.name} ${suffix}`,
+          barcode: '',
           variants: (p.variants || []).map((v) => ({ ...v, sku: '', barcode: '' })),
         });
       }
@@ -182,6 +201,31 @@ export default function Admin() {
           <VisaPaymentToggle />
         </div>
 
+        {/* Merged product search: name, SKU, or barcode (exact for barcode mode). */}
+        <div className="mt-6 flex flex-wrap items-center gap-3">
+          <div className="relative flex-1 min-w-[240px] max-w-md">
+            <Search className="absolute top-1/2 -translate-y-1/2 start-4 w-5 h-5 text-muted-foreground pointer-events-none" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t('admin.searchPlaceholder')}
+              className="w-full h-12 ps-12 pe-4 rounded-2xl bg-card border border-border/70 focus:border-cosmic outline-none font-body"
+            />
+          </div>
+          <div className="flex items-center gap-1 p-1 rounded-full bg-mist">
+            {[['all', t('admin.searchAll')], ['name', t('admin.searchName')], ['sku', t('admin.searchSku')], ['barcode', t('admin.searchBarcode')]].map(([m, label]) => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={`h-9 px-3 rounded-full text-xs font-heading font-bold transition-colors ${mode === m ? 'bg-cosmic text-white' : 'text-foreground/70'}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <span className="text-sm text-muted-foreground">{filtered.length}/{products.length}</span>
+        </div>
+
         {selected.size > 0 && (
           <div className="mt-6 flex items-center gap-3 flex-wrap rounded-3xl bg-cosmic/10 border border-cosmic/20 p-3 sm:p-4">
             <span className="font-heading font-bold text-sm">
@@ -219,6 +263,10 @@ export default function Admin() {
               <Plus className="w-5 h-5" /> {t('admin.add')}
             </button>
           </div>
+        ) : filtered.length === 0 ? (
+          <div className="mt-12 rounded-3xl bg-mist/60 p-16 text-center">
+            <p className="font-heading font-bold text-2xl">{t('admin.noResults')}</p>
+          </div>
         ) : (
           <>
             <div className="mt-8 flex items-center gap-3">
@@ -230,7 +278,7 @@ export default function Admin() {
 
             {view === 'list' ? (
               <div className="mt-4 space-y-3">
-                {products.map((p) => (
+                {filtered.map((p) => (
                   <ProductListRow
                     key={p.id}
                     product={p}
@@ -243,7 +291,7 @@ export default function Admin() {
               </div>
             ) : (
               <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {products.map((p) => (
+                {filtered.map((p) => (
                   <div key={p.id} className="relative rounded-3xl bg-card border border-border/60 overflow-hidden flex flex-col">
                     <div className="absolute top-3 left-3 z-10">
                       <input

@@ -10,6 +10,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { unwrap } from '@/lib/invoke';
 import { rewardLabel } from '@/lib/rewards';
+import ProductPicker from '@/components/admin/ProductPicker';
 
 const TYPES = [
   { key: 'product_purchase', label: { en: 'Buy a specific product', ar: 'شراء منتج محدد' } },
@@ -174,7 +175,16 @@ function ChallengeDialog({ value, onChange, onClose, onSave, ar }) {
           <L label={ar ? 'الاسم' : 'Name'}><input className={input} value={value.name} onChange={(e) => set('name', e.target.value)} /></L>
           <L label={ar ? 'الوصف' : 'Description'}><textarea className={input} rows={2} value={value.description} onChange={(e) => set('description', e.target.value)} /></L>
           <L label={ar ? 'النوع' : 'Type'}><select className={input} value={value.type} onChange={(e) => set('type', e.target.value)}>{TYPES.map((x) => <option key={x.key} value={x.key}>{x.label[ar ? 'ar' : 'en']}</option>)}</select></L>
-          {value.type === 'product_purchase' && <L label={ar ? 'معرف المنتج' : 'Product ID'}><input className={input} value={value.target?.product_id || ''} onChange={(e) => setT('product_id', e.target.value)} /></L>}
+          {value.type === 'product_purchase' && (
+            <L label={ar ? 'المنتج المطلوب' : 'Required product'}>
+              <ProductPicker
+                value={value.target?.product_id || ''}
+                productName={value.target?.product_name || ''}
+                onSelect={({ product_id, product_name }) => { setT('product_id', product_id); setT('product_name', product_name); }}
+                placeholder={ar ? 'ابحث بالاسم أو SKU أو الباركود…' : 'Search by name, SKU or barcode…'}
+              />
+            </L>
+          )}
           {value.type === 'spend_amount' && <L label={ar ? 'المبلغ' : 'Amount'}><input type="number" className={input} value={value.target?.amount || ''} onChange={(e) => setT('amount', Number(e.target.value))} /></L>}
           {value.type === 'purchase_count' && <L label={ar ? 'العدد' : 'Count'}><input type="number" className={input} value={value.target?.count || ''} onChange={(e) => setT('count', Number(e.target.value))} /></L>}
           {value.type === 'share' && <L label={ar ? 'عدد الأشخاص' : 'Share count'}><input type="number" className={input} value={value.target?.share_count || ''} onChange={(e) => setT('share_count', Number(e.target.value))} /></L>}
