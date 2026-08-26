@@ -111,35 +111,35 @@ export default function Home() {
       <Recommendations />
 
       {/* About */}
-      <section id="about" className="max-w-7xl mx-auto px-5 sm:px-8 py-12 md:py-16 hidden">
-        <div className="grid md:grid-cols-2 gap-10 md:gap-14 items-center">
-          <div className="relative aspect-[4/3] rounded-[2.5rem] overflow-hidden bg-mist">
-            <Image
-              src="https://media.base44.com/images/public/6a75c91fa5dfe02359c5f127/df023ab5e_generated_37f54450.png"
-              alt="Stacking Rainbow"
-              fittingType="fill"
-              className="w-full h-full object-cover" />
-            
-          </div>
-          <div>
-            <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">{t('about.heading')}</p>
-            <h2 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl leading-tight text-balance">
-              {t('about.title')}
-            </h2>
-            <p className="mt-6 text-lg text-muted-foreground leading-relaxed">{t('about.body')}</p>
-            <div className="mt-8 grid grid-cols-2 gap-6">
-              <div>
-                <p className="font-heading font-extrabold text-3xl text-cosmic">200+</p>
-                <p className="text-sm text-muted-foreground">{t('about.curated')}</p>
-              </div>
-              <div>
-                <p className="font-heading font-extrabold text-3xl text-cosmic">100%</p>
-                <p className="text-sm text-muted-foreground">{t('about.safe')}</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+      
 
       <Newsletter />
       <Footer />
