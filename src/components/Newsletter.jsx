@@ -46,10 +46,10 @@ export default function Newsletter() {
           </button>
         </form>
         <div className="mt-4 flex items-center justify-center gap-2 text-sm text-muted-foreground">
-          <Phone className="w-4 h-4 text-cosmic hidden" />
-          <a href={`tel:${BUSINESS_PHONE}`} className="font-heading font-bold text-foreground hover:text-cosmic transition-colors hidden" dir="ltr">
-            {BUSINESS_PHONE_DISPLAY}
-          </a>
+          
+          
+
+          
         </div>
         <p className="mt-2 text-xs text-muted-foreground">{t('nl.spam')}</p>
       </div>
