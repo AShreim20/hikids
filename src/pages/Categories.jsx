@@ -241,12 +241,12 @@ function CategoryDialog({ initial, onClose, onSaved }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center p-5">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <form onSubmit={submit} className="relative w-full max-w-lg rounded-3xl bg-card p-6 shadow-2xl">
-        <div className="flex items-center justify-between">
+      <form onSubmit={submit} className="relative w-full max-w-lg max-h-[90vh] flex flex-col rounded-3xl bg-card shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between p-6 pb-4 shrink-0">
           <h2 className="font-heading font-extrabold text-2xl">{initial ? (ar ? 'تعديل الفئة' : 'Edit category') : (ar ? 'فئة جديدة' : 'New category')}</h2>
           <button type="button" onClick={onClose} className="grid place-items-center w-10 h-10 rounded-full bg-mist"><X className="w-5 h-5" /></button>
         </div>
-        <div className="mt-5 grid gap-4">
+        <div className="px-6 pb-6 overflow-y-auto flex-1 grid gap-4">
           <FormInput label={ar ? 'الاسم (عربي)' : 'Name (Arabic)'} value={form.name} onChange={(e) => set('name', e.target.value)} required />
           <FormInput label={ar ? 'الاسم (إنجليزي) — اختياري' : 'Name (English) — optional'} value={form.name_en} onChange={(e) => set('name_en', e.target.value)} />
           <FormInput label={ar ? 'الوصف' : 'Description'} value={form.description} onChange={(e) => set('description', e.target.value)} textarea />
@@ -263,7 +263,7 @@ function CategoryDialog({ initial, onClose, onSaved }) {
             <span className="font-medium text-sm">{ar ? 'الفئة نشطة (تظهر في المتجر)' : 'Active (visible in store)'}</span>
           </label>
         </div>
-        <div className="mt-6 flex gap-3">
+        <div className="flex gap-3 p-6 pt-0 shrink-0">
           <button type="submit" disabled={saving} className="flex-1 h-12 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 disabled:opacity-60">
             {saving && <Loader2 className="w-4 h-4 animate-spin" />} {t('admin.save')}
           </button>
