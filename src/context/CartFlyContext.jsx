@@ -68,4 +68,4 @@ export function CartFlyProvider({ children }) {
   );
 }
 
-export const useCartFly = () => useContext(CartFlyContext);
+export const useCartFly = () => useContext(CartFlyContext) ?? { flyToCart: () => {} };
