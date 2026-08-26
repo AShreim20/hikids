@@ -33,7 +33,7 @@ export default function HeaderLoyaltyBalance() {
   return (
     <button
       onClick={() => navigate('/loyalty')}
-      className="hidden md:inline-flex squish items-center gap-1.5 h-11 px-3 rounded-2xl bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors"
+      className="hidden md:inline-flex squish items-center gap-1.5 h-11 px-3 rounded-2xl bg-white/15 text-white hover:bg-accent hover:text-white transition-colors"
       aria-label={t('loyalty.mynav')}
       title={t('loyalty.mynav')}
     >
