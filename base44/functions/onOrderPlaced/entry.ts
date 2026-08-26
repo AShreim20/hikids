@@ -33,13 +33,14 @@ export default async function(req) {
       : order.payment_method === 'loyalty'
         ? 'Paid with loyalty points'
         : 'Cash on delivery';
+    const il = (n) => `₪${Number(n || 0).toFixed(2)}`;
     const itemRows = (order.items || [])
       .map((it) => {
         const lineTotal = (Number(it.price) * Number(it.qty)).toFixed(2);
         const label = it.variant_label ? ` <span style="color:#9a8fbf;font-size:13px;">(${it.variant_label})</span>` : '';
         return `<tr>
           <td style="padding:12px 0;border-bottom:1px solid #f1ecfa;color:#3d2b5f;">${it.name}${label}<br><span style="font-size:13px;color:#9a8fbf;">Qty ${it.qty}</span></td>
-          <td style="padding:12px 0 12px 24px;border-bottom:1px solid #f1ecfa;text-align:right;font-weight:700;color:#3d2b5f;white-space:nowrap;">$${lineTotal}</td>
+          <td style="padding:12px 0 12px 24px;border-bottom:1px solid #f1ecfa;text-align:right;font-weight:700;color:#3d2b5f;white-space:nowrap;">${il(lineTotal)}</td>
         </tr>`;
       })
       .join('');
@@ -59,8 +60,12 @@ export default async function(req) {
             <tr><td style="padding:0 20px 16px;color:#9a8fbf;font-size:13px;text-transform:uppercase;letter-spacing:0.5px;">Payment</td><td style="padding:0 20px 16px;text-align:right;font-weight:700;color:#3d2b5f;">${paymentLabel}</td></tr>
           </table>
           <table width="100%" cellpadding="0" cellspacing="0">${itemRows}
-            <tr><td colspan="2" style="padding-top:20px;"></td></tr>
-            <tr><td style="padding:12px 0;color:#6b5b8c;font-weight:700;">Total</td><td style="padding:12px 0 12px 24px;text-align:right;font-size:18px;font-weight:800;color:#3d2b5f;">$${Number(order.total || 0).toFixed(2)}</td></tr>
+            <tr><td colspan="2" style="padding-top:16px;border-top:1px solid #f1ecfa;"></td></tr>
+            ${Number(order.subtotal || 0) > 0 ? `<tr><td style="padding:8px 0;color:#6b5b8c;">Subtotal</td><td style="padding:8px 0 8px 24px;text-align:right;font-weight:700;color:#3d2b5f;">${il(order.subtotal)}</td></tr>` : ''}
+            ${Number(order.discount_amount || 0) > 0 ? `<tr><td style="padding:8px 0;color:#6b5b8c;">Discount${order.discount_code ? ` (${order.discount_code})` : ''}</td><td style="padding:8px 0 8px 24px;text-align:right;font-weight:700;color:#3d2b5f;">−${il(order.discount_amount)}</td></tr>` : ''}
+            ${Number(order.loyalty_discount || 0) > 0 ? `<tr><td style="padding:8px 0;color:#6b5b8c;">Loyalty points${order.loyalty_points ? ` (${order.loyalty_points})` : ''}</td><td style="padding:8px 0 8px 24px;text-align:right;font-weight:700;color:#3d2b5f;">−${il(order.loyalty_discount)}</td></tr>` : ''}
+            ${Number(order.delivery_cost || 0) > 0 ? `<tr><td style="padding:8px 0;color:#6b5b8c;">Delivery</td><td style="padding:8px 0 8px 24px;text-align:right;font-weight:700;color:#3d2b5f;">${il(order.delivery_cost)}</td></tr>` : ''}
+            <tr><td style="padding:12px 0;color:#6b5b8c;font-weight:700;">Total</td><td style="padding:12px 0 12px 24px;text-align:right;font-size:18px;font-weight:800;color:#3d2b5f;">${il(order.total)}</td></tr>
           </table>
           <div style="margin-top:24px;padding:20px;background:#f7f4fb;border-radius:16px;">
             <div style="font-size:13px;color:#9a8fbf;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;">Delivery to</div>
@@ -92,7 +97,7 @@ export default async function(req) {
       const admins = await base44.asServiceRole.entities.User.filter({ role: 'admin' });
       const itemCount = (order.items || []).reduce((n, it) => n + Number(it.qty || 0), 0);
       const adminLines = (order.items || [])
-        .map((it) => `• ${it.name}${it.variant_label ? ` (${it.variant_label})` : ''} × ${it.qty} — $${(Number(it.price) * Number(it.qty)).toFixed(2)}`)
+        .map((it) => `• ${it.name}${it.variant_label ? ` (${it.variant_label})` : ''} × ${it.qty} — ₪${(Number(it.price) * Number(it.qty)).toFixed(2)}`)
         .join('\n');
       const adminBody =
         `New order received!\n\n` +
@@ -107,7 +112,7 @@ export default async function(req) {
         `Address: ${order.address || '-'}\n` +
         `Payment: ${paymentLabel}\n\n` +
         `Items:\n${adminLines}\n\n` +
-        `Total: $${Number(order.total || 0).toFixed(2)}`;
+        `Total: ₪${Number(order.total || 0).toFixed(2)}`;
       for (const a of admins || []) {
         try {
           await base44.asServiceRole.integrations.Core.SendEmail({
