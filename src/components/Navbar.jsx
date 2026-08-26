@@ -85,7 +85,7 @@ export default function Navbar() {
 
   const links = [
     { label: t('nav.explore'), to: '/shop' },
-    { label: t('nav.worlds'), to: '/#categories' },
+    { label: t('nav.home'), to: '/#categories' },
   ];
 
   // Mobile second-line nav links (Explore, World of Play, Orders, Challenges,
@@ -93,7 +93,7 @@ export default function Navbar() {
   const mobileLinks = useMemo(() => {
     const arr = [
       { key: 'explore', label: t('nav.explore'), to: '/shop', external: false },
-      { key: 'worlds', label: t('nav.worlds'), to: '/#categories', external: true },
+      { key: 'worlds', label: t('nav.home'), to: '/#categories', external: true },
     ];
     if (user) {
       arr.push({ key: 'orders', label: t('orders.title'), to: '/orders', external: false });
