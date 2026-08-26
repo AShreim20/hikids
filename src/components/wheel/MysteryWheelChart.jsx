@@ -93,59 +93,66 @@ export default function MysteryWheelChart({ rewards, available, onSpin, ar }) {
           className="absolute left-1/2 -translate-x-1/2 -top-1 z-20 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[22px] border-t-accent drop-shadow-md"
           aria-hidden="true"
         />
-        {/* The wheel */}
-        <svg
-          viewBox="0 0 300 300"
-          className="w-full h-full drop-shadow-xl"
+        {/* The wheel — rotated via a wrapper div (CSS transform on a div is
+            reliably pivoted at its center; rotating the <svg> directly can
+            pivot at 0,0 in some browsers and swing off-screen). */}
+        <div
+          className="absolute inset-0"
           style={{
             transform: `rotate(${rotation}deg)`,
+            transformOrigin: 'center center',
             transition: busy ? 'transform 2600ms cubic-bezier(0.16,1,0.3,1)' : 'none',
           }}
         >
-          <circle cx={cx} cy={cy} r={R + 6} fill="hsl(var(--card))" />
-          {slices.map((s, i) => (
-            <path
-              key={`s${i}`}
-              d={arcPath(cx, cy, R, s.start, s.start + s.angle)}
-              fill={s.color}
-              stroke="hsl(var(--card))"
-              strokeWidth={2}
-            />
-          ))}
-          {slices.map((s, i) => {
-            const p = polar(cx, cy, labelR, s.center);
-            let rot = s.center;
-            if (s.center > 90 && s.center < 270) rot = s.center + 180;
-            const raw = s.reward.label || '';
-            const label = raw.length > 14 ? `${raw.slice(0, 13)}…` : raw;
-            return (
-              <text
-                key={`t${i}`}
-                x={p.x}
-                y={p.y}
-                fill="#fff"
-                fontSize={11}
-                fontWeight={700}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                transform={`rotate(${rot} ${p.x} ${p.y})`}
-                className="font-heading select-none"
-                style={{ pointerEvents: 'none' }}
-              >
-                {label}
-              </text>
-            );
-          })}
-        </svg>
-        {/* Center SPIN hub */}
+          <svg viewBox="0 0 300 300" className="w-full h-full drop-shadow-xl">
+            <circle cx={cx} cy={cy} r={R + 6} fill="hsl(var(--card))" />
+            {slices.map((s, i) => (
+              <path
+                key={`s${i}`}
+                d={arcPath(cx, cy, R, s.start, s.start + s.angle)}
+                fill={s.color}
+                stroke="hsl(var(--card))"
+                strokeWidth={2}
+              />
+            ))}
+            {slices.map((s, i) => {
+              const p = polar(cx, cy, labelR, s.center);
+              let rot = s.center;
+              if (s.center > 90 && s.center < 270) rot = s.center + 180;
+              const raw = s.reward.label || '';
+              const label = raw.length > 14 ? `${raw.slice(0, 13)}…` : raw;
+              return (
+                <text
+                  key={`t${i}`}
+                  x={p.x}
+                  y={p.y}
+                  fill="#fff"
+                  fontSize={11}
+                  fontWeight={700}
+                  textAnchor="middle"
+                  dominantBaseline="middle"
+                  transform={`rotate(${rot} ${p.x} ${p.y})`}
+                  className="font-heading select-none"
+                  style={{ pointerEvents: 'none' }}
+                >
+                  {label}
+                </text>
+              );
+            })}
+          </svg>
+        </div>
+        {/* Center SPIN hub — positioned with an inline translate so no hover
+            transform can override the centering (the old `squish` class
+            replaced the translate and made the button jump). */}
         <button
           type="button"
           onClick={handleSpin}
           disabled={busy || available <= 0}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10 grid place-items-center w-24 h-24 rounded-full bg-cosmic text-white shadow-lg squish border-4 border-white disabled:opacity-60 disabled:cursor-not-allowed"
+          className="absolute z-10 grid place-items-center w-24 h-24 rounded-full bg-cosmic text-white shadow-lg border-4 border-white disabled:opacity-60 disabled:cursor-not-allowed"
+          style={{ left: '50%', top: '50%', transform: 'translate(-50%, -50%)' }}
           aria-label={ar ? 'أدر العجلة' : 'Spin the wheel'}
         >
-          <span className="font-heading font-extrabold text-lg tracking-wide">
+          <span className="font-heading font-extrabold text-lg tracking-wide transition-transform active:scale-95">
             {busy ? (ar ? 'يدور' : 'Spin') : (ar ? 'أدر' : 'SPIN')}
           </span>
         </button>
