@@ -4,7 +4,7 @@ import { Loader2, Lock, Search, Crown, ShieldCheck, UserCog, ArrowUpCircle, Arro
 import { base44 } from '@/api/base44Client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import Button from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/components/ui/use-toast';
