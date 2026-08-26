@@ -10,6 +10,7 @@ import LanguageToggle from '@/components/LanguageToggle';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import HeaderLoyaltyBalance from '@/components/HeaderLoyaltyBalance';
+import HeaderWheelSpins from '@/components/HeaderWheelSpins';
 
 
 
@@ -75,11 +76,7 @@ export default function Navbar() {
               {t('nav.challenges')}
             </Link>
             }
-            {user &&
-            <Link to="/wheel" className="text-sm font-medium text-accent hover:text-accent/80 transition-colors">
-              {t('nav.wheel')}
-            </Link>
-            }
+            <HeaderWheelSpins />
             {user &&
             <Link to="/wheel-rewards" className="text-sm font-medium text-white/85 hover:text-accent transition-colors">
               {t('nav.wheelRewards')}
@@ -93,7 +90,7 @@ export default function Navbar() {
           </div>
 
           <div className="flex items-center gap-1.5 lg:gap-2 ms-auto">
-            
+            <LanguageToggle />
             <HeaderLoyaltyBalance />
             {user &&
             <button
@@ -142,13 +139,13 @@ export default function Navbar() {
             {!user &&
             <div className="hidden md:flex items-center gap-2 ms-1">
               <Link
-                to="/login"
-                className="h-11 px-4 rounded-2xl bg-white/15 text-white text-sm font-heading font-bold inline-flex items-center hover:bg-accent hover:text-white transition-colors">
+              to="/login"
+              className="h-11 px-4 rounded-2xl bg-white/15 text-white text-sm font-heading font-bold inline-flex items-center hover:bg-accent hover:text-white transition-colors">
                 {t('nav.signIn')}
               </Link>
               <Link
-                to="/register"
-                className="h-11 px-4 rounded-2xl bg-accent text-white text-sm font-heading font-bold inline-flex items-center hover:bg-accent/90 transition-colors whitespace-nowrap">
+              to="/register"
+              className="h-11 px-4 rounded-2xl bg-accent text-white text-sm font-heading font-bold inline-flex items-center hover:bg-accent/90 transition-colors whitespace-nowrap">
                 {t('nav.signUp')}
               </Link>
             </div>
