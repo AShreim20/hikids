@@ -36,6 +36,7 @@ const Categories = lazy(() => import('./pages/Categories'));
 const Reports = lazy(() => import('./pages/Reports'));
 const MyOrders = lazy(() => import('./pages/MyOrders'));
 const StaffManagement = lazy(() => import('./pages/StaffManagement'));
+const UserManagement = lazy(() => import('./pages/UserManagement'));
 const OrdersManagement = lazy(() => import('./pages/OrdersManagement'));
 const OrderDetail = lazy(() => import('./pages/OrderDetail'));
 const DeliveryManagement = lazy(() => import('./pages/DeliveryManagement'));
@@ -90,6 +91,7 @@ function AnimatedRoutes() {
       <Route path="/admin/po/new" element={<POEditor />} />
       <Route path="/admin/po/:id" element={<POEditor />} />
       <Route path="/admin/categories" element={<Categories />} />
+      <Route path="/admin/users" element={<UserManagement />} />
       <Route path="/admin/bundles" element={<Bundles />} />
       <Route path="/admin/bundle/new" element={<BundleEditor />} />
       <Route path="/admin/bundle/:id" element={<BundleEditor />} />

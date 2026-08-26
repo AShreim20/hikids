@@ -24,6 +24,7 @@ export function getAdminNav(t) {
         { to: '/orders-admin', label: t('nav.managementOrders'), icon: ClipboardList },
         { to: '/admin/bundles', label: t('nav.managementBundles'), icon: Package },
         { to: '/admin/categories', label: t('nav.categories'), icon: FolderTree },
+        { to: '/admin/users', label: t('nav.users'), icon: Users },
       ],
     },
     {
