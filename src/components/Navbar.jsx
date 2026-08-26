@@ -84,8 +84,8 @@ export default function Navbar() {
   }, []);
 
   const links = [
-    { label: t('nav.explore'), to: '/shop' },
     { label: t('nav.home'), to: '/#categories' },
+    { label: t('nav.explore'), to: '/shop' },
   ];
 
   // Mobile second-line nav links (Explore, World of Play, Orders, Challenges,
