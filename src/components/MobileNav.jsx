@@ -32,10 +32,9 @@ export default function MobileNav() {
                 isActive ? 'text-cosmic' : 'text-muted-foreground'
               }`
             }
-            {...(tab.badge === 'cart' ? { 'data-cart-anchor': '' } : {})}
           >
             <span className="relative">
-              <tab.icon className="w-6 h-6" />
+              <tab.icon className="w-6 h-6" {...(tab.badge === 'cart' ? { 'data-cart-anchor': '' } : {})} />
               {tab.badge && counts[tab.badge] > 0 && (
                 <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 grid place-items-center rounded-full bg-accent text-white text-[9px] font-bold">
                   {counts[tab.badge]}

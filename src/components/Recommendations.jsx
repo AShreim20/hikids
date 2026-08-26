@@ -4,6 +4,7 @@ import { Star, Tag, Flame, ThumbsUp, ArrowRight, Plus, Check, Heart } from 'luci
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
 import { useCart } from '@/context/CartContext';
+import { useCartFly } from '@/context/CartFlyContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { productName } from '@/lib/bilingual';
@@ -17,6 +18,7 @@ function badgeFor(p, t) {
 
 export default function Recommendations() {
   const { addItem } = useCart();
+  const { flyToCart } = useCartFly();
   const { toggle, isSaved } = useWishlist();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -70,7 +72,8 @@ export default function Recommendations() {
       .finally(() => setLoading(false));
   }, []);
 
-  const quickAdd = (p) => {
+  const quickAdd = (p, originEl) => {
+    flyToCart(originEl);
     addItem(p, 1);
     setAdded((a) => ({ ...a, [p.id]: true }));
     setTimeout(() => setAdded((a) => ({ ...a, [p.id]: false })), 1500);
@@ -154,7 +157,7 @@ export default function Recommendations() {
                       )}
                     </div>
                     <button
-                      onClick={() => quickAdd(p)}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); quickAdd(p, e.currentTarget); }}
                       className="squish grid place-items-center w-10 h-10 rounded-full bg-cosmic text-white hover:bg-primary transition-colors"
                       aria-label={t('common.addToCart')}
                     >

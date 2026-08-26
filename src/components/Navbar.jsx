@@ -248,9 +248,8 @@ export default function Navbar() {
                 onClick={() => navigate('/cart')}
                 className="hidden md:grid relative squish place-items-center w-11 h-11 rounded-2xl bg-white/15 text-white hover:bg-accent hover:text-white transition-colors"
                 aria-label="Cart"
-                data-cart-anchor
               >
-                <ShoppingBag className="w-5 h-5" />
+                <ShoppingBag className="w-5 h-5" data-cart-anchor />
                 {count > 0 && (
                   <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 grid place-items-center rounded-full bg-accent text-white text-[11px] font-bold">
                     {count}

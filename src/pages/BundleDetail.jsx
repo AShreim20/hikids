@@ -6,6 +6,7 @@ import { Image } from '@/components/ui/image';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
+import { useCartFly } from '@/context/CartFlyContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/components/ui/use-toast';
 import {
@@ -17,6 +18,7 @@ export default function BundleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem, addBundle } = useCart();
+  const { flyToCart } = useCartFly();
   const { t, formatPrice } = useLanguage();
   const { toast } = useToast();
   const [bundle, setBundle] = useState(null);
@@ -69,8 +71,9 @@ export default function BundleDetail() {
   const productMap = {};
   for (const p of products) productMap[p.id] = p;
 
-  const addToCart = () => {
+  const addToCart = (originEl) => {
     if (out) return;
+    flyToCart(originEl);
     addBundle(bundle, qty, sell, (bundle.items || []).map((it) => ({
       product_id: it.product_id,
       name: it.name,
@@ -182,7 +185,7 @@ export default function BundleDetail() {
           </div>
           <div className="flex flex-1 sm:flex-initial gap-3">
             <button
-              onClick={addToCart}
+              onClick={(e) => addToCart(e.currentTarget)}
               disabled={out}
               className="squish flex-1 sm:w-auto whitespace-nowrap h-14 px-6 rounded-full bg-mist text-foreground font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-white transition-colors disabled:opacity-50 disabled:hover:bg-mist disabled:hover:text-foreground"
             >
@@ -190,7 +193,7 @@ export default function BundleDetail() {
             </button>
             <button
               disabled={out}
-              onClick={() => { addToCart(); navigate('/checkout'); }}
+              onClick={(e) => { addToCart(e.currentTarget); navigate('/checkout'); }}
               className="squish flex-1 sm:w-auto h-14 px-6 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-primary transition-colors disabled:opacity-50"
             >
               {t('common.buyNow')}

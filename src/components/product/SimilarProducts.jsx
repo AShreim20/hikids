@@ -4,6 +4,7 @@ import { Star, Plus, Check, ArrowRight } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { Image } from '@/components/ui/image';
 import { useCart } from '@/context/CartContext';
+import { useCartFly } from '@/context/CartFlyContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { priceInfo } from '@/lib/pricing';
 import { productName } from '@/lib/bilingual';
@@ -25,6 +26,7 @@ export default function SimilarProducts({ product }) {
   const { t, lang, formatPrice } = useLanguage();
   const ar = lang === 'ar';
   const { addItem } = useCart();
+  const { flyToCart } = useCartFly();
   const { discountPctFor } = useCategories();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -55,7 +57,8 @@ export default function SimilarProducts({ product }) {
     return () => { alive = false; };
   }, [product.id]);
 
-  const quickAdd = (p) => {
+  const quickAdd = (p, originEl) => {
+    flyToCart(originEl);
     const pi = priceInfo(p, discountPctFor(p.category));
     addItem(p, 1, null, pi ? pi.final : p.price);
     setAdded((a) => ({ ...a, [p.id]: true }));
@@ -118,7 +121,7 @@ export default function SimilarProducts({ product }) {
                       )}
                     </div>
                     <button
-                      onClick={() => quickAdd(p)}
+                      onClick={(e) => quickAdd(p, e.currentTarget)}
                       disabled={out}
                       className="squish grid place-items-center w-10 h-10 rounded-full bg-cosmic text-white hover:bg-primary transition-colors disabled:opacity-40"
                       aria-label={t('common.addToCart')}

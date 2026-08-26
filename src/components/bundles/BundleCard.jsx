@@ -4,6 +4,7 @@ import { Package, ShoppingBag } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
+import { useCartFly } from '@/context/CartFlyContext';
 import { useToast } from '@/components/ui/use-toast';
 import {
   bundleOriginalPrice, bundleSellingPrice, bundleDiscountPercent,
@@ -16,6 +17,7 @@ import {
 export default function BundleCard({ bundle, products }) {
   const { t, formatPrice } = useLanguage();
   const { addBundle } = useCart();
+  const { flyToCart } = useCartFly();
   const { toast } = useToast();
   const ar = t('common.addToCart') !== 'Add to cart';
 
@@ -30,6 +32,7 @@ export default function BundleCard({ bundle, products }) {
     e.preventDefault();
     e.stopPropagation();
     if (out) return;
+    flyToCart(e.currentTarget);
     addBundle(bundle, 1, sell, (bundle.items || []).map((it) => ({
       product_id: it.product_id,
       name: it.name,
