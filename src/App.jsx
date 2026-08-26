@@ -153,7 +153,8 @@ function AnimatedRoutes() {
 }
 
 const AuthenticatedApp = () => {
-  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
+  const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
+  const isAdmin = user?.role === 'admin';
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -187,8 +188,8 @@ const AuthenticatedApp = () => {
       <AdminSidebar />
       <AdminMobileMenu />
       <NewOrderNotifier />
-      <ChatWidget />
-      <WhatsAppButton />
+      {!isAdmin && <ChatWidget />}
+      {!isAdmin && <WhatsAppButton />}
       </WishlistProvider>
     </CartProvider>
     </CartFlyProvider>
