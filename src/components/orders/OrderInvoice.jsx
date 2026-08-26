@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Printer, Eye } from 'lucide-react';
-import { orderRef, orderTotals, statusLabel } from '@/lib/orderStatus';
+import { orderRef, orderTotals } from '@/lib/orderStatus';
 import { useLanguage } from '@/context/LanguageContext';
 import { BUSINESS_PHONE_DISPLAY } from '@/lib/businessContact';
 import { lineItemName } from '@/lib/bilingual';
@@ -197,8 +197,6 @@ export function printInvoice(order, { lang = 'en' } = {}) {
           ${timeStr ? `<div class="row"><span class="k">${ar ? 'الوقت' : 'Time'}</span><span class="v">${timeStr}</span></div>` : ''}
           <div class="row"><span class="k">${ar ? 'طريقة الدفع' : 'Payment'}</span><span class="v">${paymentLabel(order.payment_method, lang)}</span></div>
           <div class="row"><span class="k">${ar ? 'حالة الدفع' : 'Payment status'}</span><span class="v">${paymentStatusLabel(order.payment_status, lang)}</span></div>
-          <div class="row"><span class="k">${ar ? 'حالة الطلب' : 'Order status'}</span><span class="v">${esc(statusLabel(order.status, lang))}</span></div>
-          ${order.handled_by ? `<div class="row"><span class="k">${ar ? 'البائع' : 'Salesperson'}</span><span class="v">${esc(order.handled_by)}</span></div>` : ''}
         </div>
         <div class="panel">
           <h3>${ar ? 'بيانات العميل' : 'Bill to'}</h3>
