@@ -166,6 +166,25 @@ export default function ProductDetail() {
             </button>
           </div>
 
+          {/* Mobile buy actions — placed right under the price so they're
+              reachable without scrolling past reviews / similar products. */}
+          <div className="md:hidden mt-6 flex gap-3">
+            <button
+              onClick={addToCart}
+              disabled={!canBuy}
+              className="squish flex-1 whitespace-nowrap h-14 px-5 rounded-full bg-mist text-foreground font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-accent hover:text-white transition-colors disabled:opacity-50 disabled:hover:bg-mist disabled:hover:text-foreground"
+            >
+              <ShoppingBag className="w-5 h-5" /> {!canBuy ? t('pd.outOfStock') : added ? t('common.added') : t('common.addToCart')}
+            </button>
+            <button
+              disabled={!canBuy}
+              onClick={() => { addItem(product, qty, variant, price); navigate('/checkout'); }}
+              className="squish flex-1 h-14 px-5 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-primary transition-colors disabled:opacity-50"
+            >
+              {t('common.buyNow')}
+            </button>
+          </div>
+
           <ShareProduct product={product} />
 
           <VariantSelector product={product} selection={selection} onSelect={selectValue} />
@@ -223,8 +242,8 @@ export default function ProductDetail() {
 
       <SimilarProducts product={product} />
 
-      {/* Sticky add-to-cart bar */}
-      <div className="sticky bottom-0 z-40 border-t border-border/60 bg-background/90 backdrop-blur-xl safe-bottom">
+      {/* Sticky add-to-cart bar — desktop only (mobile uses the inline buttons) */}
+      <div className="hidden md:block sticky bottom-0 z-40 border-t border-border/60 bg-background/90 backdrop-blur-xl safe-bottom">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
           <div className="hidden sm:block">
             <p className="font-heading font-bold">{product.name}</p>

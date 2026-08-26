@@ -31,6 +31,7 @@ export const translations = {
     'nav.wheelWinners': 'Wheel Winners',
     'nav.photoReviews': 'Photo Reviews',
     'nav.users': 'User Management',
+    'nav.more': 'More',
 
     'users.title': 'User Management',
     'users.subtitle': 'Manage roles and access',
@@ -698,6 +699,7 @@ export const translations = {
     'nav.wheelWinners': 'فائزو العجلة',
     'nav.photoReviews': 'مراجعات الصور',
     'nav.users': 'إدارة المستخدمين',
+    'nav.more': 'المزيد',
 
     'users.title': 'إدارة المستخدمين',
     'users.subtitle': 'إدارة الأدوار والصلاحيات',
