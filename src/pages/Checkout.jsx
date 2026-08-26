@@ -25,7 +25,7 @@ const CARD_TYPES = [
 ];
 
 export default function Checkout() {
-  const { items, total, clear } = useCart();
+  const { items, total, clear, revalidateStock, adjustForInsufficient } = useCart();
   const { toast } = useToast();
   const { t, lang, formatPrice } = useLanguage();
   const navigate = useNavigate();
@@ -94,6 +94,22 @@ export default function Checkout() {
       .then((raw) => { const res = unwrap(raw); if (res.success) { setLoyaltyBalance(res.balance || 0); if (res.redeem_rate) setLoyaltyRate(res.redeem_rate); } })
       .catch(() => {});
   }, [user]);
+
+  // A product sitting in the cart is NOT a reservation — re-check live stock
+  // when checkout opens and adjust any lines that sold out or dropped.
+  useEffect(() => {
+    let active = true;
+    revalidateStock().then((adj) => {
+      if (!active || !adj.length) return;
+      const removed = adj.filter((a) => a.newQty === 0);
+      const reduced = adj.filter((a) => a.newQty > 0);
+      const parts = [];
+      reduced.forEach((a) => parts.push(ar ? `تم تقليل "${a.name}" إلى ${a.newQty}` : `"${a.name}" reduced to ${a.newQty}`));
+      removed.forEach((a) => parts.push(ar ? `"${a.name}" لم يعد متوفرًا` : `"${a.name}" is no longer available`));
+      toast({ title: ar ? 'تم تحديث سلتك' : 'Your cart was updated', description: parts.join(' · '), variant: 'destructive' });
+    });
+    return () => { active = false; };
+  }, []);
 
   const applySavedAddress = (id) => {
     setSavedId(id);
@@ -215,6 +231,49 @@ export default function Checkout() {
         payment_status: payment === 'card' || payment === 'loyalty' ? 'paid' : 'unpaid',
         gift_message: giftMessage.trim() || undefined,
       });
+
+      // Authoritative stock check + atomic deduction. The cart display is NOT
+      // a reservation — this is the single source of truth at order time, so
+      // two customers racing for the last item can never oversell.
+      let commit;
+      try {
+        commit = unwrap(await base44.functions.invoke('commitOrderStock', { orderId: order.id }));
+      } catch {
+        // Possibly a lost response — retry (the call is idempotent).
+        try {
+          commit = unwrap(await base44.functions.invoke('commitOrderStock', { orderId: order.id }));
+        } catch {
+          if (reserved) {
+            await base44.functions.invoke('releaseLoyaltyPoints', { idempotency_key: checkoutKey }).catch(() => {});
+          }
+          toast({ title: ar ? 'تعذر تأكيد المخزون، حاول مجددًا' : 'Could not confirm stock, please try again', variant: 'destructive' });
+          setPlacing(false);
+          return;
+        }
+      }
+      if (!commit || commit.success === false) {
+        // Insufficient stock — the backend already cancelled the order and
+        // rolled back any partial deductions. Release the reserved loyalty
+        // points and adjust the cart so the customer sees what changed.
+        if (reserved) {
+          await base44.functions.invoke('releaseLoyaltyPoints', { idempotency_key: checkoutKey }).catch(() => {});
+        }
+        const adj = adjustForInsufficient(commit?.insufficient || []);
+        const parts = adj.map((a) =>
+          a.newQty === 0
+            ? (ar ? `"${a.name}" لم يعد متوفرًا` : `"${a.name}" is no longer available`)
+            : (ar ? `تم تقليل "${a.name}" إلى ${a.newQty}` : `"${a.name}" reduced to ${a.newQty}`)
+        );
+        toast({
+          title: ar ? 'لا يمكن إكمال الطلب' : 'Order could not be completed',
+          description: parts.length ? parts.join(' · ') : (ar ? 'مخزون غير كافٍ' : 'Insufficient stock'),
+          variant: 'destructive',
+        });
+        setConfirmOpen(false);
+        setPlacing(false);
+        return;
+      }
+
       if (saveAddr && user && form.address) {
         base44.entities.Address.create({
           label: 'Home',

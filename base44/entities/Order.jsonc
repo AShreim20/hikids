@@ -70,6 +70,11 @@
       "title": "Discount counted",
       "default": false
     },
+    "stock_committed": {
+      "type": "boolean",
+      "title": "Inventory deducted",
+      "default": false
+    },
     "city": {
       "type": "string",
       "title": "City"

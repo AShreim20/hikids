@@ -13,6 +13,7 @@ import SimilarProducts from '@/components/product/SimilarProducts';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
+import { useToast } from '@/components/ui/use-toast';
 import { priceInfo } from '@/lib/pricing';
 import VariantSelector from '@/components/product/VariantSelector';
 import {
@@ -31,7 +32,9 @@ export default function ProductDetail() {
   const [qty, setQty] = useState(1);
   const [added, setAdded] = useState(false);
   const [selection, setSelection] = useState({});
-  const { t, formatPrice } = useLanguage();
+  const { t, formatPrice, lang } = useLanguage();
+  const ar = lang === 'ar';
+  const { toast } = useToast();
   const { discountPctFor } = useCategories();
 
   useEffect(() => {
@@ -103,7 +106,15 @@ export default function ProductDetail() {
   const addToCart = (e) => {
     if (!canBuy) return;
     flyToCart(e?.currentTarget);
-    addItem(product, qty, variant, price);
+    const res = addItem(product, qty, variant, price);
+    if (res.capped) {
+      toast({
+        title: res.available != null
+          ? (ar ? `متوفر ${res.available} فقط` : `Only ${res.available} available`)
+          : (ar ? 'لا يمكن إضافة المزيد' : 'No more available'),
+        variant: 'destructive',
+      });
+    }
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
@@ -181,7 +192,18 @@ export default function ProductDetail() {
             </button>
             <button
               disabled={!canBuy}
-              onClick={() => { addItem(product, qty, variant, price); navigate('/checkout'); }}
+              onClick={() => {
+                const res = addItem(product, qty, variant, price);
+                if (res.capped) {
+                  toast({
+                    title: res.available != null
+                      ? (ar ? `متوفر ${res.available} فقط` : `Only ${res.available} available`)
+                      : (ar ? 'لا يمكن إضافة المزيد' : 'No more available'),
+                    variant: 'destructive',
+                  });
+                }
+                navigate('/checkout');
+              }}
               className="squish flex-1 h-14 px-5 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-primary transition-colors disabled:opacity-50"
             >
               {t('common.buyNow')}
@@ -265,7 +287,18 @@ export default function ProductDetail() {
             </button>
             <button
               disabled={!canBuy}
-              onClick={() => { addItem(product, qty, variant, price); navigate('/checkout'); }}
+              onClick={() => {
+                const res = addItem(product, qty, variant, price);
+                if (res.capped) {
+                  toast({
+                    title: res.available != null
+                      ? (ar ? `متوفر ${res.available} فقط` : `Only ${res.available} available`)
+                      : (ar ? 'لا يمكن إضافة المزيد' : 'No more available'),
+                    variant: 'destructive',
+                  });
+                }
+                navigate('/checkout');
+              }}
               className="squish flex-1 sm:w-auto h-14 px-6 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-primary transition-colors disabled:opacity-50"
             >
               {t('common.buyNow')}

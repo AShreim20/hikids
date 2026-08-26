@@ -24,45 +24,8 @@ export default async function(req) {
       return Response.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Deduct purchased quantities from product (and variant) stock. Runs once
-    // per order, right after creation, so inventory stays in sync with sales.
-    try {
-      for (const it of order.items || []) {
-        const qty = Number(it.qty || 0);
-        if (qty <= 0) continue;
-
-        // Bundles deduct each component product's stock (bundle qty × component qty).
-        if (it.is_bundle) {
-          for (const c of (Array.isArray(it.bundle_items) ? it.bundle_items : [])) {
-            if (!c.product_id) continue;
-            const cQty = qty * Number(c.quantity || 1);
-            try {
-              const p = await base44.asServiceRole.entities.Product.get(c.product_id);
-              if (!p) continue;
-              const next = Math.max(0, Number(p.stock || 0) - cQty);
-              await base44.asServiceRole.entities.Product.update(p.id, { stock: next });
-            } catch {}
-          }
-          continue;
-        }
-
-        if (!it.id) continue;
-        try {
-          const p = await base44.asServiceRole.entities.Product.get(it.id);
-          if (!p) continue;
-          const patch: any = { stock: Math.max(0, Number(p.stock || 0) - qty) };
-          // For a variant line, also reduce that specific variant's stock.
-          if (it.variant_key && Array.isArray(p.variants)) {
-            patch.variants = p.variants.map((v: any) =>
-              v && v.key === it.variant_key
-                ? { ...v, stock: Math.max(0, Number(v.stock || 0) - qty) }
-                : v
-            );
-          }
-          await base44.asServiceRole.entities.Product.update(p.id, patch);
-        } catch {}
-      }
-    } catch {}
+    // Stock deduction is now handled atomically by `commitOrderStock`, which
+    // Checkout calls right after creating the order.
 
     const ref = String(order.id).slice(-8).toUpperCase();
     const paymentLabel = order.payment_method === 'card'

@@ -1,18 +1,48 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Minus, Plus, Trash2, ArrowRight, ArrowLeft, Package } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
+import { useToast } from '@/components/ui/use-toast';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
 import ShareCartButton from '@/components/cart/ShareCartButton';
 
 export default function Cart() {
-  const { items, updateQty, removeItem, total, count } = useCart();
+  const { items, updateQty, removeItem, total, count, revalidateStock } = useCart();
   const navigate = useNavigate();
   const { t, formatPrice, lang } = useLanguage();
   const ar = lang === 'ar';
+  const { toast } = useToast();
+
+  // Re-check inventory when the cart opens and adjust any lines that sold out
+  // or dropped below the requested quantity while the customer was away.
+  useEffect(() => {
+    let active = true;
+    revalidateStock().then((adj) => {
+      if (!active || !adj.length) return;
+      const removed = adj.filter((a) => a.newQty === 0);
+      const reduced = adj.filter((a) => a.newQty > 0);
+      const parts = [];
+      reduced.forEach((a) => parts.push(ar ? `تم تقليل "${a.name}" إلى ${a.newQty}` : `"${a.name}" reduced to ${a.newQty}`));
+      removed.forEach((a) => parts.push(ar ? `"${a.name}" لم يعد متوفرًا` : `"${a.name}" is no longer available`));
+      toast({ title: ar ? 'تم تحديث سلتك' : 'Your cart was updated', description: parts.join(' · '), variant: 'destructive' });
+    });
+    return () => { active = false; };
+  }, []);
+
+  const inc = (lineId, qty) => {
+    const res = updateQty(lineId, qty);
+    if (res.capped) {
+      toast({
+        title: res.available != null
+          ? (ar ? `متوفر ${res.available} فقط` : `Only ${res.available} available`)
+          : (ar ? 'وصلت للحد الأقصى' : 'Maximum reached'),
+        variant: 'destructive',
+      });
+    }
+  };
 
   if (items.length === 0) {
     return (
@@ -87,7 +117,7 @@ export default function Cart() {
                         <Minus className="w-4 h-4" />
                       </button>
                       <span className="w-8 text-center font-heading font-bold text-sm">{i.qty}</span>
-                      <button onClick={() => updateQty(i.lineId || i.id, i.qty + 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card" aria-label="+">
+                      <button onClick={() => inc(i.lineId || i.id, i.qty + 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card" aria-label="+">
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>

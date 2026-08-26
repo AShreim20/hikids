@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Heart } from 'lucide-react';
 import { Image } from '@/components/ui/image';
+import { useToast } from '@/components/ui/use-toast';
 import { useCart } from '@/context/CartContext';
 import { useCartFly } from '@/context/CartFlyContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -24,7 +25,9 @@ export default function ProductCard({ product, large = false }) {
   const { addItem } = useCart();
   const { flyToCart } = useCartFly();
   const { toggle, isSaved } = useWishlist();
-  const { t, formatPrice } = useLanguage();
+  const { t, formatPrice, lang } = useLanguage();
+  const ar = lang === 'ar';
+  const { toast } = useToast();
   const { discountPctFor } = useCategories();
   const [added, setAdded] = useState(false);
   const { original, final, hasDiscount } = priceInfo(product, discountPctFor(product.category));
@@ -44,7 +47,15 @@ export default function ProductCard({ product, large = false }) {
       return;
     }
     flyToCart(e.currentTarget);
-    addItem(product, 1);
+    const res = addItem(product, 1);
+    if (res.capped) {
+      toast({
+        title: res.available != null
+          ? (ar ? `متوفر ${res.available} فقط` : `Only ${res.available} available`)
+          : (ar ? 'لا يمكن إضافة المزيد' : 'No more available'),
+        variant: 'destructive',
+      });
+    }
     setAdded(true);
     setTimeout(() => setAdded(false), 1200);
   };
