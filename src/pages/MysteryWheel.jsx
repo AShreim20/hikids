@@ -11,6 +11,7 @@ import { unwrap } from '@/lib/invoke';
 import { rewardLabel } from '@/lib/rewards';
 import { useCart } from '@/context/CartContext';
 import RewardsAuthGate from '@/components/RewardsAuthGate';
+import MysteryWheelChart from '@/components/wheel/MysteryWheelChart';
 
 export default function MysteryWheel() {
   const { t, lang, formatPrice } = useLanguage();
@@ -20,8 +21,6 @@ export default function MysteryWheel() {
   const { addWheelReward, items: cartItems } = useCart();
   const [state, setState] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [spinning, setSpinning] = useState(false);
-  const [result, setResult] = useState(null);
   const [spins, setSpins] = useState([]);
 
   const load = async () => {
@@ -46,27 +45,27 @@ export default function MysteryWheel() {
     } catch (e) { toast({ title: e.message, variant: 'destructive' }); }
   };
 
-  const spin = async () => {
-    if (spinning || !state || state.available <= 0) return;
-    setSpinning(true);
-    setResult(null);
+  // Runs the server-side spin, applies side effects (free gift to cart,
+  // toast, progress refresh) and returns the reward so the wheel can land
+  // on the matching slice.
+  const handleSpin = async () => {
+    if (!state || state.available <= 0) return null;
     try {
       const res = unwrap(await base44.functions.invoke('wheelSpin', {}));
       if (res.success) {
-        setTimeout(() => {
-          setResult(res.reward);
-          setSpinning(false);
-          if (res.reward?.product && !cartItems.some((i) => i.lineId === `wheel::${res.reward.id}`)) {
-            addWheelReward(res.reward.product, res.reward.id, res.reward.product.price);
-            toast({ title: ar ? 'أُضيفت هديتك إلى السلة! 🎁' : 'Your free gift was added to the cart! 🎁' });
-          }
-          load();
-        }, 1600);
-      } else {
-        toast({ title: res.message || 'Error', variant: 'destructive' });
-        setSpinning(false);
+        if (res.reward?.product && !cartItems.some((i) => i.lineId === `wheel::${res.reward.id}`)) {
+          addWheelReward(res.reward.product, res.reward.id, res.reward.product.price);
+          toast({ title: ar ? 'أُضيفت هديتك إلى السلة! 🎁' : 'Your free gift was added to the cart! 🎁' });
+        }
+        load();
+        return res.reward;
       }
-    } catch (e) { toast({ title: e.message, variant: 'destructive' }); setSpinning(false); }
+      toast({ title: res.message || 'Error', variant: 'destructive' });
+      return null;
+    } catch (e) {
+      toast({ title: e.message, variant: 'destructive' });
+      return null;
+    }
   };
 
   const pct = state ? state.progress_pct : 0;
@@ -120,31 +119,8 @@ export default function MysteryWheel() {
             )}
 
             {/* Wheel */}
-            <div className="mt-6 rounded-3xl bg-mist/40 border border-border/60 p-8 flex flex-col items-center">
-              <div className="relative grid place-items-center">
-                {/* Fixed pointer — stays still while the wheel spins, brand-pink on the aubergine wheel */}
-                <div
-                  className="absolute top-[-6px] left-1/2 -translate-x-1/2 z-10 w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-t-[16px] border-t-accent drop-shadow-md"
-                  aria-hidden="true"
-                />
-                <div className={`grid place-items-center w-44 h-44 rounded-full bg-cosmic text-white shadow-2xl ${spinning ? 'animate-spin' : ''}`} style={spinning ? { animationDuration: '0.6s' } : undefined}>
-                {spinning ? <Loader2 className="w-12 h-12 animate-spin" /> : <Sparkles className="w-16 h-16" />}
-                </div>
-              </div>
-              <button onClick={spin} disabled={spinning || state.available <= 0} className="mt-6 squish h-14 px-10 rounded-full bg-cosmic text-white font-heading font-extrabold inline-flex items-center justify-center gap-2 disabled:opacity-50">
-                {spinning ? (ar ? 'يدور...' : 'Spinning...') : (ar ? 'أدر العجلة' : 'Spin the Wheel')}
-              </button>
-
-              {result && (
-                <div className="mt-6 text-center float-in">
-                  <p className="text-sm text-muted-foreground">{ar ? 'ربحت!' : 'You won'}</p>
-                  <p className="mt-1 font-heading font-extrabold text-3xl text-cosmic">{result.label}</p>
-                  {result.discount_code && <p className="mt-2 text-sm">{ar ? 'كود الخصم' : 'Discount code'}: <b className="font-mono">{result.discount_code}</b></p>}
-                  {result.product && <p className="mt-2 text-sm text-emerald-600 font-bold">{ar ? 'أُضيفت مجانًا إلى سلتك' : 'Added to your cart for free'}</p>}
-                  {result.fulfillment === 'manual' && <p className="mt-2 text-xs text-muted-foreground">{ar ? 'سيتم تواصل المتجر معك لاستلام المكافأة' : 'The store will contact you to fulfill this reward'}</p>}
-                  <Link to="/wheel-rewards" className="mt-3 inline-flex items-center gap-1 text-cosmic font-heading font-bold text-sm">{ar ? 'عرض مكافآتي' : 'View my rewards'}</Link>
-                </div>
-              )}
+            <div className="mt-6 rounded-3xl bg-mist/40 border border-border/60 p-8">
+              <MysteryWheelChart rewards={state.rewards || []} available={state.available} onSpin={handleSpin} ar={ar} />
             </div>
 
             {/* Recent spins */}
