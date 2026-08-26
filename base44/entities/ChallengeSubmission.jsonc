@@ -59,6 +59,11 @@
     "file_url"
   ],
   "rls": {
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
     "read": {
       "$or": [
         {
@@ -71,7 +76,6 @@
         }
       ]
     },
-    "create": null,
     "update": {
       "user_condition": {
         "role": "admin"
