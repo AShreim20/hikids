@@ -9,6 +9,7 @@ import Logo from '@/components/Logo';
 import LanguageToggle from '@/components/LanguageToggle';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
+import HeaderLoyaltyBalance from '@/components/HeaderLoyaltyBalance';
 
 
 
@@ -93,6 +94,7 @@ export default function Navbar() {
 
           <div className="flex items-center gap-1.5 lg:gap-2 ms-auto">
             <LanguageToggle />
+            <HeaderLoyaltyBalance />
             {user &&
             <button
               onClick={() => navigate('/loyalty')}
