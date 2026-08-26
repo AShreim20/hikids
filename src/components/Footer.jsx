@@ -13,7 +13,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-4 rounded mx-10">
             <Link to="/" className="inline-flex items-center">
-              <Logo className="h-20 md:h-24 w-auto" />
+              <Logo className="h-28 md:h-36 w-auto" />
             </Link>
           </div>
 

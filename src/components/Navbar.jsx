@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, BarChart3, Heart, Settings as SettingsIcon, Search, MapPin, Sparkles } from 'lucide-react';
+import { ShoppingBag, BarChart3, Heart, Settings as SettingsIcon, Search, MapPin } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -25,9 +25,7 @@ export default function Navbar() {
 
   const links = [
   { label: t('nav.explore'), to: '/shop' },
-  { label: t('nav.worlds'), to: '/#categories' },
-  { label: t('nav.about'), to: '/about' },
-  { label: t('nav.faq'), to: '/faq' }];
+  { label: t('nav.worlds'), to: '/#categories' }];
 
 
   return (
@@ -36,7 +34,7 @@ export default function Navbar() {
       <div className="border-b border-white/10">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 md:h-20 flex items-center gap-4">
           <Link to="/" className="flex items-center group shrink-0">
-            <Logo className="h-10 md:h-12 w-auto rounded-xl group-hover:scale-95 transition-transform" />
+            <Logo className="h-14 md:h-16 w-auto group-hover:scale-95 transition-transform" />
           </Link>
 
           {/* Prominent search — desktop/tablet */}
@@ -92,14 +90,6 @@ export default function Navbar() {
           <div className="flex items-center gap-1.5 lg:gap-2 ms-auto">
             <LanguageToggle />
             <HeaderLoyaltyBalance />
-            {user &&
-            <button
-              onClick={() => navigate('/loyalty')}
-              className="hidden lg:grid squish place-items-center w-11 h-11 rounded-2xl bg-white/15 text-white hover:bg-accent hover:text-white transition-colors"
-              aria-label={t('loyalty.mynav')}>
-              <Sparkles className="w-5 h-5" />
-            </button>
-            }
             {user &&
             <button
               onClick={() => navigate('/addresses')}
