@@ -17,12 +17,12 @@ export default function Home() {
   const { t } = useLanguage();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const categories = ['build','plush','vehicles','early','pretend','arts'].map((k) => ({
-    name: t(`cat.${k}`), desc: t(`cat.${k}Desc`), key: k,
+  const categories = ['build', 'plush', 'vehicles', 'early', 'pretend', 'arts'].map((k) => ({
+    name: t(`cat.${k}`), desc: t(`cat.${k}Desc`), key: k
   }));
   const CAT_ENUM = {
     build: 'Build & Create', plush: 'Plush & Soft', vehicles: 'Vehicles & Motion',
-    early: 'Early Years', pretend: 'Pretend Play', arts: 'Arts & Crafts',
+    early: 'Early Years', pretend: 'Pretend Play', arts: 'Arts & Crafts'
   };
   const catImage = (key) => {
     const p = products.find((pr) => pr.category === CAT_ENUM[key]);
@@ -30,10 +30,10 @@ export default function Home() {
   };
 
   useEffect(() => {
-    base44.entities.Product.list('-updated_date', 50)
-      .then(setProducts)
-      .catch(() => setProducts([]))
-      .finally(() => setLoading(false));
+    base44.entities.Product.list('-updated_date', 50).
+    then(setProducts).
+    catch(() => setProducts([])).
+    finally(() => setLoading(false));
   }, []);
 
   return (
@@ -47,11 +47,11 @@ export default function Home() {
       <section id="promise" className="border-y border-border/60 bg-mist/50">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 grid sm:grid-cols-3 gap-8">
           {[
-            { icon: Leaf, title: t('promise.sustain'), desc: t('promise.sustainDesc') },
-            { icon: ShieldCheck, title: t('promise.pay'), desc: t('promise.payDesc') },
-            { icon: Truck, title: t('promise.delivery'), desc: t('promise.deliveryDesc') },
-          ].map((p) => (
-            <div key={p.title} className="flex items-center gap-4">
+          { icon: Leaf, title: t('promise.sustain'), desc: t('promise.sustainDesc') },
+          { icon: ShieldCheck, title: t('promise.pay'), desc: t('promise.payDesc') },
+          { icon: Truck, title: t('promise.delivery'), desc: t('promise.deliveryDesc') }].
+          map((p) =>
+          <div key={p.title} className="flex items-center gap-4">
               <div className="grid place-items-center w-12 h-12 rounded-2xl bg-card shadow-sm">
                 <p.icon className="w-6 h-6 text-cosmic" />
               </div>
@@ -60,7 +60,7 @@ export default function Home() {
                 <p className="text-sm text-muted-foreground">{p.desc}</p>
               </div>
             </div>
-          ))}
+          )}
         </div>
       </section>
 
@@ -83,26 +83,26 @@ export default function Home() {
                 key={c.name}
                 to={`/shop?category=${encodeURIComponent(CAT_ENUM[c.key])}`}
                 className="group relative overflow-hidden rounded-3xl bg-mist aspect-[4/3] sm:aspect-[5/3] flex flex-col justify-end squish float-in"
-                style={{ animationDelay: `${i * 0.05}s` }}
-              >
-                {img ? (
-                  <Image
-                    src={img}
-                    alt={c.name}
-                    fittingType="fill"
-                    className="absolute inset-0 w-full h-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.08]"
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-cosmic/20" />
-                )}
+                style={{ animationDelay: `${i * 0.05}s` }}>
+                
+                {img ?
+                <Image
+                  src={img}
+                  alt={c.name}
+                  fittingType="fill"
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.08]" /> :
+
+
+                <div className="absolute inset-0 bg-gradient-to-br from-accent/20 to-cosmic/20" />
+                }
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="relative p-4 sm:p-6 md:p-8 text-white">
                   <h3 className="font-heading font-bold text-base sm:text-xl md:text-2xl leading-tight">{c.name}</h3>
                   <p className="text-xs sm:text-sm text-white/80 mt-1">{c.desc}</p>
                   <ArrowRight className="w-5 h-5 mt-2 sm:mt-3 text-white opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                 </div>
-              </Link>
-            );
+              </Link>);
+
           })}
         </div>
       </section>
@@ -111,15 +111,15 @@ export default function Home() {
       <Recommendations />
 
       {/* About */}
-      <section id="about" className="max-w-7xl mx-auto px-5 sm:px-8 py-12 md:py-16">
+      <section id="about" className="max-w-7xl mx-auto px-5 sm:px-8 py-12 md:py-16 hidden">
         <div className="grid md:grid-cols-2 gap-10 md:gap-14 items-center">
           <div className="relative aspect-[4/3] rounded-[2.5rem] overflow-hidden bg-mist">
             <Image
               src="https://media.base44.com/images/public/6a75c91fa5dfe02359c5f127/df023ab5e_generated_37f54450.png"
               alt="Stacking Rainbow"
               fittingType="fill"
-              className="w-full h-full object-cover"
-            />
+              className="w-full h-full object-cover" />
+            
           </div>
           <div>
             <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">{t('about.heading')}</p>
@@ -143,6 +143,6 @@ export default function Home() {
 
       <Newsletter />
       <Footer />
-    </div>
-  );
+    </div>);
+
 }
