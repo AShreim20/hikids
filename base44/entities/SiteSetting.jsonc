@@ -1,0 +1,81 @@
+{
+  "name": "SiteSetting",
+  "type": "object",
+  "properties": {
+    "key": {
+      "type": "string",
+      "title": "Setting key",
+      "default": "global"
+    },
+    "storeName": {
+      "type": "string",
+      "title": "Store name"
+    },
+    "logoUrl": {
+      "type": "string",
+      "title": "Logo URL",
+      "format": "uri"
+    },
+    "phone": {
+      "type": "string",
+      "title": "Phone (display)"
+    },
+    "phoneTel": {
+      "type": "string",
+      "title": "Phone (tel link)"
+    },
+    "whatsapp": {
+      "type": "string",
+      "title": "WhatsApp number (digits only)"
+    },
+    "email": {
+      "type": "string",
+      "title": "Email"
+    },
+    "instagram": {
+      "type": "string",
+      "title": "Instagram URL"
+    },
+    "facebook": {
+      "type": "string",
+      "title": "Facebook URL"
+    },
+    "addressAr": {
+      "type": "string",
+      "title": "Address (Arabic)"
+    },
+    "addressEn": {
+      "type": "string",
+      "title": "Address (English)"
+    },
+    "hoursAr": {
+      "type": "string",
+      "title": "Response hours (Arabic)"
+    },
+    "hoursEn": {
+      "type": "string",
+      "title": "Response hours (English)"
+    }
+  },
+  "required": [
+    "key"
+  ],
+  "rls": {
+    "read": null,
+    "create": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "update": {
+      "user_condition": {
+        "role": "admin"
+      }
+    },
+    "delete": {
+      "user_condition": {
+        "role": "admin"
+      }
+    }
+  }
+}

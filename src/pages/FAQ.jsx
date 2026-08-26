@@ -10,33 +10,16 @@ import {
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 export default function FAQ() {
   const { lang, t } = useLanguage();
+  const { faqItems } = useSiteContent();
 
-  const faqs = lang === 'ar' ? [
-    { q: 'كم تستغرق مدة التوصيل؟', a: 'يصل طلبك عادةً خلال 2-5 أيام عمل داخل فلسطين وأجزاء من إسرائيل. ستصلك رسالة تأكيد وتحديث عند الشحن.' },
-    { q: 'ما هي تكلفة التوصيل؟', a: 'التوصيل مجاني لجميع الطلبات داخل مناطق الخدمة.' },
-    { q: 'ما طرق الدفع المتاحة؟', a: 'يمكنك الدفع بالبطاقة (فيزا، ماستركارد، وغيرها) أونلاين بأمان، أو نقدًا عند استلام الطلب عند باب منزلك.' },
-    { q: 'هل يمكنني إرجاع منتج؟', a: 'نعم، يمكنك إرجاع المنتجات خلال 14 يومًا من الاستلام بحالتها الأصلية. تواصل معنا لبدء عملية الإرجاع.' },
-    { q: 'كيف تعمل نقاط الولاء؟', a: 'تكسب نقطة واحدة مقابل كل ₪1 تنفقها على الألعاب. تظهر النقاط في رصيدك بعد كل طلب مكتمل، ويمكنك استبدالها عند الدفع — 10 نقاط = ₪1 خصم على طلبك.' },
-    { q: 'كيف أستبدل نقاط ولائي؟', a: 'عند الدفع، اختر "استبدل النقاط" وأدخل عدد النقاط التي تريد استخدامها. 10 نقاط تساوي ₪1 خصم، ويُطبّق الخصم على إجماليك فورًا.' },
-    { q: 'هل تنتهي صلاحية نقاط ولائي؟', a: 'لا — تبقى نقاطك في حسابك حتى تختار استبدالها. سجّل الدخول وزر صفحة "نقاطي" لعرض رصيدك.' },
-    { q: 'كيف أتتبّع طلبي؟', a: 'استخدم صفحة "تتبّع الطلب" وأدخل رقم طلبك لمعرفة حالته الحالية.' },
-    { q: 'هل الألعاب آمنة على الأطفال؟', a: 'بالتأكيد. كل لعبة مختارة بعناية وتلتزم بأعلى معايير السلامة، بخامات طبيعية وآمنة.' },
-    { q: 'هل أحتاج إلى حساب للشراء؟', a: 'يمكنك الشراء كضيف، لكن إنشاء حساب يمنحك تتبّعًا أسهل لطلباتك وحفظ معلوماتك للمرات القادمة.' },
-  ] : [
-    { q: 'How long does delivery take?', a: 'Your order usually arrives within 2-5 business days across Palestine and parts of Israel. You will receive a confirmation and a shipping update.' },
-    { q: 'How much is delivery?', a: 'Delivery is free for all orders within our service areas.' },
-    { q: 'What payment methods are available?', a: 'You can pay by card (Visa, Mastercard, and more) securely online, or pay with cash when your order arrives at your door.' },
-    { q: 'Can I return a product?', a: 'Yes — you can return products within 14 days of delivery in their original condition. Contact us to start a return.' },
-    { q: 'How do loyalty points work?', a: 'You earn 1 point for every ₪1 you spend on toys. Points appear in your balance after each completed order, and you can redeem them at checkout — 10 points = ₪1 off your order.' },
-    { q: 'How do I redeem my loyalty points?', a: 'At checkout, choose "Redeem points" and enter how many points you want to use. 10 points equal ₪1 off, and the discount is applied to your total instantly.' },
-    { q: 'Do my loyalty points expire?', a: 'No — your points stay in your account until you choose to redeem them. Sign in and visit the "My points" page to view your balance.' },
-    { q: 'How do I track my order?', a: 'Use the "Track Order" page and enter your order number to see its current status.' },
-    { q: 'Are the toys safe for children?', a: 'Absolutely. Every toy is carefully selected and meets the highest safety standards, using natural, safe materials.' },
-    { q: 'Do I need an account to shop?', a: 'You can check out as a guest, but creating an account makes tracking easier and saves your details for next time.' },
-  ];
+  const faqs = (faqItems || []).map((f) => ({
+    q: lang === 'ar' ? (f.q_ar || f.q_en || '') : (f.q_en || f.q_ar || ''),
+    a: lang === 'ar' ? (f.a_ar || f.a_en || '') : (f.a_en || f.a_ar || ''),
+  }));
 
   return (
     <div className="min-h-screen bg-background">

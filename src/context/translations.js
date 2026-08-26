@@ -36,6 +36,9 @@ export const translations = {
     'nav.purchasing': 'Purchasing',
     'nav.management': 'Management',
     'nav.loyaltyDiscounts': 'Loyalty & Discounts',
+    'nav.content': 'Content',
+    'nav.siteContent': 'Site Content',
+    'nav.siteSettings': 'Site Settings',
 
     'users.title': 'User Management',
     'users.subtitle': 'Manage roles and access',
@@ -268,6 +271,12 @@ export const translations = {
 
     'faq.title': 'Frequently asked questions',
     'faq.subtitle': 'Everything you need to know about shopping with HiKids.',
+    'contact.title': 'Contact us',
+    'contact.subtitle': 'The HiKids team is here to help you pick the right gift, follow up on an order, or answer any question about our toys, delivery, and payment options. Choose whichever channel suits you and we will get back to you shortly.',
+    'contact.emailLabel': 'Email',
+    'contact.whatsappLabel': 'WhatsApp',
+    'contact.addressTitle': 'Where we are',
+    'contact.hoursTitle': 'Response hours',
 
     'aboutPage.hero': 'About HiKids',
     'aboutPage.heroSub': 'Wonder, crafted with care.',
@@ -708,6 +717,9 @@ export const translations = {
     'nav.purchasing': 'المشتريات',
     'nav.management': 'الإدارة',
     'nav.loyaltyDiscounts': 'الولاء والخصومات',
+    'nav.content': 'المحتوى',
+    'nav.siteContent': 'محتوى الموقع',
+    'nav.siteSettings': 'إعدادات الموقع',
 
     'users.title': 'إدارة المستخدمين',
     'users.subtitle': 'إدارة الأدوار والصلاحيات',
@@ -940,6 +952,12 @@ export const translations = {
 
     'faq.title': 'الأسئلة الشائعة',
     'faq.subtitle': 'كل ما تحتاج معرفته عن التسوّق من HiKids.',
+    'contact.title': 'تواصل معنا',
+    'contact.subtitle': 'فريق HiKids جاهز لمساعدتك في اختيار الهدية المناسبة، أو متابعة طلبك، أو الإجابة عن أي سؤال حول الألعاب والتوصيل والدفع. اختر الطريقة الأنسب لك وسنعود إليك بأسرع وقت.',
+    'contact.emailLabel': 'البريد الإلكتروني',
+    'contact.whatsappLabel': 'واتساب',
+    'contact.addressTitle': 'موقعنا',
+    'contact.hoursTitle': 'ساعات الرد',
 
     'aboutPage.hero': 'من نحن HiKids',
     'aboutPage.heroSub': 'عجائبُ مصنوعة بعناية.',

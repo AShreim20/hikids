@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, GalleryHorizontal, ShoppingCart, Truck, Layers,
-  Search, ClipboardList, BarChart3, Award, Ticket, Package, Trophy, Sparkles, Gamepad2, Users, FolderTree, Camera,
+  Search, ClipboardList, BarChart3, Award, Ticket, Package, Trophy, Sparkles, Gamepad2, Users, FolderTree, Camera, Type, Settings, FileText,
 } from 'lucide-react';
 
 // Single source of truth for the admin navigation. Top-level entries are
@@ -37,6 +37,13 @@ export function getAdminNav(t) {
       ],
     },
     { type: 'link', to: '/admin/reports', label: t('nav.reports'), icon: BarChart3 },
+    {
+      type: 'group', id: 'content', label: t('nav.content'), icon: FileText,
+      children: [
+        { to: '/admin/site-content', label: t('nav.siteContent'), icon: Type },
+        { to: '/admin/site-settings', label: t('nav.siteSettings'), icon: Settings },
+      ],
+    },
     {
       type: 'group', id: 'loyalty', label: t('nav.loyaltyDiscounts'), icon: Award,
       children: [

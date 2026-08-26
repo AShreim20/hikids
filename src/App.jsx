@@ -61,12 +61,15 @@ const MyWheelRewards = lazy(() => import('./pages/MyWheelRewards'));
 const WheelWinners = lazy(() => import('./pages/WheelWinners'));
 const SharedCart = lazy(() => import('./pages/SharedCart'));
 const PhotoReviews = lazy(() => import('./pages/PhotoReviews'));
+const SiteContentAdmin = lazy(() => import('./pages/admin/SiteContentAdmin'));
+const SiteSettingsAdmin = lazy(() => import('./pages/admin/SiteSettingsAdmin'));
 import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ThemeProvider } from '@/context/ThemeContext';
 import { LanguageProvider } from '@/context/LanguageContext';
 import { CategoryProvider } from '@/context/CategoryContext';
 import { CartFlyProvider } from '@/context/CartFlyContext';
+import { SiteContentProvider } from '@/context/SiteContentContext';
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -105,6 +108,8 @@ function AnimatedRoutes() {
       <Route path="/wheel-rewards" element={<MyWheelRewards />} />
       <Route path="/admin/wheel-winners" element={<WheelWinners />} />
       <Route path="/admin/photo-reviews" element={<PhotoReviews />} />
+      <Route path="/admin/site-content" element={<SiteContentAdmin />} />
+      <Route path="/admin/site-settings" element={<SiteSettingsAdmin />} />
       <Route path="/cart/shared" element={<SharedCart />} />
       <Route path="/admin/reports" element={<Reports />} />
       <Route path="/admin/product/new" element={<ProductEditor />} />
@@ -197,12 +202,14 @@ function App() {
       <QueryClientProvider client={queryClientInstance}>
         <ThemeProvider>
         <LanguageProvider>
+        <SiteContentProvider>
         <CategoryProvider>
         <Router>
           <ScrollToTop />
           <AuthenticatedApp />
         </Router>
         </CategoryProvider>
+        </SiteContentProvider>
         </LanguageProvider>
         </ThemeProvider>
         <Toaster />

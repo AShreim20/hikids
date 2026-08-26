@@ -5,31 +5,22 @@ import { Image } from '@/components/ui/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
+import { useSiteContent } from '@/context/SiteContentContext';
+
+const VALUE_ICONS = [Leaf, ShieldCheck, Heart, Star];
 
 export default function About() {
   const { lang, t } = useLanguage();
+  const { about } = useSiteContent();
+  const ar = lang === 'ar';
 
-  const story = lang === 'ar' ? [
-    'بدأت HiKids بحلم بسيط: أن تكون اللعبة أكثر من مجرد تسلية — أن تكون تجربة تُثري الطفل وتُصان وتُورَّث.',
-    'نختار كل قطعة بعناية، ونتعاون مع صُنّاع محليين ينتجون دفعات صغيرة من خامات مستدامة وآمنة على الأطفال.',
-    'نؤمن أن اللعب الراقي لا يحتاج إلى ضجيج، بل إلى جودة وصبر وقلب. لذلك نغلّف كل طلبٍ كهدية، ونمنحك خيار الدفع بالبطاقة أو نقدًا عند التوصيل.',
-  ] : [
-    'HiKids began with a simple dream: that a toy should be more than entertainment — it should be an experience that enriches a child, is cared for, and passed on.',
-    'We choose every piece with care, partnering with local makers who craft in small batches from sustainable, child-safe materials.',
-    'We believe premium play needs no noise — only quality, patience, and heart. So we wrap every order like a gift, and let you pay by card or cash on delivery.',
-  ];
-
-  const values = lang === 'ar' ? [
-    { icon: Leaf, title: 'استدامة', desc: 'خامات طبيعية وآمنة، مصنوعة باحترام للبيئة.' },
-    { icon: ShieldCheck, title: 'أمان', desc: 'كل لعبة تُختبَر لتلبي أعلى معايير السلامة.' },
-    { icon: Heart, title: 'صناعة بقلب', desc: 'نتعاون مع حرفيين ينتجون دفعات صغيرة بعناية.' },
-    { icon: Star, title: 'جودة تدوم', desc: 'ألعاب مصمّمة لتُورَّث، لا لتُرمى.' },
-  ] : [
-    { icon: Leaf, title: 'Sustainability', desc: 'Natural, safe materials, made with respect for the planet.' },
-    { icon: ShieldCheck, title: 'Safety', desc: 'Every toy is tested to meet the highest safety standards.' },
-    { icon: Heart, title: 'Made with heart', desc: 'We work with artisans who craft in small, careful batches.' },
-    { icon: Star, title: 'Lasting quality', desc: 'Toys designed to be passed down, not thrown away.' },
-  ];
+  const story = ar ? (about.storyAr || []) : (about.storyEn || []);
+  const valuesRaw = ar ? (about.valuesAr || []) : (about.valuesEn || []);
+  const values = valuesRaw.map((v, i) => ({
+    icon: VALUE_ICONS[i] || Star,
+    title: v.title || '',
+    desc: v.desc || '',
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -63,10 +54,10 @@ export default function About() {
           </div>
           <div>
             <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">
-              {lang === 'ar' ? 'قصتنا' : 'Our story'}
+              {ar ? about.storyLabelAr : about.storyLabelEn}
             </p>
             <h2 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl leading-tight text-balance">
-              {lang === 'ar' ? 'من الشغف إلى المتجر' : 'From passion to a store'}
+              {ar ? about.storyTitleAr : about.storyTitleEn}
             </h2>
             <div className="mt-6 space-y-4 text-lg text-muted-foreground leading-relaxed">
               {story.slice(1).map((p, i) => (
@@ -91,10 +82,10 @@ export default function About() {
       <section className="bg-mist/50 border-y border-border/60">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-16 md:py-24">
           <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium text-center">
-            {lang === 'ar' ? 'قيمنا' : 'Our values'}
+            {ar ? about.valuesLabelAr : about.valuesLabelEn}
           </p>
           <h2 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl text-center text-balance">
-            {lang === 'ar' ? 'ما الذي يحرّكنا' : 'What moves us'}
+            {ar ? about.valuesTitleAr : about.valuesTitleEn}
           </h2>
           <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {values.map((v) => (
@@ -135,18 +126,16 @@ export default function About() {
       <section className="max-w-7xl mx-auto px-5 sm:px-8 pb-24">
         <div className="rounded-[2.5rem] bg-cosmic text-white px-6 sm:px-12 py-14 md:py-20 text-center">
           <h2 className="font-heading font-extrabold text-3xl md:text-5xl text-balance">
-            {lang === 'ar' ? 'اكتشف المجموعة' : 'Discover the collection'}
+            {ar ? about.ctaTitleAr : about.ctaTitleEn}
           </h2>
           <p className="mt-4 text-white/70 max-w-xl mx-auto text-lg">
-            {lang === 'ar'
-              ? 'ألعاب مختارة بعناية، بانتظار أن تُكتشف.'
-              : 'Curated toys, waiting to be discovered.'}
+            {ar ? about.ctaDescAr : about.ctaDescEn}
           </p>
           <Link
             to="/"
             className="mt-8 squish inline-flex items-center gap-2 h-14 px-8 rounded-full bg-white text-cosmic font-heading font-bold"
           >
-            {lang === 'ar' ? 'تصفّح الآن' : 'Browse now'} <ArrowRight className="w-5 h-5" />
+            {ar ? about.ctaBtnAr : about.ctaBtnEn} <ArrowRight className="w-5 h-5" />
           </Link>
         </div>
       </section>

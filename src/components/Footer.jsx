@@ -3,9 +3,11 @@ import { Link } from 'react-router-dom';
 import { Instagram, Facebook } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { useLanguage } from '@/context/LanguageContext';
+import { useSiteContent } from '@/context/SiteContentContext';
 
 export default function Footer() {
   const { t } = useLanguage();
+  const { settings } = useSiteContent();
   return (
     <footer className="hidden md:block mt-24 bg-cosmic text-white">
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-8">
@@ -41,8 +43,8 @@ export default function Footer() {
           <div className="md:col-span-4 md:text-end">
             <h4 className="font-heading font-bold text-xs uppercase tracking-wider text-white/50">{t('footer.follow')}</h4>
             <div className="mt-1.5 flex md:justify-end gap-2">
-              <a href="https://www.instagram.com/hi_kids.ps/?hl=en" aria-label="Instagram" className="grid place-items-center w-10 h-10 rounded-full bg-white/10 hover:bg-white hover:text-cosmic transition-colors"><Instagram className="w-5 h-5" /></a>
-              <a href="https://www.facebook.com/share/gBAGEMdhAwMobxRD/?mibextid=qi2Omg" aria-label="Facebook" className="grid place-items-center w-10 h-10 rounded-full bg-white/10 hover:bg-white hover:text-cosmic transition-colors"><Facebook className="w-5 h-5" /></a>
+              <a href={settings.instagram} target="_blank" rel="noreferrer" aria-label="Instagram" className="grid place-items-center w-10 h-10 rounded-full bg-white/10 hover:bg-white hover:text-cosmic transition-colors"><Instagram className="w-5 h-5" /></a>
+              <a href={settings.facebook} target="_blank" rel="noreferrer" aria-label="Facebook" className="grid place-items-center w-10 h-10 rounded-full bg-white/10 hover:bg-white hover:text-cosmic transition-colors"><Facebook className="w-5 h-5" /></a>
             </div>
           </div>
         </div>

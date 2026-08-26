@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useReducer, useState } from 'react';
 import { translations } from './translations';
+import { getOverrides, subscribeOverrides } from '@/lib/i18nOverrides';
 
 // Preserve the context instance across Vite HMR updates. Without this, a
 // hot-reload of this module creates a *new* context object while the already
@@ -23,8 +24,17 @@ export function LanguageProvider({ children }) {
     localStorage.setItem(STORAGE_KEY, lang);
   }, [lang, dir]);
 
-  const t = (key) =>
-    (translations[lang] && translations[lang][key]) || translations.en[key] || key;
+  // Re-render consumers when admin overrides load/change so edited text
+  // appears live without a reload.
+  const [, force] = useReducer((c) => c + 1, 0);
+  useEffect(() => subscribeOverrides(force), []);
+
+  const t = (key) => {
+    const o = getOverrides();
+    const ov = o[lang] && o[lang][key] != null && o[lang][key] !== '' ? o[lang][key] : (o.en && o.en[key]);
+    if (ov != null && ov !== '') return ov;
+    return (translations[lang] && translations[lang][key]) || translations.en[key] || key;
+  };
 
   const formatPrice = (n) => {
     const value = Number(n || 0).toFixed(2);
