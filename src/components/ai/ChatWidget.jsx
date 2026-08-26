@@ -5,12 +5,17 @@ import ChatPanel from './ChatPanel';
 import { useLanguage } from '@/context/LanguageContext';
 import { useLocation } from 'react-router-dom';
 import { subscribeChatOpen, getChatOpen, setChatOpen } from '@/lib/chatOpenStore';
+import { useAuth } from '@/lib/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function ChatWidget() {
   const { t } = useLanguage();
   const { pathname } = useLocation();
   const open = useSyncExternalStore(subscribeChatOpen, getChatOpen);
+  const { user } = useAuth();
+  const isMobile = useIsMobile();
   if (pathname === '/checkout') return null;
+  if (isMobile && user?.role === 'admin') return null;
   return (
     <>
       <button

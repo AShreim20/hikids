@@ -4,6 +4,8 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useLocation } from 'react-router-dom';
 import { subscribeChatOpen, getChatOpen } from '@/lib/chatOpenStore';
 import { WHATSAPP_NUMBER } from '@/lib/businessContact';
+import { useAuth } from '@/lib/AuthContext';
+import { useIsMobile } from '@/hooks/use-mobile';
 const DEFAULT_MESSAGE = {
   en: "Hi HiKids! I have a question about your toys.",
   ar: "مرحبًا هاي كيدز! لدي سؤال عن ألعابكم."
@@ -13,7 +15,10 @@ export default function WhatsAppButton() {
   const { lang } = useLanguage();
   const { pathname } = useLocation();
   const chatOpen = useSyncExternalStore(subscribeChatOpen, getChatOpen);
+  const { user } = useAuth();
+  const isMobile = useIsMobile();
   if (pathname === '/checkout' || chatOpen) return null;
+  if (isMobile && user?.role === 'admin') return null;
   const msg = encodeURIComponent(DEFAULT_MESSAGE[lang] || DEFAULT_MESSAGE.en);
   const label = lang === 'ar' ? 'دعم واتساب' : 'WhatsApp Support';
   return (
