@@ -24,11 +24,26 @@ export function CartProvider({ children }) {
   // change what was bought.
   const addItem = (product, qty = 1, variant = null, price = null) => {
     const lineId = variant ? `${product.id}::${variant.key}` : product.id;
+    // Never let a cart line exceed available stock. Variant stock wins over
+    // product stock; missing stock info is treated as unlimited.
+    const available =
+      variant && variant.stock != null ? Number(variant.stock)
+      : product.stock != null ? Number(product.stock)
+      : Infinity;
+    const max = Number.isFinite(available) ? Math.max(0, available) : Infinity;
     setItems((prev) => {
       const existing = prev.find((i) => i.lineId === lineId);
       if (existing) {
-        return prev.map((i) => (i.lineId === lineId ? { ...i, qty: i.qty + qty } : i));
+        const nextQty = Math.min(existing.qty + qty, max);
+        if (nextQty < 1) return prev;
+        return prev.map((i) =>
+          i.lineId === lineId
+            ? { ...i, qty: nextQty, ...(Number.isFinite(available) ? { stock: available } : {}) }
+            : i
+        );
       }
+      const clampedQty = Math.min(qty, max);
+      if (clampedQty < 1) return prev;
       return [
         ...prev,
         {
@@ -37,7 +52,8 @@ export function CartProvider({ children }) {
           name: product.name,
           price: price != null ? price : (product.sale_price ?? product.price),
           image_url: product.image_url,
-          qty,
+          qty: clampedQty,
+          ...(Number.isFinite(available) ? { stock: available } : {}),
           variant_key: variant?.key || null,
           variant_label: variant ? variantLabel(variant.attributes) : null,
           variant_attributes: variant?.attributes || null,
@@ -79,9 +95,11 @@ export function CartProvider({ children }) {
 
   const updateQty = (lineId, qty) =>
     setItems((prev) =>
-      prev.map((i) =>
-        (i.lineId || i.id) === lineId ? { ...i, qty: Math.max(1, qty) } : i
-      )
+      prev.map((i) => {
+        if ((i.lineId || i.id) !== lineId) return i;
+        const max = typeof i.stock === 'number' && Number.isFinite(i.stock) ? i.stock : Infinity;
+        return { ...i, qty: Math.min(Math.max(1, qty), Math.max(1, max)) };
+      })
     );
 
   // A free Mystery Wheel product reward. price is 0 (100% discount) but the
