@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, BarChart3, Heart, Settings as SettingsIcon, Search, MapPin } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
@@ -23,13 +23,29 @@ export default function Navbar() {
   const { t } = useLanguage();
   const { user } = useAuth();
 
+  // The header is fixed so it stays visible; this measured spacer reserves
+  // the exact header height in the flow so every page's content starts below
+  // the header — auto-matching the real height on mobile and desktop.
+  const headerRef = useRef(null);
+  const [headerH, setHeaderH] = useState(null);
+  useLayoutEffect(() => {
+    const el = headerRef.current;
+    if (!el) return;
+    const measure = () => setHeaderH(el.getBoundingClientRect().height);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   const links = [
   { label: t('nav.explore'), to: '/shop' },
   { label: t('nav.worlds'), to: '/#categories' }];
 
 
   return (
-    <header className="sticky top-0 z-50 bg-[#5D3F85]/90 backdrop-blur-xl border-b border-accent/30 safe-top">
+    <>
+    <header ref={headerRef} className="fixed top-0 left-0 right-0 z-50 bg-[#5D3F85]/90 backdrop-blur-xl border-b border-accent/30 safe-top">
       {/* Section 1 — brand + search (the main visual band) */}
       <div className="border-b border-white/10">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 md:h-20 flex items-center gap-4">
@@ -150,6 +166,9 @@ export default function Navbar() {
       </div>
       }
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-    </header>);
+    </header>
+    <div aria-hidden className="h-[112px] md:h-[136px]" style={headerH ? { height: `${headerH}px` } : undefined} />
+    </>
+  );
 
 }
