@@ -25,7 +25,10 @@ export default function MysteryWheel() {
 
   const load = async () => {
     if (!user) { setLoading(false); return; }
-    setLoading(true);
+    // Only show the full-page spinner on the first load; later refreshes
+    // (e.g. right after a spin) keep the wheel mounted so its rotation
+    // animation can finish instead of being unmounted and reset.
+    if (!state) setLoading(true);
     try {
       const res = unwrap(await base44.functions.invoke('wheelState', {}));
       if (res.success) setState(res);
