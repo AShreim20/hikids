@@ -22,11 +22,11 @@ export default function Navbar() {
   const { user } = useAuth();
 
   const links = [
-    { label: t('nav.explore'), to: '/shop' },
-    { label: t('nav.worlds'), to: '/#categories' },
-    { label: t('nav.about'), to: '/about' },
-    { label: t('nav.faq'), to: '/faq' },
-  ];
+  { label: t('nav.explore'), to: '/shop' },
+  { label: t('nav.worlds'), to: '/#categories' },
+  { label: t('nav.about'), to: '/about' },
+  { label: t('nav.faq'), to: '/faq' }];
+
 
   return (
     <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/60 safe-top">
@@ -36,40 +36,40 @@ export default function Navbar() {
         </Link>
 
         <div className="hidden md:flex items-center gap-5 lg:gap-9">
-          {links.map((l) => (
-            <a
-              key={l.label}
-              href={l.to}
-              className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors"
-            >
+          {links.map((l) =>
+          <a
+            key={l.label}
+            href={l.to}
+            className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors mx-5">
+            
               {l.label}
             </a>
-          ))}
-          {user && (
-            <Link to="/orders" className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors">
+          )}
+          {user &&
+          <Link to="/orders" className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors">
               {t('orders.title')}
             </Link>
-          )}
-          {user && (
-            <Link to="/challenges" className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors">
+          }
+          {user &&
+          <Link to="/challenges" className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors">
               {t('nav.challenges')}
             </Link>
-          )}
-          {user && (
-            <Link to="/wheel" className="text-sm font-medium text-accent hover:text-cosmic transition-colors">
+          }
+          {user &&
+          <Link to="/wheel" className="text-sm font-medium text-accent hover:text-cosmic transition-colors">
               {t('nav.wheel')}
             </Link>
-          )}
-          {user && (
-            <Link to="/wheel-rewards" className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors">
+          }
+          {user &&
+          <Link to="/wheel-rewards" className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors">
               {t('nav.wheelRewards')}
             </Link>
-          )}
-          {user?.role === 'admin' && (
-            <Link to="/analytics" className="text-sm font-medium text-cosmic hover:text-primary transition-colors flex items-center gap-1.5">
+          }
+          {user?.role === 'admin' &&
+          <Link to="/analytics" className="text-sm font-medium text-cosmic hover:text-primary transition-colors flex items-center gap-1.5">
               <BarChart3 className="w-4 h-4" /> {t('nav.insights')}
             </Link>
-          )}
+          }
         </div>
 
         <div className="flex items-center gap-1.5 lg:gap-2">
@@ -79,84 +79,84 @@ export default function Navbar() {
           <button
             onClick={() => setSearchOpen((v) => !v)}
             className="md:hidden grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
-            aria-label={t('nav.search')}
-          >
+            aria-label={t('nav.search')}>
+            
             <Search className="w-5 h-5" />
           </button>
           <LanguageToggle />
-          {user && (
-            <button
-              onClick={() => navigate('/loyalty')}
-              className="hidden lg:grid squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
-              aria-label={t('loyalty.mynav')}
-            >
+          {user &&
+          <button
+            onClick={() => navigate('/loyalty')}
+            className="hidden lg:grid squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+            aria-label={t('loyalty.mynav')}>
+            
               <Sparkles className="w-5 h-5" />
             </button>
-          )}
-          {user && (
-            <button
-              onClick={() => navigate('/addresses')}
-              className="hidden lg:grid squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
-              aria-label={t('address.title')}
-            >
+          }
+          {user &&
+          <button
+            onClick={() => navigate('/addresses')}
+            className="hidden lg:grid squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+            aria-label={t('address.title')}>
+            
               <MapPin className="w-5 h-5" />
             </button>
-          )}
+          }
           <button
             onClick={() => setSettingsOpen(true)}
             className="grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
-            aria-label={t('nav.settings')}
-          >
+            aria-label={t('nav.settings')}>
+            
             <SettingsIcon className="w-5 h-5" />
           </button>
           <button
             onClick={() => navigate('/wishlist')}
             className="hidden md:grid relative squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
-            aria-label="Wishlist"
-          >
+            aria-label="Wishlist">
+            
             <Heart className="w-5 h-5" />
-            {wishCount > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 grid place-items-center rounded-full bg-accent text-white text-[11px] font-bold">
+            {wishCount > 0 &&
+            <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 grid place-items-center rounded-full bg-accent text-white text-[11px] font-bold">
                 {wishCount}
               </span>
-            )}
+            }
           </button>
           <button
             onClick={() => navigate('/cart')}
             className="hidden md:grid relative squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
-            aria-label="Cart"
-          >
+            aria-label="Cart">
+            
             <ShoppingBag className="w-5 h-5" />
-            {count > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 grid place-items-center rounded-full bg-cosmic text-white text-[11px] font-bold">
+            {count > 0 &&
+            <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 grid place-items-center rounded-full bg-cosmic text-white text-[11px] font-bold">
                 {count}
               </span>
-            )}
+            }
           </button>
-          {!user && (
-            <div className="hidden md:flex items-center gap-2 ms-1">
+          {!user &&
+          <div className="hidden md:flex items-center gap-2 ms-1">
               <Link
-                to="/login"
-                className="h-11 px-4 rounded-2xl bg-mist text-foreground text-sm font-heading font-bold inline-flex items-center hover:bg-accent hover:text-white transition-colors"
-              >
+              to="/login"
+              className="h-11 px-4 rounded-2xl bg-mist text-foreground text-sm font-heading font-bold inline-flex items-center hover:bg-accent hover:text-white transition-colors">
+              
                 {t('nav.signIn')}
               </Link>
               <Link
-                to="/register"
-                className="h-11 px-4 rounded-2xl bg-cosmic text-white text-sm font-heading font-bold inline-flex items-center hover:bg-primary transition-colors whitespace-nowrap"
-              >
+              to="/register"
+              className="h-11 px-4 rounded-2xl bg-cosmic text-white text-sm font-heading font-bold inline-flex items-center hover:bg-primary transition-colors whitespace-nowrap">
+              
                 {t('nav.signUp')}
               </Link>
             </div>
-          )}
+          }
         </div>
       </nav>
-      {searchOpen && (
-        <div className="md:hidden border-t border-border/60 px-5 sm:px-8 py-3 max-w-7xl mx-auto">
+      {searchOpen &&
+      <div className="md:hidden border-t border-border/60 px-5 sm:px-8 py-3 max-w-7xl mx-auto">
           <SearchBar autoFocus className="w-full" onSubmitted={() => setSearchOpen(false)} />
         </div>
-      )}
+      }
       <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
-    </header>
-  );
+    </header>);
+
 }
