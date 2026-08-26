@@ -1,5 +1,5 @@
-import React from 'react';
-import { Printer } from 'lucide-react';
+import React, { useState } from 'react';
+import { Printer, Eye } from 'lucide-react';
 import { orderRef, orderTotals, statusLabel } from '@/lib/orderStatus';
 import { useLanguage } from '@/context/LanguageContext';
 import { BUSINESS_PHONE_DISPLAY } from '@/lib/businessContact';
@@ -265,5 +265,118 @@ export default function InvoiceButton({ order }) {
     >
       <Printer className="w-4 h-4" /> {lang === 'ar' ? 'طباعة الفاتورة' : 'Print invoice'}
     </button>
+  );
+}
+
+// Demo data used only for invoice preview — never persisted, never confused
+// with a real transaction. The `_is_preview` flag and PREVIEW* id mark it.
+const SAMPLE_ITEMS = [
+  { name: 'سيارة سباق يتم التحكم بها عن بعد', name_en: 'RC Race Car Pro', sku: 'HK-RC-014', barcode: '6290123400011', price: 149, qty: 1 },
+  { name: 'مجموعة مكعبات بناء 220 قطعة', name_en: 'Building Blocks 220pc', sku: 'HK-BLK-220', barcode: '6290123400028', price: 89, qty: 2 },
+  { name: 'دمية دب قطني ناعم', name_en: 'Plush Teddy Bear', sku: 'HK-PL-009', barcode: '6290123400035', price: 65, qty: 1 },
+  { name: 'لوح رسم مغناطيسي ثنائي الوجه', name_en: 'Magnetic Drawing Board', sku: 'HK-DB-007', barcode: '6290123400042', price: 110, qty: 1 },
+  { name: 'بازل صخري 100 قطعة', name_en: 'Dinosaur Puzzle 100pc', sku: 'HK-PZ-100', barcode: '6290123400059', price: 45, qty: 3 },
+  { name: 'قطار خشبي كلاسيكي - مجموعة 40 قطعة', name_en: 'Wooden Train Set 40pc', sku: 'HK-TR-040', barcode: '6290123400066', price: 130, qty: 1 },
+  { name: 'كرة قدم مضيئة بال_LED', name_en: 'LED Light Football', sku: 'HK-BL-021', barcode: '6290123400073', price: 75, qty: 2 },
+  { name: 'ميكروسكوب علمي للأطفال', name_en: 'Kids Microscope', sku: 'HK-SC-003', barcode: '6290123400080', price: 199, qty: 1 },
+  { name: 'لوحة ألوان وفرو شعر', name_en: 'Watercolor Paint Set', sku: 'HK-AR-018', barcode: '6290123400097', price: 58, qty: 2 },
+  { name: 'روبوت برمجي تفاعلي', name_en: 'Coding Robot Kit', sku: 'HK-RB-001', barcode: '6290123400103', price: 240, qty: 1 },
+  { name: 'مطبخ ألعاب كامل بالملحقات', name_en: 'Play Kitchen Deluxe', sku: 'HK-KT-005', barcode: '6290123400110', price: 320, qty: 1 },
+  { name: 'دراجة ثلاثية العجلات حمراء', name_en: 'Red Tricycle', sku: 'HK-TR-005', barcode: '6290123400127', price: 280, qty: 1 },
+  { name: 'مجموعة طباعة ديناصورات', name_en: 'Dinosaur Stamp Set', sku: 'HK-ST-012', barcode: '6290123400134', price: 38, qty: 2 },
+  { name: 'جيتار صغير موسيقي للأطفال', name_en: 'Kids Acoustic Guitar', sku: 'HK-MU-006', barcode: '6290123400141', price: 145, qty: 1 },
+  { name: 'لعبة تركيب شرطة المرور', name_en: 'Traffic Lego Set', sku: 'HK-LG-031', barcode: '6290123400158', price: 95, qty: 1 },
+  { name: 'مكعبات رياضيات تعليمية', name_en: 'Math Learning Cubes', sku: 'HK-ED-022', barcode: '6290123400165', price: 52, qty: 3 },
+  { name: 'ساعة يد رقمية للأطفال', name_en: 'Kids Digital Watch', sku: 'HK-WT-008', barcode: '6290123400172', price: 70, qty: 2 },
+  { name: 'طاولة ونشاطات متعددة', name_en: 'Activity Play Table', sku: 'HK-AT-001', barcode: '6290123400189', price: 210, qty: 1 },
+];
+
+// Opens the real invoice template with mock data. Print / Save-as-PDF behave
+// exactly like a live invoice. Nothing is written to the database.
+export function previewSampleInvoice({ lang = 'en' } = {}) {
+  const ar = lang === 'ar';
+  const items = SAMPLE_ITEMS.map((p) => {
+    const line = p.price * p.qty;
+    const tax = Math.round(line * 0.16 * 100) / 100;
+    return { ...p, tax };
+  });
+  // A free wheel-reward line to exercise the reward / strike-through styling.
+  items.push({
+    name: 'مكافأة العجلة السحرية', name_en: 'Mystery Wheel Reward',
+    sku: 'HK-RWD', barcode: '6290000000001', price: 0, qty: 1,
+    is_wheel_reward: true, reward_price: 89, tax: 0,
+  });
+
+  const subtotal = items.reduce((s, it) => s + it.price * it.qty, 0);
+  const taxTotal = items.reduce((s, it) => s + Number(it.tax || 0), 0);
+  const discount_amount = 25;
+  const loyalty_discount = 20;
+  const loyalty_points = 200;
+  const delivery_cost = 30;
+  const total = subtotal + taxTotal + delivery_cost - discount_amount - loyalty_discount;
+
+  const order = {
+    _is_preview: true,
+    id: 'PREVIEW0001',
+    created_date: new Date().toISOString(),
+    payment_method: 'card',
+    payment_status: 'paid',
+    status: 'delivered',
+    handled_by: 'ahmad@hikids.ps',
+    customer_name: ar ? 'نور إبراهيم' : 'Noor Ibrahim',
+    phone: '+970 59 123 4567',
+    customer_email: 'noor@example.com',
+    city: ar ? 'رام الله' : 'Ramallah',
+    address: ar ? 'شارع الماصون، بجانب البنك العربي' : 'Al-Masoun St., next to Arab Bank',
+    subtotal,
+    delivery_cost,
+    discount_code: 'WELCOME10',
+    discount_amount,
+    loyalty_points,
+    loyalty_discount,
+    total,
+    gift_message: ar ? 'كل عام وأنتم بخير — هدية للعيد!' : 'Wishing you a wonderful birthday!',
+    delivery_notes: ar ? 'الرجاء الاتصال قبل التوصيل بـ 15 دقيقة.' : 'Please call 15 minutes before delivery.',
+    items,
+  };
+
+  printInvoice(order, { lang });
+}
+
+export function PreviewInvoiceButton() {
+  const { lang } = useLanguage();
+  const ar = lang === 'ar';
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="squish inline-flex items-center gap-1.5 h-11 px-4 rounded-full bg-cosmic text-white font-heading font-bold text-sm"
+      >
+        <Eye className="w-4 h-4" /> {ar ? 'معاينة الفاتورة' : 'Preview Invoice'}
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
+          <div className="absolute end-0 top-full mt-2 z-50 min-w-[200px] rounded-2xl bg-card border border-border shadow-xl py-1.5">
+            <button
+              type="button"
+              onClick={() => { previewSampleInvoice({ lang: 'en' }); setOpen(false); }}
+              className="w-full text-start px-4 py-2.5 text-sm hover:bg-mist"
+            >
+              English (LTR)
+            </button>
+            <button
+              type="button"
+              onClick={() => { previewSampleInvoice({ lang: 'ar' }); setOpen(false); }}
+              className="w-full text-start px-4 py-2.5 text-sm hover:bg-mist"
+            >
+              العربية (RTL)
+            </button>
+          </div>
+        </>
+      )}
+    </div>
   );
 }

@@ -7,6 +7,7 @@ import Footer from '@/components/Footer';
 import OrderStatsCards from '@/components/orders/OrderStatsCards';
 import OrderFilters from '@/components/orders/OrderFilters';
 import OrderListItem from '@/components/orders/OrderListItem';
+import { PreviewInvoiceButton } from '@/components/orders/OrderInvoice';
 import { usePermissions } from '@/lib/permissions';
 import { useLanguage } from '@/context/LanguageContext';
 import {
@@ -108,12 +109,17 @@ export default function OrdersManagement() {
     <div className="min-h-screen bg-background">
       <PageHeader title={ar ? 'الطلبات والمبيعات' : 'Orders & Sales'} />
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 md:pl-16">
-        <h1 className="font-heading font-extrabold text-3xl md:text-4xl">
-          {ar ? 'الطلبات والمبيعات' : 'Orders & Sales'}
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          {ar ? 'متابعة وإدارة كل طلبات الزبائن.' : 'Track and manage every customer order.'}
-        </p>
+        <div className="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h1 className="font-heading font-extrabold text-3xl md:text-4xl">
+              {ar ? 'الطلبات والمبيعات' : 'Orders & Sales'}
+            </h1>
+            <p className="mt-2 text-muted-foreground">
+              {ar ? 'متابعة وإدارة كل طلبات الزبائن.' : 'Track and manage every customer order.'}
+            </p>
+          </div>
+          <PreviewInvoiceButton />
+        </div>
 
         <div className="mt-8">
           <OrderStatsCards orders={orders} active={tab} onPick={setTab} />
