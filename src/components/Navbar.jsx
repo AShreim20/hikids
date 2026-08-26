@@ -29,9 +29,9 @@ export default function Navbar() {
 
 
   return (
-    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-border/60 safe-top">
+    <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-xl border-b border-accent/20 safe-top">
       {/* Section 1 — brand + search (the main visual band) */}
-      <div className="border-b border-border/40">
+      <div className="border-b border-accent/15">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 md:h-20 flex items-center gap-4">
           <Link to="/" className="flex items-center group shrink-0">
             <Logo className="h-10 md:h-12 w-auto rounded-xl group-hover:scale-95 transition-transform" />
@@ -45,7 +45,7 @@ export default function Navbar() {
           {/* Search toggle — mobile */}
           <button
             onClick={() => setSearchOpen((v) => !v)}
-            className="md:hidden ms-auto grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+            className="md:hidden ms-auto grid place-items-center w-11 h-11 rounded-2xl bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors"
             aria-label={t('nav.search')}>
             <Search className="w-5 h-5" />
           </button>
@@ -60,32 +60,32 @@ export default function Navbar() {
             <a
               key={l.label}
               href={l.to}
-              className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors mx-5">
+              className="text-sm font-medium text-foreground/80 hover:text-accent transition-colors mx-5">
               {l.label}
             </a>
             )}
             {user &&
-            <Link to="/orders" className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors">
+            <Link to="/orders" className="text-sm font-medium text-foreground/80 hover:text-accent transition-colors">
               {t('orders.title')}
             </Link>
             }
             {user &&
-            <Link to="/challenges" className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors">
+            <Link to="/challenges" className="text-sm font-medium text-foreground/80 hover:text-accent transition-colors">
               {t('nav.challenges')}
             </Link>
             }
             {user &&
-            <Link to="/wheel" className="text-sm font-medium text-accent hover:text-cosmic transition-colors">
+            <Link to="/wheel" className="text-sm font-medium text-accent hover:text-accent/80 transition-colors">
               {t('nav.wheel')}
             </Link>
             }
             {user &&
-            <Link to="/wheel-rewards" className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors">
+            <Link to="/wheel-rewards" className="text-sm font-medium text-foreground/80 hover:text-accent transition-colors">
               {t('nav.wheelRewards')}
             </Link>
             }
             {user?.role === 'admin' &&
-            <Link to="/analytics" className="text-sm font-medium text-cosmic hover:text-primary transition-colors flex items-center gap-1.5">
+            <Link to="/analytics" className="text-sm font-medium text-accent hover:text-accent/80 transition-colors flex items-center gap-1.5">
               <BarChart3 className="w-4 h-4" /> {t('nav.insights')}
             </Link>
             }
@@ -96,7 +96,7 @@ export default function Navbar() {
             {user &&
             <button
               onClick={() => navigate('/loyalty')}
-              className="hidden lg:grid squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+              className="hidden lg:grid squish place-items-center w-11 h-11 rounded-2xl bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors"
               aria-label={t('loyalty.mynav')}>
               <Sparkles className="w-5 h-5" />
             </button>
@@ -104,20 +104,20 @@ export default function Navbar() {
             {user &&
             <button
               onClick={() => navigate('/addresses')}
-              className="hidden lg:grid squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+              className="hidden lg:grid squish place-items-center w-11 h-11 rounded-2xl bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors"
               aria-label={t('address.title')}>
               <MapPin className="w-5 h-5" />
             </button>
             }
             <button
               onClick={() => setSettingsOpen(true)}
-              className="grid place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+              className="grid place-items-center w-11 h-11 rounded-2xl bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors"
               aria-label={t('nav.settings')}>
               <SettingsIcon className="w-5 h-5" />
             </button>
             <button
               onClick={() => navigate('/wishlist')}
-              className="hidden md:grid relative squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+              className="hidden md:grid relative squish place-items-center w-11 h-11 rounded-2xl bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors"
               aria-label="Wishlist">
               <Heart className="w-5 h-5" />
               {wishCount > 0 &&
@@ -128,11 +128,11 @@ export default function Navbar() {
             </button>
             <button
               onClick={() => navigate('/cart')}
-              className="hidden md:grid relative squish place-items-center w-11 h-11 rounded-2xl bg-mist text-foreground hover:bg-accent hover:text-white transition-colors"
+              className="hidden md:grid relative squish place-items-center w-11 h-11 rounded-2xl bg-accent/10 text-accent hover:bg-accent hover:text-white transition-colors"
               aria-label="Cart">
               <ShoppingBag className="w-5 h-5" />
               {count > 0 &&
-              <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 grid place-items-center rounded-full bg-cosmic text-white text-[11px] font-bold">
+              <span className="absolute -top-1 -right-1 min-w-5 h-5 px-1 grid place-items-center rounded-full bg-accent text-white text-[11px] font-bold">
                 {count}
               </span>
               }
@@ -141,12 +141,12 @@ export default function Navbar() {
             <div className="hidden md:flex items-center gap-2 ms-1">
               <Link
               to="/login"
-              className="h-11 px-4 rounded-2xl bg-mist text-foreground text-sm font-heading font-bold inline-flex items-center hover:bg-accent hover:text-white transition-colors">
+              className="h-11 px-4 rounded-2xl bg-accent/10 text-accent text-sm font-heading font-bold inline-flex items-center hover:bg-accent hover:text-white transition-colors">
                 {t('nav.signIn')}
               </Link>
               <Link
               to="/register"
-              className="h-11 px-4 rounded-2xl bg-cosmic text-white text-sm font-heading font-bold inline-flex items-center hover:bg-primary transition-colors whitespace-nowrap">
+              className="h-11 px-4 rounded-2xl bg-cosmic text-white text-sm font-heading font-bold inline-flex items-center hover:bg-cosmic/90 transition-colors whitespace-nowrap">
                 {t('nav.signUp')}
               </Link>
             </div>
