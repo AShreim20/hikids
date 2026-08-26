@@ -32,6 +32,10 @@ export const translations = {
     'nav.photoReviews': 'Photo Reviews',
     'nav.users': 'User Management',
     'nav.more': 'More',
+    'nav.carousel': 'Carousel',
+    'nav.purchasing': 'Purchasing',
+    'nav.management': 'Management',
+    'nav.loyaltyDiscounts': 'Loyalty & Discounts',
 
     'users.title': 'User Management',
     'users.subtitle': 'Manage roles and access',
@@ -700,6 +704,10 @@ export const translations = {
     'nav.photoReviews': 'مراجعات الصور',
     'nav.users': 'إدارة المستخدمين',
     'nav.more': 'المزيد',
+    'nav.carousel': 'السلايدر',
+    'nav.purchasing': 'المشتريات',
+    'nav.management': 'الإدارة',
+    'nav.loyaltyDiscounts': 'الولاء والخصومات',
 
     'users.title': 'إدارة المستخدمين',
     'users.subtitle': 'إدارة الأدوار والصلاحيات',

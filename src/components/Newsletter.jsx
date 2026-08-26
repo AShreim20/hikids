@@ -36,7 +36,8 @@ export default function Newsletter() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="you@email.com"
-            className="flex-1 h-12 w-full px-6 rounded-full bg-card border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40" />
+            className="flex-1 h-12 w-full px-7 rounded-full bg-card border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40"
+            style={{ paddingInline: '1.75rem' }} />
           
           <button
             type="submit"

@@ -9,7 +9,7 @@ const getSystemDark = () =>
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(() => {
     if (typeof window === 'undefined') return 'system';
-    return localStorage.getItem(STORAGE_KEY) || 'system';
+    return localStorage.getItem(STORAGE_KEY) || 'dark';
   });
   // Track the OS preference in state so "system" re-applies live when it changes.
   const [systemDark, setSystemDark] = useState(getSystemDark);

@@ -7,7 +7,6 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import Recommendations from '@/components/Recommendations';
 import HeroCarousel from '@/components/HeroCarousel';
-import SaleBanner from '@/components/SaleBanner';
 import Newsletter from '@/components/Newsletter';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -63,8 +62,6 @@ export default function Home() {
           )}
         </div>
       </section>
-
-      <SaleBanner />
 
       {/* Categories */}
       <section id="categories" className="max-w-7xl mx-auto px-5 sm:px-8 py-12 md:py-16">
