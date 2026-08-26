@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
 import { unwrap } from '@/lib/invoke';
 import { rewardLabel } from '@/lib/rewards';
+import { useCart } from '@/context/CartContext';
 import RewardsAuthGate from '@/components/RewardsAuthGate';
 
 export default function MysteryWheel() {
@@ -16,6 +17,7 @@ export default function MysteryWheel() {
   const ar = lang === 'ar';
   const { user } = useAuth();
   const { toast } = useToast();
+  const { addWheelReward, items: cartItems } = useCart();
   const [state, setState] = useState(null);
   const [loading, setLoading] = useState(true);
   const [spinning, setSpinning] = useState(false);
@@ -51,7 +53,15 @@ export default function MysteryWheel() {
     try {
       const res = unwrap(await base44.functions.invoke('wheelSpin', {}));
       if (res.success) {
-        setTimeout(() => { setResult(res.reward); setSpinning(false); load(); }, 1600);
+        setTimeout(() => {
+          setResult(res.reward);
+          setSpinning(false);
+          if (res.reward?.product && !cartItems.some((i) => i.lineId === `wheel::${res.reward.id}`)) {
+            addWheelReward(res.reward.product, res.reward.id, res.reward.product.price);
+            toast({ title: ar ? 'أُضيفت هديتك إلى السلة! 🎁' : 'Your free gift was added to the cart! 🎁' });
+          }
+          load();
+        }, 1600);
       } else {
         toast({ title: res.message || 'Error', variant: 'destructive' });
         setSpinning(false);
@@ -123,7 +133,9 @@ export default function MysteryWheel() {
                   <p className="text-sm text-muted-foreground">{ar ? 'ربحت!' : 'You won'}</p>
                   <p className="mt-1 font-heading font-extrabold text-3xl text-cosmic">{result.label}</p>
                   {result.discount_code && <p className="mt-2 text-sm">{ar ? 'كود الخصم' : 'Discount code'}: <b className="font-mono">{result.discount_code}</b></p>}
+                  {result.product && <p className="mt-2 text-sm text-emerald-600 font-bold">{ar ? 'أُضيفت مجانًا إلى سلتك' : 'Added to your cart for free'}</p>}
                   {result.fulfillment === 'manual' && <p className="mt-2 text-xs text-muted-foreground">{ar ? 'سيتم تواصل المتجر معك لاستلام المكافأة' : 'The store will contact you to fulfill this reward'}</p>}
+                  <Link to="/wheel-rewards" className="mt-3 inline-flex items-center gap-1 text-cosmic font-heading font-bold text-sm">{ar ? 'عرض مكافآتي' : 'View my rewards'}</Link>
                 </div>
               )}
             </div>
@@ -131,7 +143,7 @@ export default function MysteryWheel() {
             {/* Recent spins */}
             <div className="mt-8 flex items-center justify-between">
               <h2 className="font-heading font-extrabold text-xl">{ar ? 'آخر النتائج' : 'Recent results'}</h2>
-              <Link to="/rewards" className="inline-flex items-center gap-1 text-cosmic font-heading font-bold text-sm"><History className="w-4 h-4" /> {ar ? 'كل المكافآت' : 'All rewards'}</Link>
+              <Link to="/wheel-rewards" className="inline-flex items-center gap-1 text-cosmic font-heading font-bold text-sm"><History className="w-4 h-4" /> {ar ? 'كل المكافآت' : 'All rewards'}</Link>
             </div>
             <div className="mt-4 space-y-3">
               {spins.length === 0 ? (

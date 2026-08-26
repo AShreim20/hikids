@@ -57,6 +57,8 @@ const Challenges = lazy(() => import('./pages/Challenges'));
 const MysteryWheel = lazy(() => import('./pages/MysteryWheel'));
 const RewardsHistory = lazy(() => import('./pages/RewardsHistory'));
 const ShareLanding = lazy(() => import('./pages/ShareLanding'));
+const MyWheelRewards = lazy(() => import('./pages/MyWheelRewards'));
+const WheelWinners = lazy(() => import('./pages/WheelWinners'));
 import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -97,6 +99,8 @@ function AnimatedRoutes() {
       <Route path="/wheel" element={<MysteryWheel />} />
       <Route path="/rewards" element={<RewardsHistory />} />
       <Route path="/share" element={<ShareLanding />} />
+      <Route path="/wheel-rewards" element={<MyWheelRewards />} />
+      <Route path="/admin/wheel-winners" element={<WheelWinners />} />
       <Route path="/admin/reports" element={<Reports />} />
       <Route path="/admin/product/new" element={<ProductEditor />} />
       <Route path="/admin/product/:id" element={<ProductEditor />} />

@@ -60,6 +60,11 @@ export default function Navbar() {
               {t('nav.wheel')}
             </Link>
           )}
+          {user && (
+            <Link to="/wheel-rewards" className="text-sm font-medium text-foreground/70 hover:text-foreground transition-colors">
+              {t('nav.wheelRewards')}
+            </Link>
+          )}
           {user?.role === 'admin' && (
             <Link to="/analytics" className="text-sm font-medium text-cosmic hover:text-primary transition-colors flex items-center gap-1.5">
               <BarChart3 className="w-4 h-4" /> {t('nav.insights')}

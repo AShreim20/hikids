@@ -44,6 +44,20 @@
       "type": "string",
       "title": "Product"
     },
+    "product_name": {
+      "type": "string",
+      "title": "Product name"
+    },
+    "product_image": {
+      "type": "string",
+      "title": "Product image",
+      "format": "uri"
+    },
+    "product_price": {
+      "type": "number",
+      "title": "Product normal price",
+      "default": 0
+    },
     "points_awarded": {
       "type": "integer",
       "title": "Points awarded",
@@ -52,6 +66,37 @@
     "discount_code": {
       "type": "string",
       "title": "Discount code"
+    },
+    "discount_code_id": {
+      "type": "string",
+      "title": "Discount code record"
+    },
+    "customer_name": {
+      "type": "string",
+      "title": "Customer name"
+    },
+    "customer_phone": {
+      "type": "string",
+      "title": "Customer phone"
+    },
+    "status": {
+      "type": "string",
+      "title": "Redemption status",
+      "enum": [
+        "unused",
+        "used",
+        "expired",
+        "unavailable"
+      ],
+      "default": "unused"
+    },
+    "redeemed_order_id": {
+      "type": "string",
+      "title": "Redeemed in order"
+    },
+    "expires_at": {
+      "type": "string",
+      "title": "Expires at"
     },
     "fulfillment": {
       "type": "string",

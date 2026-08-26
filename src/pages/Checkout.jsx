@@ -189,6 +189,8 @@ export default function Checkout() {
           is_bundle: !!i.is_bundle,
           bundle_id: i.bundle_id || null,
           bundle_items: i.bundle_items || null,
+          wheel_spin_id: i.wheel_spin_id || null,
+          is_wheel_reward: !!i.is_wheel_reward,
         })),
         subtotal: total,
         delivery_cost: deliveryCost,
@@ -226,6 +228,7 @@ export default function Checkout() {
       clear();
       setDone(true);
       base44.functions.invoke('onOrderPlaced', { orderId: order.id }).catch(() => {});
+      base44.functions.invoke('finalizeWheelRewards', { order_id: order.id }).catch(() => {});
       if (user) base44.functions.invoke('awardLoyaltyPoints', { order_id: order.id }).catch(() => {});
       toast({ title: lang === 'ar' ? 'تم تأكيد الطلب' : 'Order placed' });
     } catch (err) {

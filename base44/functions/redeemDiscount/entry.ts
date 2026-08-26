@@ -38,6 +38,11 @@ export default async function(req) {
       return Response.json({ success: false, message: 'Code mismatch' });
     }
 
+    // A wheel/challenge code bound to a customer can only be spent by that customer.
+    if (dc.owner_email && order.customer_email !== dc.owner_email && user.role !== 'admin') {
+      return Response.json({ success: false, message: 'This code belongs to another customer' }, { status: 403 });
+    }
+
     // Idempotency: never count the same order twice.
     if (order.discount_counted) return Response.json({ success: true, message: 'already counted' });
 
@@ -45,6 +50,17 @@ export default async function(req) {
       used_count: (dc.used_count || 0) + 1,
     });
     await base44.asServiceRole.entities.Order.update(orderId, { discount_counted: true });
+
+    // If this code came from a wheel spin, mark that reward as used now that the
+    // code was actually redeemed in a real order (not on view/copy).
+    if (dc.wheel_spin_id) {
+      const spin = await base44.asServiceRole.entities.WheelSpin.get(dc.wheel_spin_id).catch(() => null);
+      if (spin && spin.status === 'unused' && spin.user_email === order.customer_email) {
+        await base44.asServiceRole.entities.WheelSpin.update(spin.id, {
+          status: 'used', redeemed_order_id: orderId,
+        });
+      }
+    }
     return Response.json({ success: true });
   } catch (error) {
     return Response.json({ success: false, error: error.message }, { status: 500 });

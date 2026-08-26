@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { rewardLabel } from '@/lib/rewards';
+import WheelProductPicker from '@/components/admin/WheelProductPicker';
 
 const REWARD_TYPES = ['points', 'discount_percent', 'discount_fixed', 'free_delivery', 'product', 'credit'];
 const BASIS = [
@@ -112,6 +113,7 @@ export default function MysteryWheelAdmin() {
             <L label={ar ? 'نهاية الفترة' : 'Period end'}><input type="date" className={input} value={config.period_end || ''} onChange={(e) => setConfig({ ...config, period_end: e.target.value })} /></L>
             <L label={ar ? 'بداية الحملة' : 'Start date'}><input type="date" className={input} value={config.start_date || ''} onChange={(e) => setConfig({ ...config, start_date: e.target.value })} /></L>
             <L label={ar ? 'نهاية الحملة' : 'End date'}><input type="date" className={input} value={config.end_date || ''} onChange={(e) => setConfig({ ...config, end_date: e.target.value })} /></L>
+            <L label={ar ? 'انتهاء المكافأة (أيام، 0=أبدًا)' : 'Reward expiry (days, 0=never)'}><input type="number" className={input} value={config.reward_expiry_days || 0} onChange={(e) => setConfig({ ...config, reward_expiry_days: Number(e.target.value) })} /></L>
           </div>
           <div className="mt-4 flex flex-wrap gap-4 text-sm">
             <label className="flex items-center gap-2"><input type="checkbox" checked={config.active} onChange={(e) => setConfig({ ...config, active: e.target.checked })} /> {ar ? 'نشط' : 'Active'}</label>
@@ -159,6 +161,11 @@ export default function MysteryWheelAdmin() {
               <L label={ar ? 'التسمية' : 'Label'}><input className={input} value={editingReward.label} onChange={(e) => setEditingReward({ ...editingReward, label: e.target.value })} /></L>
               <L label={ar ? 'النوع' : 'Type'}><select className={input} value={editingReward.type} onChange={(e) => setEditingReward({ ...editingReward, type: e.target.value })}>{REWARD_TYPES.map((r) => <option key={r} value={r}>{r}</option>)}</select></L>
               <L label={ar ? 'القيمة' : 'Value'}><input type="number" className={input} value={editingReward.value} onChange={(e) => setEditingReward({ ...editingReward, value: Number(e.target.value) })} /></L>
+              {editingReward.type === 'product' && (
+                <L label={ar ? 'المنتج' : 'Product'}>
+                  <WheelProductPicker value={editingReward.product_id} productName={editingReward.product_name} onSelect={({ product_id, product_name }) => setEditingReward({ ...editingReward, product_id, product_name })} />
+                </L>
+              )}
               <L label={ar ? 'الوزن (الاحتمال)' : 'Weight (probability)'}><input type="number" className={input} value={editingReward.weight} onChange={(e) => setEditingReward({ ...editingReward, weight: Number(e.target.value) })} /></L>
               <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={editingReward.active} onChange={(e) => setEditingReward({ ...editingReward, active: e.target.checked })} /> {ar ? 'نشط' : 'Active'}</label>
             </div>

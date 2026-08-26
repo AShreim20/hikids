@@ -84,6 +84,7 @@ export default function OrderDetail() {
         if (res?.reversed || res?.refunded) {
           toast({ title: ar ? 'تم تسوية نقاط الولاء لهذا الطلب' : 'Loyalty points settled for this order' });
         }
+        base44.functions.invoke('reverseWheelRewards', { order_id: order.id }).catch(() => {});
       }
     } catch {
       // non-blocking: the status change itself already succeeded

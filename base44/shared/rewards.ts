@@ -20,19 +20,44 @@ export async function grantPoints(base44, user, points, reason, idempotency_key)
   return res;
 }
 
-// Mint a single-use discount code the customer can apply at checkout.
-export async function grantDiscountCode(base44, { prefix, type, value, expires_at }) {
+// Mint a single-use discount code the customer can apply at checkout. The code
+// can be bound to a specific customer + wheel spin so it can't be transferred
+// or reused. Returns the full created record (use .code for the string).
+export async function grantDiscountCodeRecord(base44, {
+  prefix, type, value, expires_at, owner_email, wheel_spin_id, source, description,
+}) {
   const code = `${prefix || 'RW'}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-  await base44.asServiceRole.entities.DiscountCode.create({
+  return base44.asServiceRole.entities.DiscountCode.create({
     code,
     type: type === 'percent' ? 'percent' : 'fixed',
     value: Number(value) || 0,
     usage_limit: 1,
     used_count: 0,
     active: true,
-    expires_at,
+    expires_at: expires_at || '',
+    owner_email: owner_email || '',
+    wheel_spin_id: wheel_spin_id || '',
+    source: source || 'admin',
+    description: description || '',
   });
-  return code;
+}
+
+// Back-compat wrapper: returns just the code string (challenges still use this).
+export async function grantDiscountCode(base44, opts) {
+  const rec = await grantDiscountCodeRecord(base44, opts);
+  return rec.code;
+}
+
+// Expiry timestamp for a newly-granted reward, based on the wheel config.
+export function rewardExpiresAt(config) {
+  const days = Number(config && config.reward_expiry_days) || 0;
+  return days > 0 ? new Date(Date.now() + days * 86400000).toISOString() : '';
+}
+
+// Has a specific reward (not the spin itself) passed its expiry?
+export function isRewardExpired(spin) {
+  if (!spin || !spin.expires_at) return false;
+  return new Date(spin.expires_at) < new Date();
 }
 
 // Append a single, deduplicated row to the customer's reward history.

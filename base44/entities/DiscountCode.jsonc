@@ -47,6 +47,24 @@
       "type": "boolean",
       "title": "Active",
       "default": true
+    },
+    "owner_email": {
+      "type": "string",
+      "title": "Bound customer email"
+    },
+    "wheel_spin_id": {
+      "type": "string",
+      "title": "Linked wheel spin"
+    },
+    "source": {
+      "type": "string",
+      "title": "Source",
+      "enum": [
+        "admin",
+        "wheel",
+        "challenge"
+      ],
+      "default": "admin"
     }
   },
   "required": [

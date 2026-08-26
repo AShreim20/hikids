@@ -71,6 +71,11 @@
       "type": "boolean",
       "title": "New customers only",
       "default": false
+    },
+    "reward_expiry_days": {
+      "type": "integer",
+      "title": "Reward expiry days (0 = never)",
+      "default": 0
     }
   },
   "required": [

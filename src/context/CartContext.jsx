@@ -84,6 +84,18 @@ export function CartProvider({ children }) {
       )
     );
 
+  // A free Mystery Wheel product reward. price is 0 (100% discount) but the
+  // product's normal price is snapshotted as `reward_price` so the server can
+  // re-price the line if the same reward is ever redeemed twice. One line per
+  // spin (lineId keyed on the spin id) — the same reward can't be added twice.
+  const addWheelReward = (product, spinId, rewardPrice) => {
+    const lineId = `wheel::${spinId}`;
+    setItems((prev) => {
+      if (prev.some((i) => i.lineId === lineId)) return prev;
+      return [...prev, { lineId, id: product.id, name: `${product.name} · Free Mystery Wheel reward`, price: 0, image_url: product.image_url, qty: 1, wheel_spin_id: spinId, is_wheel_reward: true, reward_price: rewardPrice || 0 }];
+    });
+  };
+
   const clear = () => setItems([]);
 
   const count = items.reduce((s, i) => s + i.qty, 0);
@@ -91,7 +103,7 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, addBundle, removeItem, updateQty, clear, count, total }}
+      value={{ items, addItem, addBundle, addWheelReward, removeItem, updateQty, clear, count, total }}
     >
       {children}
     </CartContext.Provider>
