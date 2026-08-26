@@ -21,28 +21,28 @@ export default function AdminSidebar() {
   const nav = getAdminNav(t);
 
   return (
-    <aside className="hidden md:flex fixed left-0 top-28 md:top-34 bottom-0 z-40 flex-col items-center gap-1.5 w-14 py-6 border-r border-border/60 bg-background/80 backdrop-blur-xl overflow-visible">
+    <aside className="hidden md:flex fixed left-0 top-28 md:top-34 bottom-0 z-40 flex-col items-center gap-1.5 w-14 border-r border-border/60 bg-background/80 backdrop-blur-xl overflow-visible py-20">
       {nav.map((item) =>
-        item.type === 'group' ? (
-          <AdminNavGroup
-            key={item.id}
-            group={item}
-            activePaths={item.children.map((c) => c.to)}
-            open={openGroup === item.id}
-            onToggle={() => setOpenGroup((v) => (v === item.id ? null : item.id))}
-            onClose={() => setOpenGroup(null)}
-          />
-        ) : (
-          <NavButton
-            key={item.to}
-            item={item}
-            active={pathname === item.to}
-            onSelect={() => { setOpenGroup(null); navigate(item.to); }}
-          />
-        )
+      item.type === 'group' ?
+      <AdminNavGroup
+        key={item.id}
+        group={item}
+        activePaths={item.children.map((c) => c.to)}
+        open={openGroup === item.id}
+        onToggle={() => setOpenGroup((v) => v === item.id ? null : item.id)}
+        onClose={() => setOpenGroup(null)} /> :
+
+
+      <NavButton
+        key={item.to}
+        item={item}
+        active={pathname === item.to}
+        onSelect={() => {setOpenGroup(null);navigate(item.to);}} />
+
+
       )}
-    </aside>
-  );
+    </aside>);
+
 }
 
 function NavButton({ item, active, onSelect }) {
@@ -53,12 +53,12 @@ function NavButton({ item, active, onSelect }) {
       title={item.label}
       aria-label={item.label}
       className={`grid place-items-center w-11 h-11 rounded-xl transition-colors cursor-pointer ${
-        active
-          ? 'bg-cosmic text-white'
-          : 'bg-mist text-foreground/70 hover:bg-cosmic hover:text-white'
-      }`}
-    >
+      active ?
+      'bg-cosmic text-white' :
+      'bg-mist text-foreground/70 hover:bg-cosmic hover:text-white'}`
+      }>
+      
       <Icon className="w-5 h-5" />
-    </button>
-  );
+    </button>);
+
 }
