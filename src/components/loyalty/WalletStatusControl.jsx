@@ -3,6 +3,7 @@ import { Loader2, Snowflake, Play } from 'lucide-react';
 import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
+import { unwrap } from '@/lib/invoke';
 
 // Freeze / unfreeze a single wallet. Confirmation + optional reason, the status
 // always comes back from the server and is handed to the parent.
@@ -20,12 +21,15 @@ export default function WalletStatusControl({ wallet, onUpdated }) {
   const apply = async () => {
     setBusy(true);
     try {
-      const res = await base44.functions.invoke('setWalletStatus', {
+      const raw = await base44.functions.invoke('setWalletStatus', {
         wallet_id: wallet.id,
         user_email: wallet.user_email,
         status: next,
         reason: reason.trim(),
       });
+      // functions.invoke may wrap the payload in `.data`; unwrap normalizes
+      // both shapes so success/failure is read from the real server response.
+      const res = unwrap(raw);
       if (!res?.success) throw new Error(res?.message || t('wallet.statusFailed'));
       toast({ title: next === 'frozen' ? t('wallet.frozenSuccess') : t('wallet.unfrozenSuccess') });
       setOpen(false);
