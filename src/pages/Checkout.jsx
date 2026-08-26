@@ -38,7 +38,7 @@ export default function Checkout() {
   // A null selection (e.g. a direct visit with no cart selection made) falls
   // back to the whole cart so the page still works outside the selection flow.
   const items = useMemo(
-    () => (checkoutSelection ? cartItems.filter((i) => checkoutSelection.has(lineIdOf(i))) : cartItems),
+    () => cartItems.filter((i) => (!checkoutSelection || checkoutSelection.has(lineIdOf(i))) && !i.unavailable),
     [cartItems, checkoutSelection]
   );
   const total = items.reduce((s, i) => s + i.qty * i.price, 0);
@@ -134,7 +134,10 @@ export default function Checkout() {
   const set = (k) => (e) => setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const validate = () => {
-    if (items.length === 0) return false;
+    if (items.length === 0) {
+      toast({ title: ar ? 'لا توجد منتجات متاحة لإتمام الطلب' : 'No available items to checkout', variant: 'destructive' });
+      return false;
+    }
     if (!selectedCity) {
       toast({ title: ar ? 'اختر المدينة' : 'Please select a city', variant: 'destructive' });
       return false;
@@ -349,14 +352,21 @@ export default function Checkout() {
   }
 
   if (items.length === 0) {
+    const hasUnavailable = cartItems.some((i) => i.unavailable);
     return (
       <div className="min-h-screen bg-background">
         <PageHeader title={t('checkout.title')} />
         <div className="max-w-2xl mx-auto px-5 py-32 text-center">
-          <h1 className="font-heading font-extrabold text-3xl">{t('checkout.empty')}</h1>
-          <p className="mt-3 text-muted-foreground">{t('checkout.emptyDesc')}</p>
-          <Link to="/" className="mt-6 inline-flex items-center gap-2 text-cosmic font-heading font-bold">
-            <ArrowLeft className="w-4 h-4 ltr:rotate-180 rtl:rotate-0" /> {t('nav.explore')}
+          <h1 className="font-heading font-extrabold text-3xl">
+            {hasUnavailable ? (ar ? 'المنتجات غير متوفرة' : t('checkout.empty')) : t('checkout.empty')}
+          </h1>
+          <p className="mt-3 text-muted-foreground">
+            {hasUnavailable
+              ? (ar ? 'المنتجات التي اخترتها لم تعد متوفرة. يمكنك العودة إلى السلة واختيار منتجات أخرى.' : t('checkout.emptyDesc'))
+              : t('checkout.emptyDesc')}
+          </p>
+          <Link to="/cart" className="mt-6 inline-flex items-center gap-2 text-cosmic font-heading font-bold">
+            <ArrowLeft className="w-4 h-4 ltr:rotate-180 rtl:rotate-0" /> {ar ? 'العودة إلى السلة' : t('nav.explore')}
           </Link>
         </div>
       </div>

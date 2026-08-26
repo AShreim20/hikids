@@ -151,28 +151,30 @@ export function CartProvider({ children }) {
     const map = {};
     products.forEach((p) => { if (p) map[p.id] = p; });
     const adjustments = [];
-    const next = items
-      .map((i) => {
-        if (i.is_bundle || !i.id) return i;
-        const p = map[i.id];
-        if (!p) return i;
-        let available;
-        if (i.variant_key && Array.isArray(p.variants)) {
-          const v = p.variants.find((x) => x && x.key === i.variant_key);
-          available = v ? Number(v.stock ?? 0) : 0;
-        } else {
-          available = p.stock != null ? Number(p.stock) : Infinity;
-        }
-        if (!Number.isFinite(available)) return i; // unlimited
-        if (i.qty > available) {
-          const newQty = Math.max(0, available);
-          adjustments.push({ id: i.id, name: i.name, variant_label: i.variant_label || null, oldQty: i.qty, newQty });
-          if (newQty <= 0) return null;
-          return { ...i, qty: newQty, stock: available };
-        }
-        return { ...i, stock: available };
-      })
-      .filter(Boolean);
+    // Out-of-stock lines are KEPT in the cart but flagged `unavailable: true`
+    // so the UI can grey them out and checkout can skip them — they are never
+    // silently deleted. If stock returns later, revalidation flips the flag
+    // back off so the line becomes purchasable again.
+    const next = items.map((i) => {
+      if (i.is_bundle || !i.id) return i;
+      const p = map[i.id];
+      if (!p) return i;
+      let available;
+      if (i.variant_key && Array.isArray(p.variants)) {
+        const v = p.variants.find((x) => x && x.key === i.variant_key);
+        available = v ? Number(v.stock ?? 0) : 0;
+      } else {
+        available = p.stock != null ? Number(p.stock) : Infinity;
+      }
+      if (!Number.isFinite(available)) return { ...i, unavailable: false }; // unlimited
+      if (i.qty > available) {
+        const newQty = Math.max(0, available);
+        adjustments.push({ id: i.id, name: i.name, variant_label: i.variant_label || null, oldQty: i.qty, newQty, available });
+        if (newQty <= 0) return { ...i, unavailable: true, stock: 0 };
+        return { ...i, qty: newQty, stock: available, unavailable: false };
+      }
+      return { ...i, stock: available, unavailable: false };
+    });
     if (adjustments.length > 0) setItems(next);
     return adjustments;
   };
@@ -183,22 +185,22 @@ export function CartProvider({ children }) {
   const adjustForInsufficient = (insufficient) => {
     if (!Array.isArray(insufficient) || insufficient.length === 0) return [];
     const adjustments = [];
-    const next = items
-      .map((i) => {
-        const match = insufficient.find((s) => s.id === i.id && (s.variant_key || null) === (i.variant_key || null));
-        if (!match) return i;
-        const newQty = Math.max(0, Number(match.available || 0));
-        adjustments.push({ id: i.id, name: i.name, variant_label: i.variant_label || null, oldQty: i.qty, newQty, available: match.available });
-        if (newQty <= 0) return null;
-        return { ...i, qty: newQty, stock: newQty };
-      })
-      .filter(Boolean);
+    const next = items.map((i) => {
+      const match = insufficient.find((s) => s.id === i.id && (s.variant_key || null) === (i.variant_key || null));
+      if (!match) return i;
+      const newQty = Math.max(0, Number(match.available || 0));
+      adjustments.push({ id: i.id, name: i.name, variant_label: i.variant_label || null, oldQty: i.qty, newQty, available: match.available });
+      if (newQty <= 0) return { ...i, unavailable: true, stock: 0 };
+      return { ...i, qty: newQty, stock: newQty, unavailable: false };
+    });
     setItems(next);
     return adjustments;
   };
 
   const count = items.reduce((s, i) => s + i.qty, 0);
-  const total = items.reduce((s, i) => s + i.qty * i.price, 0);
+  // Unavailable (out-of-stock) lines are kept in the cart but excluded from
+  // the purchasable total — the customer is never charged for them.
+  const total = items.reduce((s, i) => s + (i.unavailable ? 0 : i.qty * i.price), 0);
 
   return (
     <CartContext.Provider

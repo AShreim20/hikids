@@ -30,19 +30,25 @@ export default function Cart() {
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const allIds = items.map(lineIdOf);
-  const allSelected = allIds.length > 0 && allIds.every((id) => selected.has(id));
+  // "Select All" and the master checkbox only cover purchasable lines —
+  // unavailable (out-of-stock) lines stay in the cart but can't be selected
+  // for checkout.
+  const availIds = items.filter((i) => !i.unavailable).map(lineIdOf);
+  const allSelected = availIds.length > 0 && availIds.every((id) => selected.has(id));
   const someSelected = selected.size > 0 && !allSelected;
 
   // Keep the selection set in sync with the cart — drop ids whose lines no
-  // longer exist (e.g. after stock revalidation removes a sold-out item) so
-  // the "N selected" count and "Select All" state never go stale.
+  // longer exist OR have become unavailable, so the "N selected" count and
+  // "Select All" state never go stale and unavailable items can't be checked
+  // out.
   useEffect(() => {
     setSelected((prev) => {
       const live = new Set(allIds);
+      const unavail = new Set(items.filter((i) => i.unavailable).map(lineIdOf));
       let changed = false;
       const next = new Set();
       prev.forEach((id) => {
-        if (live.has(id)) next.add(id);
+        if (live.has(id) && !unavail.has(id)) next.add(id);
         else changed = true;
       });
       return changed ? next : prev;
@@ -60,7 +66,7 @@ export default function Cart() {
 
   const toggleAll = () => {
     if (allSelected) setSelected(new Set());
-    else setSelected(new Set(allIds));
+    else setSelected(new Set(availIds));
   };
 
   const deleteSelected = () => {
@@ -81,8 +87,12 @@ export default function Cart() {
   // Only the currently-selected lines go to checkout. Unselected items stay
   // in the cart untouched.
   const goCheckout = () => {
+    if (availIds.length === 0) {
+      toast({ title: ar ? 'كل المنتجات غير متوفرة حاليًا' : 'All items are currently unavailable', variant: 'destructive' });
+      return;
+    }
     if (selected.size === 0) {
-      toast({ title: ar ? 'اختر منتجًا واحدًا على الأقل' : 'Please select at least one item', variant: 'destructive' });
+      toast({ title: ar ? 'اختر منتجًا متوفرًا واحدًا على الأقل' : 'Please select at least one available item', variant: 'destructive' });
       return;
     }
     setCheckoutSelection(new Set(selected));
@@ -200,15 +210,23 @@ export default function Cart() {
             {items.map((i) => {
               const id = lineIdOf(i);
               const checked = selected.has(id);
+              const unavail = !!i.unavailable;
               return (
               <div
                 key={id}
                 className={`flex gap-4 p-4 rounded-3xl bg-card border transition-colors ${
-                  checked ? 'border-cosmic bg-cosmic/5 ring-1 ring-cosmic/30' : 'border-border/60'
+                  unavail ? 'border-border/60 opacity-60'
+                  : checked ? 'border-cosmic bg-cosmic/5 ring-1 ring-cosmic/30'
+                  : 'border-border/60'
                 }`}
               >
                 <div className="flex flex-col items-center gap-2 justify-center">
-                  <Checkbox checked={checked} onCheckedChange={() => toggleOne(id)} aria-label={ar ? 'تحديد العنصر' : 'Select item'} />
+                  <Checkbox
+                    checked={checked}
+                    onCheckedChange={unavail ? undefined : () => toggleOne(id)}
+                    disabled={unavail}
+                    aria-label={ar ? 'تحديد العنصر' : 'Select item'}
+                  />
                 </div>
                 <Link to={i.is_bundle ? `/bundles/${i.id}` : `/product/${i.id}`} className="shrink-0">
                   <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-mist">
@@ -221,6 +239,11 @@ export default function Cart() {
                       {i.is_bundle && (
                         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-cosmic/10 text-cosmic text-[11px] font-heading font-bold mb-1">
                           <Package className="w-3 h-3" /> {ar ? 'حزمة' : 'Bundle'}
+                        </span>
+                      )}
+                      {unavail && (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-destructive/10 text-destructive text-[11px] font-heading font-bold mb-1">
+                          {ar ? 'غير متوفر' : 'Out of Stock'}
                         </span>
                       )}
                       <Link to={i.is_bundle ? `/bundles/${i.id}` : `/product/${i.id}`} className="font-heading font-bold text-lg hover:text-cosmic">
@@ -246,15 +269,15 @@ export default function Cart() {
                   </div>
                   <div className="mt-auto flex items-center justify-between">
                     <div className="flex items-center rounded-full bg-mist">
-                      <button onClick={() => updateQty(id, i.qty - 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card" aria-label="-">
+                      <button onClick={() => updateQty(id, i.qty - 1)} disabled={unavail} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card disabled:opacity-40 disabled:hover:bg-mist" aria-label="-">
                         <Minus className="w-4 h-4" />
                       </button>
                       <span className="w-8 text-center font-heading font-bold text-sm">{i.qty}</span>
-                      <button onClick={() => inc(id, i.qty + 1)} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card" aria-label="+">
+                      <button onClick={() => inc(id, i.qty + 1)} disabled={unavail} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card disabled:opacity-40 disabled:hover:bg-mist" aria-label="+">
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>
-                    <p className="font-heading font-extrabold">{formatPrice(i.price * i.qty)}</p>
+                    <p className="font-heading font-extrabold">{unavail ? '—' : formatPrice(i.price * i.qty)}</p>
                   </div>
                 </div>
               </div>
