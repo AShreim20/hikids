@@ -19,7 +19,7 @@ import {
 const lineIdOf = (i) => i.lineId || i.id;
 
 export default function Cart() {
-  const { items, updateQty, removeItem, removeItems, clear, total, count, revalidateStock } = useCart();
+  const { items, updateQty, removeItem, removeItems, clear, total, count, revalidateStock, setCheckoutSelection } = useCart();
   const navigate = useNavigate();
   const { t, formatPrice, lang } = useLanguage();
   const ar = lang === 'ar';
@@ -76,6 +76,17 @@ export default function Cart() {
     setSelected(new Set());
     setConfirmOpen(false);
     toast({ title: ar ? 'تم إفراغ السلة' : 'Cart cleared' });
+  };
+
+  // Only the currently-selected lines go to checkout. Unselected items stay
+  // in the cart untouched.
+  const goCheckout = () => {
+    if (selected.size === 0) {
+      toast({ title: ar ? 'اختر منتجًا واحدًا على الأقل' : 'Please select at least one item', variant: 'destructive' });
+      return;
+    }
+    setCheckoutSelection(new Set(selected));
+    navigate('/checkout');
   };
 
   // Re-check inventory when the cart opens and adjust any lines that sold out
@@ -271,7 +282,7 @@ export default function Cart() {
               <ShareCartButton />
             </div>
             <button
-              onClick={() => navigate('/checkout')}
+              onClick={goCheckout}
               className="squish mt-6 w-full h-14 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-primary transition-colors"
             >
               {t('common.checkout')} <ArrowRight className="w-5 h-5" />

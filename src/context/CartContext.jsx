@@ -20,6 +20,12 @@ export function CartProvider({ children }) {
     } catch { /* ignore */ }
   }, [items]);
 
+  // Which cart lines the customer chose to check out (a Set of lineIds).
+  // Set from the Cart page right before navigating to checkout; null means
+  // "no filter chosen" (e.g. a direct visit) — Checkout then uses the whole
+  // cart. Lives in memory only; it is not persisted and clears after the order.
+  const [checkoutSelection, setCheckoutSelection] = useState(null);
+
   // `variant` (optional) is the selected variant combination — its exact
   // details are snapshotted into the cart line so later product edits don't
   // change what was bought.
@@ -196,7 +202,7 @@ export function CartProvider({ children }) {
 
   return (
     <CartContext.Provider
-      value={{ items, addItem, addBundle, addWheelReward, removeItem, removeItems, updateQty, clear, count, total, revalidateStock, adjustForInsufficient }}
+      value={{ items, addItem, addBundle, addWheelReward, removeItem, removeItems, updateQty, clear, count, total, revalidateStock, adjustForInsufficient, checkoutSelection, setCheckoutSelection }}
     >
       {children}
     </CartContext.Provider>

@@ -26,12 +26,22 @@ const CARD_TYPES = [
 ];
 
 export default function Checkout() {
-  const { items, total, clear, revalidateStock, adjustForInsufficient } = useCart();
+  const { items: cartItems, removeItems, revalidateStock, adjustForInsufficient, checkoutSelection, setCheckoutSelection } = useCart();
   const { toast } = useToast();
   const { t, lang, formatPrice } = useLanguage();
   const navigate = useNavigate();
   const { user } = useAuth();
   const ar = lang === 'ar';
+
+  const lineIdOf = (i) => i.lineId || i.id;
+  // Only the lines the customer selected in the cart go into this order.
+  // A null selection (e.g. a direct visit with no cart selection made) falls
+  // back to the whole cart so the page still works outside the selection flow.
+  const items = useMemo(
+    () => (checkoutSelection ? cartItems.filter((i) => checkoutSelection.has(lineIdOf(i))) : cartItems),
+    [cartItems, checkoutSelection]
+  );
+  const total = items.reduce((s, i) => s + i.qty * i.price, 0);
 
   const [form, setForm] = useState({ name: '', email: '', address: '', phone: '' });
   const [phoneCountry, setPhoneCountry] = useState('ps');
@@ -290,7 +300,9 @@ export default function Checkout() {
       }
       setConfirmOpen(false);
       setOrderId(order.id);
-      clear();
+      // Remove only what was actually purchased; keep any unselected cart lines.
+      removeItems(items.map(lineIdOf));
+      setCheckoutSelection(null);
       setDone(true);
       base44.functions.invoke('onOrderPlaced', { orderId: order.id }).catch(() => {});
       base44.functions.invoke('finalizeWheelRewards', { order_id: order.id }).catch(() => {});
