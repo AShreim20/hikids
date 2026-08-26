@@ -384,7 +384,7 @@ export default function Checkout() {
                   <p className="mt-3 font-heading font-bold">{t('checkout.cod')}</p>
                 </button>
 
-                {user && loyaltyBalance > 0 && (
+                {user && (
                   <button
                     type="button"
                     onClick={() => { setPayment('loyalty'); setLoyaltyRedeem(null); }}

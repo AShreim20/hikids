@@ -23,7 +23,7 @@ export default function WhatsAppButton() {
       rel="noreferrer"
       title={label}
       aria-label={label}
-      className="fixed z-50 bottom-[9rem] md:bottom-24 start-4 md:start-6 inline-flex items-center gap-2 h-14 w-14 md:w-auto md:px-5 justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-[#25D366]/30 squish focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#25D366]/40"
+      className="fixed z-50 bottom-[9rem] md:bottom-24 end-4 md:end-6 inline-flex items-center gap-2 h-14 w-14 md:w-auto md:px-5 justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-[#25D366]/30 squish focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#25D366]/40"
     >
       <WhatsAppIcon className="w-6 h-6 shrink-0" />
       <span className="hidden md:inline font-heading font-bold text-sm whitespace-nowrap">{label}</span>

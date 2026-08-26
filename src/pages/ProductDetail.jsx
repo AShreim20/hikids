@@ -168,7 +168,7 @@ export default function ProductDetail() {
 
           {/* Mobile buy actions — placed right under the price so they're
               reachable without scrolling past reviews / similar products. */}
-          <div className="md:hidden mt-6 flex gap-3">
+          <div className="md:hidden mt-6 mb-6 flex gap-3">
             <button
               onClick={addToCart}
               disabled={!canBuy}
