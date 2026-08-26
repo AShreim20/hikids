@@ -10,6 +10,7 @@ import LanguageToggle from '@/components/LanguageToggle';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import HeaderLoyaltyBalance from '@/components/HeaderLoyaltyBalance';
+import HeaderWheelSpins from '@/components/HeaderWheelSpins';
 
 
 
@@ -75,11 +76,7 @@ export default function Navbar() {
               {t('nav.challenges')}
             </Link>
             }
-            {user &&
-            <Link to="/wheel" className="text-sm font-medium text-accent hover:text-accent/80 transition-colors">
-              {t('nav.wheel')}
-            </Link>
-            }
+            <HeaderWheelSpins />
             {user &&
             <Link to="/wheel-rewards" className="text-sm font-medium text-white/85 hover:text-accent transition-colors">
               {t('nav.wheelRewards')}
