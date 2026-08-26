@@ -50,14 +50,15 @@ export default function Checkout() {
   const [loyaltyRedeem, setLoyaltyRedeem] = useState(null);
   const [loyaltyBalance, setLoyaltyBalance] = useState(0);
   const [loyaltyRate, setLoyaltyRate] = useState(0.1);
-  const [visaEnabled, setVisaEnabled] = useState(true);
+  const [cardEnabled, setCardEnabled] = useState(true);
   const [confirmOpen, setConfirmOpen] = useState(false);
   // Stable per-checkout key so a retried submit can never spend points twice.
   const [checkoutKey] = useState(() => `co-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
 
-  // Visa chip is hidden entirely when the admin disables it; other card types
-  // and the card payment method itself are unaffected.
-  const availableCardTypes = useMemo(() => CARD_TYPES.filter((c) => c.key !== 'visa' || visaEnabled), [visaEnabled]);
+  // The admin "Card Payment" toggle controls the entire card method. When off,
+  // no card option (Visa, Mastercard, …) is shown at checkout — only COD and
+  // loyalty remain.
+  const availableCardTypes = useMemo(() => (cardEnabled ? CARD_TYPES : []), [cardEnabled]);
 
   const selectedCity = cities.find((c) => c.id === cityId);
   const deliveryCost = selectedCity ? selectedCity.price : 0;
@@ -72,16 +73,20 @@ export default function Checkout() {
   useEffect(() => {
     base44.entities.DeliveryCity.filter({ active: true }).then(setCities).catch(() => {});
     if (user) base44.entities.Address.list('-created_date', 50).then(setAddresses).catch(() => {});
-    getSetting('visa_payment_enabled', 1).then((v) => setVisaEnabled(!!v)).catch(() => {});
+    getSetting('visa_payment_enabled', 1).then((v) => setCardEnabled(!!v)).catch(() => {});
   }, [user]);
 
-  // If the selected card type is no longer available (e.g. Visa disabled),
-  // fall back to the first available type.
+  // If the selected card type is no longer available, fall back to the first.
   useEffect(() => {
     if (!availableCardTypes.some((c) => c.key === cardType)) {
       setCardType((availableCardTypes[0] || { key: 'mastercard' }).key);
     }
   }, [availableCardTypes, cardType]);
+
+  // When the whole card method is disabled, switch any 'card' selection to COD.
+  useEffect(() => {
+    if (!cardEnabled && payment === 'card') setPayment('cod');
+  }, [cardEnabled, payment]);
 
   useEffect(() => {
     if (!user) return;
@@ -345,21 +350,23 @@ export default function Checkout() {
               <h2 className="font-heading font-extrabold text-2xl">{t('checkout.payment')}</h2>
 
               <div className="mt-6 grid sm:grid-cols-2 gap-4">
-                <button
-                  type="button"
-                  onClick={() => setPayment('card')}
-                  className={`text-left p-5 rounded-2xl border-2 transition-all ${
-                    payment === 'card' ? 'border-cosmic bg-cosmic/5' : 'border-border hover:border-cosmic/40'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="grid place-items-center w-11 h-11 rounded-xl bg-mist">
-                      <CreditCard className="w-5 h-5 text-cosmic" />
+                {cardEnabled && (
+                  <button
+                    type="button"
+                    onClick={() => setPayment('card')}
+                    className={`text-left p-5 rounded-2xl border-2 transition-all ${
+                      payment === 'card' ? 'border-cosmic bg-cosmic/5' : 'border-border hover:border-cosmic/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="grid place-items-center w-11 h-11 rounded-xl bg-mist">
+                        <CreditCard className="w-5 h-5 text-cosmic" />
+                      </div>
+                      {payment === 'card' && <Check className="w-5 h-5 text-cosmic" />}
                     </div>
-                    {payment === 'card' && <Check className="w-5 h-5 text-cosmic" />}
-                  </div>
-                  <p className="mt-3 font-heading font-bold">{t('checkout.card')}</p>
-                </button>
+                    <p className="mt-3 font-heading font-bold">{t('checkout.card')}</p>
+                  </button>
+                )}
 
                 <button
                   type="button"
