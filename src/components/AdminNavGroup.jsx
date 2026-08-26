@@ -66,7 +66,7 @@ export default function AdminNavGroup({ group, open, onToggle, onClose, activePa
         title={group.label}
         aria-label={group.label}
         aria-expanded={open}
-        className={`grid place-items-center w-11 h-11 rounded-xl transition-colors cursor-pointer px-4 ${
+        className={`grid place-items-center w-11 h-11 rounded-xl transition-colors cursor-pointer my-2 ${
         open || anyActive ?
         'bg-cosmic text-white' :
         'bg-mist text-foreground/70 hover:bg-cosmic hover:text-white'}`
