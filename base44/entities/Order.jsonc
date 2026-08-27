@@ -75,6 +75,11 @@
       "title": "Inventory deducted",
       "default": false
     },
+    "secured": {
+      "type": "boolean",
+      "title": "Financials verified server-side",
+      "default": false
+    },
     "city": {
       "type": "string",
       "title": "City"
