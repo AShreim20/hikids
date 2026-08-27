@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Heart, ShieldCheck, Leaf, Truck, Star, ArrowRight } from 'lucide-react';
-import Logo from '@/components/Logo';
+import { Image } from '@/components/ui/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
@@ -44,8 +44,13 @@ export default function About() {
       {/* Story */}
       <section className="max-w-7xl mx-auto px-5 sm:px-8 py-16 md:py-24">
         <div className="grid md:grid-cols-2 gap-12 md:gap-20 items-center">
-          <div className="relative aspect-[4/3] rounded-[2.5rem] overflow-hidden bg-mist grid place-items-center p-8 md:p-14">
-            <Logo className="h-32 sm:h-44 md:h-60 w-auto max-w-full object-contain" />
+          <div className="relative aspect-[4/3] rounded-[2.5rem] overflow-hidden bg-mist">
+            <Image
+              src="https://media.base44.com/images/public/6a75c91fa5dfe02359c5f127/8f9e38f8f_IMG-20240429-WA0012jpg.jpeg"
+              alt="HiKids"
+              fittingType="fill"
+              className="w-full h-full object-cover"
+            />
           </div>
           <div>
             <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">
