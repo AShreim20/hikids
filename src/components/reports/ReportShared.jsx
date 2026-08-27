@@ -11,7 +11,7 @@ export function PeriodSelector({ period, setPeriod, custom, setCustom }) {
         <button
           key={p.id}
           onClick={() => setPeriod(p.id)}
-          className={`shrink-0 h-9 rounded-full text-sm font-heading font-bold transition-colors px-4 my-1 ${period === p.id ? 'bg-cosmic text-white' : 'text-foreground/70 hover:bg-cosmic/10'}`}>
+          className={`shrink-0 h-9 px-4 rounded-full text-sm font-heading font-bold transition-colors py-5 ${period === p.id ? 'bg-cosmic text-white' : 'text-foreground/70 hover:bg-cosmic/10'}`}>
           
             {t(p.labelKey)}
           </button>
