@@ -58,7 +58,7 @@ export default function ShopByGenderMenu({ mobile = false, onNavigate }) {
         {open && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => { setOpen(false); setExpanded(null); }} />
-            <div className="absolute end-0 top-full mt-2 z-[60] min-w-[240px] max-w-[calc(100vw-2rem)] rounded-2xl bg-[#3A2660] border border-white/20 shadow-2xl p-3">
+            <div className="absolute start-0 top-full mt-2 z-[60] min-w-[240px] max-w-[calc(100vw-2rem)] rounded-2xl bg-[#3A2660] border border-white/20 shadow-2xl p-3">
               {GENDERS.map((g) => (
                 <div key={g.key} className="mb-1">
                   <button
