@@ -153,7 +153,7 @@ export default function Navbar() {
         <HeaderToyPattern />
         {/* Section 1 — brand + search + mobile action icons */}
         <div className="relative z-10 border-b border-white/10">
-          <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 md:h-20 flex items-center gap-4">
+          <div className="max-w-7xl mx-auto px-6 sm:px-10 h-16 md:h-20 flex items-center gap-5 md:gap-6">
             <Link to="/" className="flex items-center group shrink-0">
               <Logo className="h-14 md:h-16 w-auto group-hover:scale-95 transition-transform" />
             </Link>
@@ -164,7 +164,7 @@ export default function Navbar() {
             </div>
 
             {/* Mobile: search + language + settings inline in the first line */}
-            <div className="md:hidden ms-auto flex items-center gap-1.5">
+            <div className="md:hidden ms-auto flex items-center gap-2">
               <button
                 onClick={() => setSearchOpen((v) => !v)}
                 className="grid place-items-center w-11 h-11 rounded-2xl bg-white/15 text-white hover:bg-accent hover:text-white transition-colors"
@@ -186,13 +186,13 @@ export default function Navbar() {
 
         {/* Section 2 — desktop navigation + account actions (desktop only) */}
         <div className="hidden md:block relative z-10">
-          <div className="max-w-7xl mx-auto px-5 sm:px-8 h-12 md:h-14 flex items-center justify-between gap-3">
-            <div className="hidden md:flex items-center gap-5 lg:gap-9">
+          <div className="max-w-7xl mx-auto px-6 sm:px-10 h-12 md:h-14 flex items-center justify-between gap-4">
+            <div className="hidden md:flex items-center gap-6 lg:gap-8">
               {links.map((l) => (
                 <a
                   key={l.label}
                   href={l.to}
-                  className="text-sm font-medium text-white/85 hover:text-accent transition-colors mx-5"
+                  className="text-sm font-medium text-white/85 hover:text-accent transition-colors"
                 >
                   {l.label}
                 </a>
@@ -221,7 +221,7 @@ export default function Navbar() {
               )}
             </div>
 
-            <div className="flex items-center gap-1.5 lg:gap-2 ms-auto">
+            <div className="flex items-center gap-2 lg:gap-2.5 ms-auto">
               <span className="hidden md:inline-flex"><LanguageToggle /></span>
               <HeaderLoyaltyBalance />
               {user && (
@@ -296,7 +296,7 @@ export default function Navbar() {
               <MobileLinkItem key={l.key} link={l} />
             ))}
           </div>
-          <div className="max-w-7xl mx-auto px-5 sm:px-8 h-12 flex items-center">
+          <div className="max-w-7xl mx-auto px-6 sm:px-10 h-12 flex items-center">
             <div ref={rowRef} className="flex items-center gap-4 flex-1 min-w-0">
               <ShopByGenderMenu mobile />
               {mobileLinks.slice(0, visibleCount).map((l) => (
@@ -310,7 +310,7 @@ export default function Navbar() {
         </div>
 
         {searchOpen && (
-          <div className="md:hidden relative z-10 border-t border-white/10 px-5 sm:px-8 py-3 max-w-7xl mx-auto">
+          <div className="md:hidden relative z-10 border-t border-white/10 px-6 sm:px-10 py-3 max-w-7xl mx-auto">
             <SearchBar autoFocus className="w-full" onSubmitted={() => setSearchOpen(false)} />
           </div>
         )}
