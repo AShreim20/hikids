@@ -62,6 +62,7 @@ const SharedCart = lazy(() => import('./pages/SharedCart'));
 const PhotoReviews = lazy(() => import('./pages/PhotoReviews'));
 const SiteContentAdmin = lazy(() => import('./pages/admin/SiteContentAdmin'));
 const SiteSettingsAdmin = lazy(() => import('./pages/admin/SiteSettingsAdmin'));
+const PrivacyPolicy = lazy(() => import('./pages/PrivacyPolicy'));
 import { CartProvider } from '@/context/CartContext';
 import { WishlistProvider } from '@/context/WishlistContext';
 import { ThemeProvider } from '@/context/ThemeContext';
@@ -108,6 +109,7 @@ function AnimatedRoutes() {
       <Route path="/admin/photo-reviews" element={<PhotoReviews />} />
       <Route path="/admin/site-content" element={<SiteContentAdmin />} />
       <Route path="/admin/site-settings" element={<SiteSettingsAdmin />} />
+      <Route path="/privacy" element={<PrivacyPolicy />} />
       <Route path="/cart/shared" element={<SharedCart />} />
       <Route path="/admin/reports" element={<Reports />} />
       <Route path="/admin/product/new" element={<ProductEditor />} />

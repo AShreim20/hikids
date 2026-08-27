@@ -52,7 +52,7 @@ export default function Footer() {
         <div className="mt-6 pt-4 border-t border-white/15 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/50">
           <p>© {new Date().getFullYear()} {t('footer.rights')}</p>
           <div className="flex gap-5">
-            <a href="#" className="hover:text-white">{t('footer.privacy')}</a>
+            <Link to="/privacy" className="hover:text-white">{t('footer.privacy')}</Link>
             <a href="#" className="hover:text-white">{t('footer.terms')}</a>
           </div>
         </div>
