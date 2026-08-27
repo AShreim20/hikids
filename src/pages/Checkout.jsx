@@ -246,6 +246,14 @@ export default function Checkout() {
         gift_message: giftMessage.trim() || undefined,
       });
 
+      // Recompute every price/total server-side from the real product, category,
+      // delivery, discount and loyalty records so a forged client payload can
+      // never lower what the customer pays. Defensive: a transient failure
+      // keeps the client totals rather than blocking the happy path.
+      try {
+        await base44.functions.invoke('secureOrder', { order_id: order.id });
+      } catch { /* non-blocking */ }
+
       // Authoritative stock check + atomic deduction. The cart display is NOT
       // a reservation — this is the single source of truth at order time, so
       // two customers racing for the last item can never oversell.
