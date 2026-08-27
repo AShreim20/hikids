@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { ShieldCheck } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -189,6 +190,13 @@ export default function PrivacyPolicy() {
             </div>
           ))}
         </div>
+        <p className="mt-12 text-muted-foreground leading-relaxed" dir={ar ? 'rtl' : 'ltr'}>
+          {ar ? 'للاطّلاع على شروط الاستخدام، يُرجى مراجعة' : 'For the terms of use, please review our'}{' '}
+          <Link to="/terms" className="text-cosmic font-medium hover:underline">
+            {ar ? 'الشروط والأحكام' : 'Terms & Conditions'}
+          </Link>
+          {ar ? '.' : '.'}
+        </p>
       </section>
 
       <Footer />
