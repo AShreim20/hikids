@@ -18,6 +18,11 @@ export const productName = (p, lang) => pickName(p?.name, p?.name_en, lang);
 // categories by their Arabic `name`, so this only affects display.
 export const categoryName = (c, lang) => pickName(c?.name, c?.name_en, lang);
 
+// Category description follows the same rule: Arabic is mandatory, English is
+// optional and falls back to Arabic when empty.
+export const categoryDescription = (c, lang) =>
+  pickName(c?.description, c?.description_en, lang);
+
 // WheelReward uses `label` as its primary (Arabic) name.
 export const rewardName = (r, lang) => pickName(r?.label, r?.label_en, lang);
 

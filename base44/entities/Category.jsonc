@@ -12,7 +12,12 @@
     },
     "description": {
       "type": "string",
-      "title": "Description",
+      "title": "Description (Arabic)",
+      "maxLength": 1000
+    },
+    "description_en": {
+      "type": "string",
+      "title": "Description (English)",
       "maxLength": 1000
     },
     "active": {

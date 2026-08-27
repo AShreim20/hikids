@@ -6,7 +6,7 @@ import { Image } from '@/components/ui/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import { useSiteContent } from '@/context/SiteContentContext';
-import { categoryName } from '@/lib/bilingual';
+import { categoryName, categoryDescription } from '@/lib/bilingual';
 
 // "World of Play" homepage section — driven entirely by the live Categories
 // database. Admin can pick up to 6 categories (stored in SiteContent key
@@ -93,7 +93,7 @@ export default function WorldOfPlay() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                 <div className="relative p-4 sm:p-6 md:p-8 text-white">
                   <h3 className="font-heading font-bold text-base sm:text-xl md:text-2xl leading-tight">{name}</h3>
-                  {c.description && <p className="text-xs sm:text-sm text-white/80 mt-1 line-clamp-2">{c.description}</p>}
+                  {(() => { const d = categoryDescription(c, lang); return d ? <p className="text-xs sm:text-sm text-white/80 mt-1 line-clamp-2">{d}</p> : null; })()}
                   <ArrowRight className="w-5 h-5 mt-2 sm:mt-3 text-white opacity-0 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
                 </div>
               </Link>

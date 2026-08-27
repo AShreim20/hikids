@@ -205,6 +205,7 @@ function CategoryDialog({ initial, onClose, onSaved }) {
     name: initial?.name || '',
     name_en: initial?.name_en || '',
     description: initial?.description || '',
+    description_en: initial?.description_en || '',
     sort_order: initial?.sort_order ?? 0,
     discount_percent: initial?.discount_percent ?? 0,
     discount_active: !!initial?.discount_active,
@@ -216,12 +217,14 @@ function CategoryDialog({ initial, onClose, onSaved }) {
   const submit = async (e) => {
     e.preventDefault();
     if (!form.name.trim()) { toast({ title: ar ? 'الاسم مطلوب' : 'Name required', variant: 'destructive' }); return; }
+    if (!form.description.trim()) { toast({ title: ar ? 'الوصف مطلوب' : 'Description required', variant: 'destructive' }); return; }
     setSaving(true);
     try {
       const payload = {
         name: form.name.trim(),
         name_en: form.name_en.trim(),
-        description: form.description,
+        description: form.description.trim(),
+        description_en: form.description_en.trim(),
         sort_order: Number(form.sort_order) || 0,
         discount_percent: Math.max(0, Math.min(100, Number(form.discount_percent) || 0)),
         discount_active: !!form.discount_active,
@@ -249,7 +252,8 @@ function CategoryDialog({ initial, onClose, onSaved }) {
         <div className="px-6 pb-6 overflow-y-auto flex-1 grid gap-4">
           <FormInput label={ar ? 'الاسم (عربي)' : 'Name (Arabic)'} value={form.name} onChange={(e) => set('name', e.target.value)} required />
           <FormInput label={ar ? 'الاسم (إنجليزي) — اختياري' : 'Name (English) — optional'} value={form.name_en} onChange={(e) => set('name_en', e.target.value)} />
-          <FormInput label={ar ? 'الوصف' : 'Description'} value={form.description} onChange={(e) => set('description', e.target.value)} textarea />
+          <FormInput label={ar ? 'الوصف (عربي)' : 'Description (Arabic)'} value={form.description} onChange={(e) => set('description', e.target.value)} textarea required />
+          <FormInput label={ar ? 'الوصف (إنجليزي) — اختياري' : 'Description (English) — optional'} value={form.description_en} onChange={(e) => set('description_en', e.target.value)} textarea />
           <FormInput label={ar ? 'ترتيب الفرز' : 'Sort order'} type="number" value={form.sort_order} onChange={(e) => set('sort_order', e.target.value)} />
           <div className="grid grid-cols-2 gap-4">
             <FormInput label={ar ? 'نسبة الخصم %' : 'Discount %'} type="number" value={form.discount_percent} onChange={(e) => set('discount_percent', e.target.value)} />
