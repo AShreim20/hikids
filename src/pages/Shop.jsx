@@ -36,8 +36,10 @@ export default function Shop() {
   const [sort, setSort] = useState('featured');
   const initialCat = searchParams.get('category');
   const initialAge = searchParams.get('age');
+  const initialGender = searchParams.get('gender');
   const [cats, setCats] = useState(() => (initialCat ? [initialCat] : []));
   const [ages, setAges] = useState(() => (initialAge && AGE_OPTIONS.some((g) => g.id === initialAge) ? [initialAge] : []));
+  const [gender, setGender] = useState(() => (initialGender === 'Boy' || initialGender === 'Girl' ? initialGender : null));
   const [priceBounds, setPriceBounds] = useState([0, 1000]);
   const [price, setPrice] = useState(null); // null = untouched → use bounds
   const [usedCategoryNames, setUsedCategoryNames] = useState([]);
@@ -83,6 +85,7 @@ export default function Shop() {
         sort,
         cats,
         ages,
+        gender,
         priceMin: activePrice[0],
         priceMax: activePrice[1],
         priceActive,
@@ -107,11 +110,12 @@ export default function Shop() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, perPage, sort, cats, ages, price, search]);
+  }, [page, perPage, sort, cats, ages, gender, price, search]);
 
   const hasActive =
     cats.length > 0 ||
     ages.length > 0 ||
+    !!gender ||
     !!search ||
     (!!price && (price[0] !== priceBounds[0] || price[1] !== priceBounds[1]));
 
@@ -119,12 +123,14 @@ export default function Shop() {
   const onSortChange = (v) => { setSort(v); setPage(1); };
   const onSetCats = (v) => { setCats(v); setPage(1); };
   const onSetAges = (v) => { setAges(v); setPage(1); };
+  const onSetGender = (v) => { setGender(v); setPage(1); };
   const onSetPrice = (v) => { setPrice(v); setPage(1); };
   const onPerPage = (v) => { setPerPage(v); setPage(1); };
 
   const clearAll = () => {
     setCats([]);
     setAges([]);
+    setGender(null);
     setPrice(null);
     if (search) setSearchParams({}, { replace: true });
     setPage(1);
@@ -143,6 +149,7 @@ export default function Shop() {
   const FiltersEl = (
     <ProductFilters
       cats={cats} setCats={onSetCats} ages={ages} setAges={onSetAges}
+      gender={gender} setGender={onSetGender}
       priceBounds={priceBounds} price={displayPrice} setPrice={onSetPrice}
       onClear={clearAll} hasActive={hasActive}
       extraCategories={categories}
@@ -169,9 +176,9 @@ export default function Shop() {
             className="inline-flex items-center gap-2 h-11 px-4 rounded-full bg-mist font-heading font-bold text-sm"
           >
             <SlidersHorizontal className="w-4 h-4" /> {t('plp.filter')}
-            {cats.length + ages.length > 0 && (
+            {cats.length + ages.length + (gender ? 1 : 0) > 0 && (
               <span className="grid place-items-center min-w-5 h-5 px-1 rounded-full bg-cosmic text-white text-[11px]">
-                {cats.length + ages.length}
+                {cats.length + ages.length + (gender ? 1 : 0)}
               </span>
             )}
           </button>

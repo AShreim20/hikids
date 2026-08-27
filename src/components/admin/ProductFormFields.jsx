@@ -91,6 +91,27 @@ export default function ProductFormFields({ form, set }) {
         />
       </label>
       <FormInput label={t('admin.ageRange')} value={form.age_range} onChange={(e) => set('age_range', e.target.value)} placeholder="3-5" />
+      <div className="sm:col-span-2">
+        <span className="text-sm font-medium text-foreground/80">{t('admin.gender')}</span>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {['Boy', 'Girl', 'Unisex'].map((g) => {
+            const arr = form.gender || [];
+            const active = arr.includes(g);
+            return (
+              <button
+                type="button"
+                key={g}
+                onClick={() => set('gender', active ? arr.filter((x) => x !== g) : [...arr, g])}
+                className={`squish h-10 px-4 rounded-full text-sm font-medium transition-colors ${
+                  active ? 'bg-cosmic text-white' : 'bg-mist text-foreground/70 hover:bg-accent/20'
+                }`}
+              >
+                {t(`gender.${g.toLowerCase()}`)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
       <FormInput label={t('admin.material')} value={form.material} onChange={(e) => set('material', e.target.value)} className="sm:col-span-2" />
       <FormInput label={t('admin.rating')} type="number" value={form.rating} onChange={(e) => set('rating', e.target.value)} />
       <FormInput label={t('admin.stock')} type="number" value={form.stock} onChange={(e) => set('stock', e.target.value)} />

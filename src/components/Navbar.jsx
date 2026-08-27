@@ -11,6 +11,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import HeaderLoyaltyBalance from '@/components/HeaderLoyaltyBalance';
 import HeaderWheelSpins from '@/components/HeaderWheelSpins';
+import ShopByGenderMenu from '@/components/ShopByGenderMenu';
 
 const MOBILE_LINK_CLASS =
   'text-sm font-medium text-white/85 hover:text-accent transition-colors whitespace-nowrap shrink-0';
@@ -119,7 +120,8 @@ export default function Navbar() {
       const widths = Array.from(measureEl.children).map((c) => c.offsetWidth);
       const gap = 16; // gap-4
       const moreW = 80; // reserved width for the "More" button
-      const avail = rowEl.clientWidth;
+      const genderW = 130; // reserved width for the "Shop by Gender" mobile button
+      const avail = Math.max(0, rowEl.clientWidth - genderW - gap);
       const fit = (reserveMore) => {
         const a = avail - (reserveMore ? moreW + gap : 0);
         let total = 0, count = 0;
@@ -143,11 +145,11 @@ export default function Navbar() {
 
   return (
     <>
-      <header ref={headerRef} className="fixed top-0 left-0 right-0 z-50 bg-[#5D3F85]/90 backdrop-blur-xl border-b border-accent/30 safe-top overflow-hidden">
+      <header ref={headerRef} className="fixed top-0 left-0 right-0 z-50 bg-[#5D3F85]/90 backdrop-blur-xl border-b border-accent/30 safe-top">
         {/* Decorative brand ribbons — opposite the logo, behind all content.
             Colors sampled from the HiKids logo: cyan #00BFF3, yellow #FFEC5C,
             light yellow #FFF38A, with a subtle pink #FF4F81 accent. */}
-        <div aria-hidden className="pointer-events-none absolute inset-y-0 end-0 flex items-end gap-2.5 sm:gap-4 pe-4 sm:pe-6 pb-2.5" style={{ zIndex: 0 }}>
+        <div aria-hidden className="pointer-events-none absolute inset-y-0 end-0 flex items-end gap-2.5 sm:gap-4 pe-4 sm:pe-6 pb-2.5 overflow-hidden" style={{ zIndex: 0 }}>
           <span className="block rounded-full bg-[#00BFF3] w-2.5 sm:w-4 h-[60%] opacity-70" />
           <span className="block rounded-full bg-[#FFEC5C] w-4 sm:w-6 h-[94%] opacity-80" />
           <span className="block rounded-full bg-[#FF4F81] w-2 sm:w-3 h-[46%] opacity-45" />
@@ -199,6 +201,7 @@ export default function Navbar() {
                   {l.label}
                 </a>
               ))}
+              <ShopByGenderMenu />
               {user && (
                 <Link to="/orders" className="text-sm font-medium text-white/85 hover:text-accent transition-colors">
                   {t('orders.title')}
@@ -299,6 +302,7 @@ export default function Navbar() {
           </div>
           <div className="max-w-7xl mx-auto px-5 sm:px-8 h-12 flex items-center">
             <div ref={rowRef} className="flex items-center gap-4 flex-1 min-w-0">
+              <ShopByGenderMenu mobile />
               {mobileLinks.slice(0, visibleCount).map((l) => (
                 <MobileLinkItem key={l.key} link={l} />
               ))}

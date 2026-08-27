@@ -14,7 +14,9 @@ const MATCH_CAP = 10000;
 const AGE_OPTIONS = [
   { id: '0_2', min: 0, max: 2 },
   { id: '3_5', min: 3, max: 5 },
-  { id: '6', min: 6, max: Infinity },
+  { id: '6_8', min: 6, max: 8 },
+  { id: '9_12', min: 9, max: 12 },
+  { id: '13', min: 13, max: Infinity },
 ];
 
 function escapeRegex(s) {
@@ -52,6 +54,7 @@ export default async function (req) {
     const sort = body.sort || 'featured';
     const cats = Array.isArray(body.cats) ? body.cats.filter(Boolean) : [];
     const ages = Array.isArray(body.ages) ? body.ages.filter(Boolean) : [];
+    const gender = body.gender ? String(body.gender) : null;
     const search = String(body.search || '').trim();
     const priceActive = !!body.priceActive;
     const priceMin = Number(body.priceMin);
@@ -75,6 +78,7 @@ export default async function (req) {
     // DB query: category $in + search $or $regex (implicit AND between them).
     const q = {};
     if (cats.length) q.category = { $in: cats };
+    if (gender) q.gender = { $in: [gender, 'Unisex'] };
     if (search) {
       const r = escapeRegex(search);
       q.$or = [

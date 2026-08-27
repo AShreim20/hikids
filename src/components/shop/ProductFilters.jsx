@@ -5,7 +5,9 @@ import { categoryName } from '@/lib/bilingual';
 export const AGE_OPTIONS = [
 { id: '0_2', min: 0, max: 2 },
 { id: '3_5', min: 3, max: 5 },
-{ id: '6', min: 6, max: Infinity }];
+{ id: '6_8', min: 6, max: 8 },
+{ id: '9_12', min: 9, max: 12 },
+{ id: '13', min: 13, max: Infinity }];
 
 
 export function ageRange(a) {
@@ -31,7 +33,7 @@ const Chip = ({ active, onClick, children }) =>
 
 export default function ProductFilters({
   cats, setCats, ages, setAges, priceBounds, price, setPrice, onClear, hasActive,
-  extraCategories = [], usedCategoryNames = []
+  extraCategories = [], usedCategoryNames = [], gender, setGender
 }) {
   const { t, lang } = useLanguage();
   const toggleArr = (arr, val, setter) =>
@@ -92,6 +94,14 @@ export default function ProductFilters({
             onChange={(e) => setPrice([pmin, Math.max(Number(e.target.value), pmin)])}
             className="w-full accent-cosmic" />
           
+        </div>
+      </div>
+
+      <div>
+        <p className="text-sm font-heading font-bold mb-3">{t('plp.gender')}</p>
+        <div className="flex flex-wrap gap-2">
+          <Chip active={gender === 'Boy'} onClick={() => setGender(gender === 'Boy' ? null : 'Boy')}>{t('gender.boys')}</Chip>
+          <Chip active={gender === 'Girl'} onClick={() => setGender(gender === 'Girl' ? null : 'Girl')}>{t('gender.girls')}</Chip>
         </div>
       </div>
 
