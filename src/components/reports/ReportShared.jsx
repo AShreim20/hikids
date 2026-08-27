@@ -6,7 +6,7 @@ export function PeriodSelector({ period, setPeriod, custom, setCustom }) {
   const { t } = useLanguage();
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <div className="flex items-center gap-1 p-1 rounded-full bg-mist overflow-x-auto">
+      <div className="flex items-center gap-1 rounded-full bg-mist overflow-x-auto py-1 px-5">
         {PERIODS.map((p) =>
         <button
           key={p.id}
@@ -30,7 +30,7 @@ export function PeriodSelector({ period, setPeriod, custom, setCustom }) {
 
 export function StatCard({ label, value, accent, hint }) {
   return (
-    <div className={`rounded-3xl border py-5 px-5 ${accent === 'cosmic' ? 'bg-cosmic/5 border-cosmic/20' : accent === 'accent' ? 'bg-accent/5 border-accent/20' : accent === 'destructive' ? 'bg-destructive/5 border-destructive/20' : 'bg-card border-border/60'}`}>
+    <div className={`rounded-3xl border py-5 px-5 my-4 ${accent === 'cosmic' ? 'bg-cosmic/5 border-cosmic/20' : accent === 'accent' ? 'bg-accent/5 border-accent/20' : accent === 'destructive' ? 'bg-destructive/5 border-destructive/20' : 'bg-card border-border/60'}`}>
       <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">{label}</p>
       <p className={`mt-1.5 font-heading font-extrabold text-2xl ${accent === 'cosmic' ? 'text-cosmic' : accent === 'accent' ? 'text-accent' : accent === 'destructive' ? 'text-destructive' : ''}`}>{value}</p>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
