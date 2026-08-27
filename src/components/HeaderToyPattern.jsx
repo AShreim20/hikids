@@ -84,6 +84,73 @@ function Star({ color = C.cyan }) {
   );
 }
 
+// Beach-style ball: two-tone with a simple curved seam.
+function Ball() {
+  return (
+    <svg viewBox="0 0 32 32" fill="none" className="w-full h-full">
+      <circle cx="16" cy="16" r="14" fill={C.pink} />
+      <path d="M2 16c0-7.2 6.3-13 14-13S30 8.8 30 16" stroke={C.lightYellow} strokeWidth="2.2" fill="none" opacity="0.7" />
+      <path d="M5.5 9.5c4 3 17 3 21 0" stroke={C.lightYellow} strokeWidth="2.2" fill="none" opacity="0.6" />
+      <circle cx="16" cy="16" r="14" stroke={C.purple} strokeWidth="1.4" fill="none" opacity="0.35" />
+    </svg>
+  );
+}
+
+// Toy rocket: rounded body, fins, porthole.
+function Rocket() {
+  return (
+    <svg viewBox="0 0 32 40" fill="none" className="w-full h-full">
+      <path d="M16 2c5 4.5 7.5 10 7.5 17v10H8.5V19C8.5 12 11 6.5 16 2Z" fill={C.cyan} />
+      <path d="M8.5 19v10h-4c-1.6 0-2.5-1.2-2-2.8C3.6 23 5.6 20.5 8.5 19Z" fill={C.pink} />
+      <path d="M23.5 19v10h4c1.6 0 2.5-1.2 2-2.8C28.4 23 26.4 20.5 23.5 19Z" fill={C.pink} />
+      <circle cx="16" cy="14" r="3.4" fill={C.lightYellow} />
+      <circle cx="16" cy="14" r="3.4" stroke={C.purple} strokeWidth="1" fill="none" opacity="0.4" />
+      <path d="M13 31l3 6 3-6" stroke={C.yellow} strokeWidth="2.6" strokeLinecap="round" fill="none" />
+    </svg>
+  );
+}
+
+// Balloon: ellipse body + curling string.
+function Balloon() {
+  return (
+    <svg viewBox="0 0 24 36" fill="none" className="w-full h-full">
+      <ellipse cx="12" cy="12" rx="9" ry="11" fill={C.pink} />
+      <path d="M10 3.5c-2.5 1-4 3.5-4 6.5" stroke="#ffffff" strokeWidth="1.4" fill="none" opacity="0.55" />
+      <path d="M12 23l-1.4 3 2.8 0L12 23Z" fill={C.purple} opacity="0.6" />
+      <path d="M12 26c-1 2-2 4 0 6s-1 3 0 4" stroke={C.purple} strokeWidth="1.2" fill="none" opacity="0.5" />
+    </svg>
+  );
+}
+
+// Spinning top: cone body + stem + tip.
+function Top() {
+  return (
+    <svg viewBox="0 0 28 34" fill="none" className="w-full h-full">
+      <path d="M14 3v6" stroke={C.purple} strokeWidth="2" strokeLinecap="round" />
+      <circle cx="14" cy="2" r="1.6" fill={C.yellow} />
+      <path d="M4 12c4 4 16 4 20 0c-3 7-6 11-10 11s-7-4-10-11Z" fill={C.cyan} />
+      <path d="M4 12c4 4 16 4 20 0" stroke={C.purple} strokeWidth="1.2" fill="none" opacity="0.4" />
+      <path d="M14 23l3 9h-6l3-9Z" fill={C.pink} />
+    </svg>
+  );
+}
+
+// Toy train piece: rounded body + wheels + window.
+function Train() {
+  return (
+    <svg viewBox="0 0 40 30" fill="none" className="w-full h-full">
+      <rect x="4" y="6" width="22" height="15" rx="3.5" fill={C.yellow} />
+      <rect x="9" y="9" width="9" height="7" rx="2" fill={C.lightYellow} />
+      <rect x="26" y="10" width="8" height="11" rx="2.5" fill={C.cyan} />
+      <path d="M30 10V6.5h4V10" stroke={C.purple} strokeWidth="1.4" fill="none" opacity="0.5" />
+      <circle cx="10" cy="24" r="3.6" fill={C.purple} />
+      <circle cx="20" cy="24" r="3.6" fill={C.purple} />
+      <circle cx="10" cy="24" r="1.3" fill={C.lightYellow} />
+      <circle cx="20" cy="24" r="1.3" fill={C.lightYellow} />
+    </svg>
+  );
+}
+
 const Piece = ({ children, className, style }) => (
   <div className={`absolute ${className}`} style={style} aria-hidden>
     {children}
@@ -125,6 +192,36 @@ export default function HeaderToyPattern() {
       {/* Star (yellow) — desktop accent */}
       <Piece className="hidden sm:block bottom-12 sm:bottom-14 end-14 lg:end-20 h-4 w-4 sm:h-5 sm:w-5 opacity-70">
         <Star color={C.yellow} />
+      </Piece>
+
+      {/* Rocket — desktop, mid-upper */}
+      <Piece className="hidden sm:block top-2 sm:top-3 end-32 lg:end-44 h-8 w-6 sm:h-10 sm:w-8 lg:h-12 lg:w-9 opacity-85" style={{ transform: 'rotate(10deg)' }}>
+        <Rocket />
+      </Piece>
+
+      {/* Balloon — desktop, mid area */}
+      <Piece className="hidden sm:block top-14 sm:top-16 end-28 lg:end-36 h-8 w-6 sm:h-10 sm:w-7 lg:h-12 lg:w-8 opacity-80" style={{ transform: 'rotate(-6deg)' }}>
+        <Balloon />
+      </Piece>
+
+      {/* Spinning top — desktop, mid-lower */}
+      <Piece className="hidden sm:block bottom-10 sm:bottom-12 end-32 lg:end-44 h-7 w-6 sm:h-9 sm:w-7 lg:h-11 lg:w-8 opacity-80" style={{ transform: 'rotate(-12deg)' }}>
+        <Top />
+      </Piece>
+
+      {/* Toy train — desktop, lower band */}
+      <Piece className="hidden lg:block bottom-2 end-44 h-7 w-9 opacity-75" style={{ transform: 'rotate(2deg)' }}>
+        <Train />
+      </Piece>
+
+      {/* Ball — desktop, mid accent */}
+      <Piece className="hidden lg:block top-8 end-56 h-7 w-7 opacity-75" style={{ transform: 'rotate(4deg)' }}>
+        <Ball />
+      </Piece>
+
+      {/* Star (pink) — desktop micro accent */}
+      <Piece className="hidden lg:block top-6 end-8 h-4 w-4 opacity-70">
+        <Star color={C.pink} />
       </Piece>
     </div>
   );
