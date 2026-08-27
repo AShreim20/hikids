@@ -147,6 +147,7 @@ export const translations = {
     'plp.gender': 'Gender',
     'admin.gender': 'Gender',
     'nav.shopByGender': 'Shop by Gender',
+    'nav.ages': 'Ages',
 
     'rec.label': 'Recommended for you',
     'rec.title': 'Loved by families',
@@ -840,6 +841,7 @@ export const translations = {
     'plp.gender': 'الجنس',
     'admin.gender': 'الجنس',
     'nav.shopByGender': 'تسوّق حسب الجنس',
+    'nav.ages': 'الأعمار',
 
     'rec.label': 'موصى به لك',
     'rec.title': 'محبوب لدى العائلات',
