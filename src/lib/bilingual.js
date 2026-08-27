@@ -14,6 +14,11 @@ export const pickName = (ar, en, lang) => {
 // Entity-specific wrappers — keep call sites readable and consistent.
 export const productName = (p, lang) => pickName(p?.name, p?.name_en, lang);
 
+// Product description follows the same bilingual rule as the name: Arabic is
+// mandatory, English is optional and falls back to Arabic when empty.
+export const productDescription = (p, lang) =>
+  pickName(p?.description, p?.description_en, lang);
+
 // Category: Arabic name is mandatory, English is optional. Products link to
 // categories by their Arabic `name`, so this only affects display.
 export const categoryName = (c, lang) => pickName(c?.name, c?.name_en, lang);

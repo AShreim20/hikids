@@ -11,7 +11,7 @@ import ProductFormFields, { CATEGORIES } from '@/components/admin/ProductFormFie
 import { unwrap } from '@/lib/invoke';
 
 const EMPTY = {
-  name: '', name_en: '', description: '', price: '', sale_price: '', unit_cost: '', barcode: '', category: CATEGORIES[0], age_range: '',
+  name: '', name_en: '', description: '', description_en: '', price: '', sale_price: '', unit_cost: '', barcode: '', category: CATEGORIES[0], age_range: '',
   image_url: '', images: [], video_url: '', material: '', rating: '', stock: '',
   featured: false, loyalty_exempt: false, tags: [], options: [], variants: [],
 };
@@ -35,6 +35,7 @@ export default function ProductEditor() {
         name: p.name || '',
         name_en: p.name_en || '',
         description: p.description || '',
+        description_en: p.description_en || '',
         price: p.price ?? '',
         sale_price: p.sale_price ?? '',
         unit_cost: p.unit_cost ?? '',
@@ -81,6 +82,10 @@ export default function ProductEditor() {
       toast({ title: t('admin.required'), variant: 'destructive' });
       return;
     }
+    if (!form.description || !form.description.trim()) {
+      toast({ title: lang === 'ar' ? 'الوصف (عربي) مطلوب' : 'Arabic description required', variant: 'destructive' });
+      return;
+    }
     setSaving(true);
     const barcodeValue = (form.barcode || '').trim();
     if (barcodeValue) {
@@ -101,6 +106,7 @@ export default function ProductEditor() {
       name: form.name,
       name_en: (form.name_en || '').trim() || null,
       description: form.description,
+      description_en: (form.description_en || '').trim() || null,
       price: Number(form.price) || 0,
       sale_price: form.sale_price ? Number(form.sale_price) : null,
       unit_cost: form.unit_cost ? Number(form.unit_cost) : null,

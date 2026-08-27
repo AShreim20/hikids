@@ -15,7 +15,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import { useToast } from '@/components/ui/use-toast';
 import { priceInfo } from '@/lib/pricing';
-import { productName } from '@/lib/bilingual';
+import { productName, productDescription } from '@/lib/bilingual';
 import VariantSelector from '@/components/product/VariantSelector';
 import {
   hasVariants, findVariant, defaultSelection, selectionImages,
@@ -164,7 +164,7 @@ export default function ProductDetail() {
           )}
 
           <p className="mt-6 text-lg text-muted-foreground leading-relaxed">
-            {product.description}
+            {productDescription(product, lang)}
           </p>
 
           <div className="mt-8 flex items-center gap-4">

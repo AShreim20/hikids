@@ -12,7 +12,11 @@
     },
     "description": {
       "type": "string",
-      "title": "Description"
+      "title": "Description (Arabic)"
+    },
+    "description_en": {
+      "type": "string",
+      "title": "Description (English)"
     },
     "price": {
       "type": "number",

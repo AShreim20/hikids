@@ -72,7 +72,8 @@ export default function ProductFormFields({ form, set }) {
     <div className="grid sm:grid-cols-2 gap-4">
       <FormInput label={ar ? 'الاسم (عربي) — مطلوب' : 'Name (Arabic) — required'} value={form.name} onChange={(e) => set('name', e.target.value)} required className="sm:col-span-2" />
       <FormInput label={ar ? 'الاسم (إنجليزي) — اختياري' : 'Name (English) — optional'} value={form.name_en || ''} onChange={(e) => set('name_en', e.target.value)} className="sm:col-span-2" />
-      <FormInput label={t('admin.description')} value={form.description} onChange={(e) => set('description', e.target.value)} textarea className="sm:col-span-2" />
+      <FormInput label={ar ? 'الوصف (عربي) — مطلوب' : 'Description (Arabic) — required'} value={form.description} onChange={(e) => set('description', e.target.value)} textarea required className="sm:col-span-2" />
+      <FormInput label={ar ? 'الوصف (إنجليزي) — اختياري' : 'Description (English) — optional'} value={form.description_en || ''} onChange={(e) => set('description_en', e.target.value)} textarea className="sm:col-span-2" />
       <FormInput label={t('admin.price')} type="number" value={form.price} onChange={(e) => set('price', e.target.value)} required />
       <FormInput label={t('admin.salePrice')} type="number" value={form.sale_price} onChange={(e) => set('sale_price', e.target.value)} />
       <FormInput label={t('admin.unitCost')} type="number" value={form.unit_cost} onChange={(e) => set('unit_cost', e.target.value)} />
