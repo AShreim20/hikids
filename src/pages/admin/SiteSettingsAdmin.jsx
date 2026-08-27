@@ -10,6 +10,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useSiteContent } from '@/context/SiteContentContext';
 import { upsertSettings } from '@/lib/siteContent';
 import { DEFAULT_SETTINGS } from '@/lib/siteDefaults';
+import StickySaveBar from '@/components/admin/StickySaveBar';
 
 const FIELDS = [
   { key: 'storeName', en: 'Store name', ar: 'اسم المتجر' },
@@ -112,9 +113,11 @@ export default function SiteSettingsAdmin() {
           ))}
         </div>
 
-        <button onClick={save} disabled={saving} className="mt-6 squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold disabled:opacity-60">
-          {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {t('settings.save')}
-        </button>
+        <StickySaveBar>
+          <button onClick={save} disabled={saving} className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold disabled:opacity-60">
+            {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {t('settings.save')}
+          </button>
+        </StickySaveBar>
       </div>
       <Footer />
     </div>

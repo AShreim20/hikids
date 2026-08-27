@@ -10,6 +10,7 @@ import { useSiteContent } from '@/context/SiteContentContext';
 import { upsertContent, loadContentRecord } from '@/lib/siteContent';
 import { DEFAULT_FAQ_ITEMS, DEFAULT_ABOUT } from '@/lib/siteDefaults';
 import { translations } from '@/context/translations';
+import StickySaveBar from '@/components/admin/StickySaveBar';
 
 // Group translation keys into friendly pages for the override editor.
 const PAGE_GROUPS = [
@@ -147,9 +148,11 @@ export default function SiteContentAdmin() {
                 </div>
               ))}
             </div>
-            <button onClick={saveText} disabled={savingText} className="mt-6 squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold disabled:opacity-60">
-              {savingText ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {t('settings.save')}
-            </button>
+            <StickySaveBar>
+              <button onClick={saveText} disabled={savingText} className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold disabled:opacity-60">
+                {savingText ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {t('settings.save')}
+              </button>
+            </StickySaveBar>
           </div>
         )}
 
@@ -190,11 +193,11 @@ export default function SiteContentAdmin() {
               ))}
             </div>
             <button onClick={addItem} className="mt-4 squish inline-flex items-center gap-2 h-11 px-5 rounded-full bg-mist font-heading font-bold"><Plus className="w-5 h-5" /> Add question</button>
-            <div>
-              <button onClick={saveFaq} disabled={savingFaq} className="mt-6 squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold disabled:opacity-60">
+            <StickySaveBar>
+              <button onClick={saveFaq} disabled={savingFaq} className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold disabled:opacity-60">
                 {savingFaq ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {t('settings.save')}
               </button>
-            </div>
+            </StickySaveBar>
           </div>
         )}
 
@@ -241,9 +244,11 @@ export default function SiteContentAdmin() {
                 <div><label className="text-xs font-heading font-bold text-cosmic">CTA button (EN)</label><input value={about.ctaBtnEn || ''} onChange={(e) => setAboutField('ctaBtnEn', e.target.value)} className={`mt-1 ${input}`} /></div>
               </div>
             </div>
-            <button onClick={saveAbout} disabled={savingAbout} className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold disabled:opacity-60">
-              {savingAbout ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {t('settings.save')}
-            </button>
+            <StickySaveBar>
+              <button onClick={saveAbout} disabled={savingAbout} className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold disabled:opacity-60">
+                {savingAbout ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {t('settings.save')}
+              </button>
+            </StickySaveBar>
           </div>
         )}
       </div>
