@@ -143,9 +143,17 @@ export default function Navbar() {
 
   return (
     <>
-      <header ref={headerRef} className="fixed top-0 left-0 right-0 z-50 bg-[#5D3F85]/90 backdrop-blur-xl border-b border-accent/30 safe-top">
+      <header ref={headerRef} className="fixed top-0 left-0 right-0 z-50 bg-[#5D3F85]/90 backdrop-blur-xl border-b border-accent/30 safe-top overflow-hidden">
+        {/* Decorative brand stripes — opposite the logo, behind all content.
+            Colors sampled from the HiKids logo: blue #00BFF3, yellow #FFEC5C/#FFF38A. */}
+        <div aria-hidden className="pointer-events-none absolute inset-y-0 end-0 flex items-stretch gap-3 sm:gap-5 pe-4 sm:pe-10 opacity-25 sm:opacity-30" style={{ zIndex: 0 }}>
+          <span className="block w-2.5 sm:w-4 bg-[#00BFF3] rounded-full" />
+          <span className="block w-5 sm:w-7 bg-[#FFEC5C] rounded-full" />
+          <span className="block w-2 sm:w-3 bg-[#FFF38A] rounded-full" />
+          <span className="block w-4 sm:w-5 bg-[#00BFF3] rounded-full" />
+        </div>
         {/* Section 1 — brand + search + mobile action icons */}
-        <div className="border-b border-white/10">
+        <div className="relative z-10 border-b border-white/10">
           <div className="max-w-7xl mx-auto px-5 sm:px-8 h-16 md:h-20 flex items-center gap-4">
             <Link to="/" className="flex items-center group shrink-0">
               <Logo className="h-14 md:h-16 w-auto group-hover:scale-95 transition-transform" />
@@ -178,7 +186,7 @@ export default function Navbar() {
         </div>
 
         {/* Section 2 — desktop navigation + account actions (desktop only) */}
-        <div className="hidden md:block">
+        <div className="hidden md:block relative z-10">
           <div className="max-w-7xl mx-auto px-5 sm:px-8 h-12 md:h-14 flex items-center justify-between gap-3">
             <div className="hidden md:flex items-center gap-5 lg:gap-9">
               {links.map((l) => (
@@ -277,7 +285,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile second line — nav links with "More" overflow */}
-        <div className="md:hidden relative">
+        <div className="md:hidden relative z-10">
           {/* invisible measure row (kept in flow for accurate widths) */}
           <div
             ref={measureRef}
@@ -301,7 +309,7 @@ export default function Navbar() {
         </div>
 
         {searchOpen && (
-          <div className="md:hidden border-t border-white/10 px-5 sm:px-8 py-3 max-w-7xl mx-auto">
+          <div className="md:hidden relative z-10 border-t border-white/10 px-5 sm:px-8 py-3 max-w-7xl mx-auto">
             <SearchBar autoFocus className="w-full" onSubmitted={() => setSearchOpen(false)} />
           </div>
         )}
