@@ -3,8 +3,7 @@ import { Toaster } from "@/components/ui/toaster"
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClientInstance } from '@/lib/query-client'
 import { BrowserRouter as Router, Route, Routes, useLocation } from 'react-router-dom';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useIsMobile } from '@/hooks/use-mobile';
+
 const PageNotFound = lazy(() => import('./lib/PageNotFound'));
 import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
@@ -73,7 +72,6 @@ import { SiteContentProvider } from '@/context/SiteContentContext';
 
 function AnimatedRoutes() {
   const location = useLocation();
-  const isMobile = useIsMobile();
   const routes = (
     <Routes location={location}>
       {/* Add your page Route elements here */}
@@ -131,25 +129,13 @@ function AnimatedRoutes() {
     </Routes>
   );
 
-  // Desktop keeps the default routing (no transition wrapper) so sticky
-  // headers / fixed overlays behave exactly as before. On mobile we wrap
-  // routes in AnimatePresence for a smooth slide-in + fade-out per navigation.
-  if (!isMobile) return routes;
-
-  return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={location.pathname}
-        className="route-slide-in"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.2, ease: 'easeOut' }}
-      >
-        {routes}
-      </motion.div>
-    </AnimatePresence>
-  );
+  // The <Routes> element must stay stable across navigations: all page
+  // components are lazy-loaded behind <Suspense>, and keying/remounting the
+  // route tree (e.g. via an AnimatePresence wrapper keyed by pathname) re-fires
+  // the Suspense fallback and page mount effects on every navigation — which
+  // on mobile showed up as a persistent loading/reload loop. Returning routes
+  // directly keeps the same <Routes> instance, so lazy chunks stay loaded.
+  return routes;
 }
 
 const AuthenticatedApp = () => {
