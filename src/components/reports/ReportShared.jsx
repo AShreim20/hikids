@@ -7,25 +7,25 @@ export function PeriodSelector({ period, setPeriod, custom, setCustom }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div className="flex items-center gap-1 p-1 rounded-full bg-mist overflow-x-auto">
-        {PERIODS.map((p) => (
-          <button
-            key={p.id}
-            onClick={() => setPeriod(p.id)}
-            className={`shrink-0 h-9 px-4 rounded-full text-sm font-heading font-bold transition-colors ${period === p.id ? 'bg-cosmic text-white' : 'text-foreground/70 hover:bg-cosmic/10'}`}
-          >
+        {PERIODS.map((p) =>
+        <button
+          key={p.id}
+          onClick={() => setPeriod(p.id)}
+          className={`shrink-0 h-9 rounded-full text-sm font-heading font-bold transition-colors px-4 my-1 ${period === p.id ? 'bg-cosmic text-white' : 'text-foreground/70 hover:bg-cosmic/10'}`}>
+          
             {t(p.labelKey)}
           </button>
-        ))}
+        )}
       </div>
-      {period === 'custom' && (
-        <div className="flex items-center gap-2">
+      {period === 'custom' &&
+      <div className="flex items-center gap-2">
           <input type="date" value={custom.from || ''} onChange={(e) => setCustom((c) => ({ ...c, from: e.target.value }))} className="h-10 px-3 rounded-2xl bg-mist border border-border text-sm" />
           <span className="text-muted-foreground">–</span>
           <input type="date" value={custom.to || ''} onChange={(e) => setCustom((c) => ({ ...c, to: e.target.value }))} className="h-10 px-3 rounded-2xl bg-mist border border-border text-sm" />
         </div>
-      )}
-    </div>
-  );
+      }
+    </div>);
+
 }
 
 export function StatCard({ label, value, accent, hint }) {
@@ -34,8 +34,8 @@ export function StatCard({ label, value, accent, hint }) {
       <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">{label}</p>
       <p className={`mt-1.5 font-heading font-extrabold text-2xl ${accent === 'cosmic' ? 'text-cosmic' : accent === 'accent' ? 'text-accent' : accent === 'destructive' ? 'text-destructive' : ''}`}>{value}</p>
       {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}
-    </div>
-  );
+    </div>);
+
 }
 
 export function SectionCard({ title, children, right }) {
@@ -46,8 +46,8 @@ export function SectionCard({ title, children, right }) {
         {right}
       </div>
       {children}
-    </div>
-  );
+    </div>);
+
 }
 
 export function EmptyRow({ text }) {
@@ -55,10 +55,10 @@ export function EmptyRow({ text }) {
 }
 
 export function MiniBar({ value, max, color = 'bg-cosmic' }) {
-  const pct = max > 0 ? Math.max(2, (value / max) * 100) : 0;
+  const pct = max > 0 ? Math.max(2, value / max * 100) : 0;
   return (
     <div className="mt-1.5 h-2 rounded-full bg-mist overflow-hidden">
       <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
-    </div>
-  );
+    </div>);
+
 }
