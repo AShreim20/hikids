@@ -42,6 +42,22 @@
       "type": "string",
       "title": "Age Range"
     },
+    "ages": {
+      "type": "array",
+      "title": "Age ranges",
+      "items": {
+        "type": "string",
+        "enum": [
+          "0_2",
+          "3_5",
+          "6_8",
+          "9_12",
+          "12",
+          "all"
+        ]
+      },
+      "default": []
+    },
     "gender": {
       "type": "array",
       "title": "Gender",

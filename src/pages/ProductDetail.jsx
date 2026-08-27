@@ -16,6 +16,7 @@ import { useCategories } from '@/context/CategoryContext';
 import { useToast } from '@/components/ui/use-toast';
 import { priceInfo } from '@/lib/pricing';
 import { productName, productDescription } from '@/lib/bilingual';
+import { ageLabels } from '@/lib/ages';
 import VariantSelector from '@/components/product/VariantSelector';
 import {
   hasVariants, findVariant, defaultSelection, selectionImages,
@@ -150,7 +151,7 @@ export default function ProductDetail() {
                 />
               ))}
             </div>
-            <span className="text-sm text-muted-foreground">{product.rating?.toFixed(1)} · {t('pd.ages')} {product.age_range}</span>
+            <span className="text-sm text-muted-foreground">{product.rating?.toFixed(1)} · {t('pd.ages')} {ageLabels(product, t)}</span>
           </div>
 
           {Array.isArray(product.tags) && product.tags.length > 0 && (

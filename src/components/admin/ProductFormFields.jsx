@@ -10,6 +10,7 @@ import OptionsEditor from '@/components/admin/OptionsEditor';
 import VariantTable from '@/components/admin/VariantTable';
 import FormInput from '@/components/admin/FormInput';
 import { useCategories } from '@/context/CategoryContext';
+import { PRODUCT_AGE_OPTIONS } from '@/lib/ages';
 
 export const CATEGORIES = [
   'Build & Create',
@@ -90,7 +91,27 @@ export default function ProductFormFields({ form, set }) {
           options={categoryOptions.map((c) => ({ value: c, label: c }))}
         />
       </label>
-      <FormInput label={t('admin.ageRange')} value={form.age_range} onChange={(e) => set('age_range', e.target.value)} placeholder="3-5" />
+      <div className="sm:col-span-2">
+        <span className="text-sm font-medium text-foreground/80">{t('admin.ageRange')}</span>
+        <div className="mt-2 flex flex-wrap gap-2">
+          {PRODUCT_AGE_OPTIONS.map((o) => {
+            const arr = form.ages || [];
+            const active = arr.includes(o.id);
+            return (
+              <button
+                type="button"
+                key={o.id}
+                onClick={() => set('ages', active ? arr.filter((x) => x !== o.id) : [...arr, o.id])}
+                className={`squish h-10 px-4 rounded-full text-sm font-medium transition-colors ${
+                  active ? 'bg-cosmic text-white' : 'bg-mist text-foreground/70 hover:bg-accent/20'
+                }`}
+              >
+                {t(`age.${o.id}`)}
+              </button>
+            );
+          })}
+        </div>
+      </div>
       <div className="sm:col-span-2">
         <span className="text-sm font-medium text-foreground/80">{t('admin.gender')}</span>
         <div className="mt-2 flex flex-wrap gap-2">

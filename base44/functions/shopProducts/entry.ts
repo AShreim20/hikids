@@ -16,7 +16,7 @@ const AGE_OPTIONS = [
   { id: '3_5', min: 3, max: 5 },
   { id: '6_8', min: 6, max: 8 },
   { id: '9_12', min: 9, max: 12 },
-  { id: '13', min: 13, max: Infinity },
+  { id: '12', min: 12, max: Infinity },
 ];
 
 function escapeRegex(s) {
@@ -114,9 +114,13 @@ export default async function (req) {
           if (ep < priceMin || ep > priceMax) return false;
         }
         if (selectedAges.length) {
-          const ok = selectedAges.some((g) =>
-            overlaps(parseAgeRange(p.age_range), { min: g.min, max: g.max })
-          );
+          const ids = Array.isArray(p.ages) ? p.ages : [];
+          const ok = selectedAges.some((g) => {
+            if (ids.includes(g.id) || ids.includes('all')) return true;
+            const legacy = p.age_range;
+            if (legacy) return overlaps(parseAgeRange(legacy), { min: g.min, max: g.max });
+            return false;
+          });
           if (!ok) return false;
         }
         return true;

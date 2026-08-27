@@ -9,9 +9,10 @@ import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import ProductFormFields, { CATEGORIES } from '@/components/admin/ProductFormFields';
 import { unwrap } from '@/lib/invoke';
+import { ageRangeToIds } from '@/lib/ages';
 
 const EMPTY = {
-  name: '', name_en: '', description: '', description_en: '', price: '', sale_price: '', unit_cost: '', barcode: '', category: CATEGORIES[0], age_range: '',
+  name: '', name_en: '', description: '', description_en: '', price: '', sale_price: '', unit_cost: '', barcode: '', category: CATEGORIES[0], age_range: '', ages: [],
   image_url: '', images: [], video_url: '', material: '', rating: '', stock: '',
   featured: false, loyalty_exempt: false, tags: [], options: [], variants: [],
 };
@@ -42,6 +43,7 @@ export default function ProductEditor() {
         barcode: p.barcode || '',
         category: p.category || CATEGORIES[0],
         age_range: p.age_range || '',
+        ages: Array.isArray(p.ages) && p.ages.length ? p.ages : ageRangeToIds(p.age_range),
         image_url: p.image_url || '',
         images: Array.isArray(p.images) ? p.images : [],
         video_url: p.video_url || '',
@@ -113,6 +115,7 @@ export default function ProductEditor() {
       barcode: form.barcode || '',
       category: form.category,
       age_range: form.age_range,
+      ages: form.ages || [],
       image_url: form.image_url,
       images: form.images || [],
       video_url: form.video_url || null,

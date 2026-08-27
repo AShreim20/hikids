@@ -1,13 +1,9 @@
 import React from 'react';
 import { useLanguage } from '@/context/LanguageContext';
 import { categoryName } from '@/lib/bilingual';
+import { AGE_OPTIONS } from '@/lib/ages';
 
-export const AGE_OPTIONS = [
-{ id: '0_2', min: 0, max: 2 },
-{ id: '3_5', min: 3, max: 5 },
-{ id: '6_8', min: 6, max: 8 },
-{ id: '9_12', min: 9, max: 12 },
-{ id: '13', min: 13, max: Infinity }];
+export { AGE_OPTIONS };
 
 
 export function ageRange(a) {

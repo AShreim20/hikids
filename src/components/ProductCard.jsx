@@ -10,6 +10,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import { priceInfo } from '@/lib/pricing';
 import { productName } from '@/lib/bilingual';
+import { ageLabels } from '@/lib/ages';
 import { hasVariants, getVariants, isSellable } from '@/lib/variants';
 
 const CAT_LABEL = {
@@ -124,7 +125,7 @@ export default function ProductCard({ product, large = false }) {
         <h3 className="mt-1 font-display font-semibold text-xl leading-tight tracking-tight">
           {productName(product, lang)}
         </h3>
-        <p className="mt-1 text-sm text-muted-foreground">{t('pd.ages')} {product.age_range}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{t('pd.ages')} {ageLabels(product, t)}</p>
         <p className="mt-2 font-heading font-extrabold text-xl">
           {formatPrice(final)}
           {hasDiscount && <span className="ml-2 text-sm text-muted-foreground line-through">{formatPrice(original)}</span>}
