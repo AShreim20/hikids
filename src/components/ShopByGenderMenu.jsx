@@ -36,7 +36,7 @@ export default function ShopByGenderMenu({ mobile = false, onNavigate }) {
           <Link
             to={linkFor(gender, a.id)}
             onClick={closeAll}
-            className={`block rounded-lg text-white/80 hover:bg-white/10 hover:text-accent transition-colors ${itemClass}`}
+            className={`block rounded-lg text-white hover:bg-white/15 hover:text-accent transition-colors ${itemClass}`}
           >
             {t(`age.${a.id}`)}
           </Link>
@@ -58,7 +58,7 @@ export default function ShopByGenderMenu({ mobile = false, onNavigate }) {
         {open && (
           <>
             <div className="fixed inset-0 z-40" onClick={() => { setOpen(false); setExpanded(null); }} />
-            <div className="absolute end-0 top-full mt-2 z-50 min-w-[240px] rounded-2xl bg-[#5D3F85] border border-white/15 shadow-xl p-3">
+            <div className="absolute end-0 top-full mt-2 z-[60] min-w-[240px] max-w-[calc(100vw-2rem)] rounded-2xl bg-[#3A2660] border border-white/20 shadow-2xl p-3">
               {GENDERS.map((g) => (
                 <div key={g.key} className="mb-1">
                   <button
@@ -101,9 +101,9 @@ export default function ShopByGenderMenu({ mobile = false, onNavigate }) {
         {t('nav.shopByGender')} <ChevronDown className="w-4 h-4" />
       </button>
       {open && (
-        <div className="absolute start-0 top-full z-50 pt-2">
+        <div className="absolute start-0 top-full z-[60] pt-2">
           <div
-            className={`rounded-2xl bg-[#5D3F85] border border-white/15 shadow-xl p-4 transition-all ${
+            className={`rounded-2xl bg-[#3A2660] border border-white/20 shadow-2xl p-4 transition-all ${
               hovered ? 'min-w-[420px] grid grid-cols-2 gap-5' : 'min-w-[180px]'
             }`}
           >
@@ -115,7 +115,7 @@ export default function ShopByGenderMenu({ mobile = false, onNavigate }) {
                   onMouseEnter={() => setHovered(g.key)}
                   onClick={() => setHovered(g.key)}
                   className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-heading font-bold transition-colors ${
-                    hovered === g.key ? 'bg-white/10 text-accent' : 'text-white hover:bg-white/5'
+                    hovered === g.key ? 'bg-white/15 text-accent' : 'text-white hover:bg-white/10'
                   }`}
                 >
                   {t(g.labelKey)}
