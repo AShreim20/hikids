@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShieldAlert, Package } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { subscribeOrders } from '@/lib/orderRealtime';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import OrderStatsCards from '@/components/orders/OrderStatsCards';
@@ -31,11 +32,11 @@ export default function OrdersManagement() {
 
   useEffect(() => {
     if (!allowed) { setLoading(false); return; }
-    base44.entities.Order.list('-created_date', 500)
+    db.Order.list('-created_date', 500)
       .then(setOrders)
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));
-    const unsubscribe = base44.entities.Order.subscribe((event) => {
+    const unsubscribe = subscribeOrders((event) => {
       if (event.type === 'create') setOrders((prev) => [event.data, ...prev]);
       if (event.type === 'update') setOrders((prev) => prev.map((o) => (o.id === event.data.id ? event.data : o)));
       if (event.type === 'delete') setOrders((prev) => prev.filter((o) => o.id !== event.id));

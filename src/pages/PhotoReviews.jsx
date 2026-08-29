@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lock, Loader2, Check, X, Camera, Star, Settings as SettingsIcon } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import { Image } from '@/components/ui/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/components/ui/use-toast';
-import { unwrap } from '@/lib/invoke';
 import { getSetting, setSetting } from '@/lib/storeSettings';
 
 const REWARD_KEY = 'photo_review_reward_points';
@@ -34,7 +34,7 @@ export default function PhotoReviews() {
     setLoading(true);
     try {
       const [rows, pts] = await Promise.all([
-        base44.entities.Review.filter({ status: 'pending' }, '-created_date', 200),
+        db.Review.filter({ status: 'pending' }, '-created_date', 200),
         getSetting(REWARD_KEY, DEFAULT_POINTS),
       ]);
       const list = (rows || []).filter((r) => !!r.photo_url);
@@ -43,7 +43,7 @@ export default function PhotoReviews() {
       setPointsInput(String(Number(pts) || 0));
       const ids = [...new Set(list.map((r) => r.product_id))];
       if (ids.length) {
-        const all = await base44.entities.Product.list('-updated_date', 200);
+        const all = await db.Product.list('-updated_date', 200);
         setProducts((all || []).filter((p) => ids.includes(p.id)));
       } else {
         setProducts([]);
@@ -75,7 +75,7 @@ export default function PhotoReviews() {
   const review = async (r, action) => {
     setBusy((b) => ({ ...b, [r.id]: true }));
     try {
-      const res = unwrap(await base44.functions.invoke('reviewPhoto', { review_id: r.id, action }));
+      const res = await invokeFunction('reviewPhoto', { review_id: r.id, action });
       toast({
         title: res.success ? (ar ? 'تم' : 'Done') : res.message,
         description: action === 'approve' && res.success ? `+${res.points} ${ar ? 'نقطة' : 'pts'}` : undefined,

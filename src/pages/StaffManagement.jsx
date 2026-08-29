@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Lock, ShieldCheck, Send, Save } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -27,8 +28,8 @@ export default function StaffManagement() {
     setLoading(true);
     try {
       const [u, l] = await Promise.all([
-        base44.entities.User.list('-created_date', 100),
-        base44.entities.AuditLog.list('-created_date', 50).catch(() => []),
+        db.Profile.list('-created_at', 100),
+        db.AuditLog.list('-created_date', 50).catch(() => []),
       ]);
       setUsers(u);
       setLogs(l);
@@ -75,7 +76,7 @@ export default function StaffManagement() {
     if (!email) return;
     setInviting(true);
     try {
-      await base44.users.inviteUser(email, 'user');
+      await invokeFunction('inviteUser', { email });
       toast({ title: t('staff.inviteSent') });
       setInviteEmail('');
       load();
@@ -104,8 +105,8 @@ export default function StaffManagement() {
         toast({ title: t('staff.noChanges') });
         return;
       }
-      await base44.entities.User.update(u.id, changes);
-      await base44.functions.invoke('logAuditActivity', {
+      await db.Profile.update(u.id, changes);
+      await invokeFunction('logAuditActivity', {
         action: 'staff.permissions_updated',
         target_type: 'user',
         target_id: u.id,

@@ -4,39 +4,52 @@ Guidance for Claude (and other AI coding agents) working on this repository.
 
 ## What this app is
 
-**HiKids** — a premium bilingual (Arabic/English, RTL-first) online toy store built on the
-Base44 platform. Published at https://hikids.base44.app. The store has a full storefront
-(shop, product detail, cart, checkout, wishlist, reviews, bundles, challenges, a Mystery
-Unboxing reward wheel, loyalty wallet) plus an admin dashboard (products, inventory,
-purchase orders, suppliers, categories, discounts, orders, loyalty, reports, site content).
+**HiKids** — a premium bilingual (Arabic/English, RTL-first) online toy store, backed by
+Supabase (migrated off the Base44 platform). The store has a full storefront (shop,
+product detail, cart, checkout, wishlist, reviews, bundles, challenges, a Mystery Unboxing
+reward wheel, loyalty wallet) plus an admin dashboard (products, inventory, purchase
+orders, suppliers, categories, discounts, orders, loyalty, reports, site content).
 
 ## First: read AGENTS.md
 
-`AGENTS.md` has the general Base44-agent setup (CLI, skills, key files). Follow it. This
-file adds **project-specific** conventions on top.
+`AGENTS.md` has the general agent setup (key files, working notes). Follow it. This file
+adds **project-specific** conventions on top.
 
 ## Tech stack & hard rules
 
 - **Frontend:** React 18 + Vite (ESM only — **never** use `require()`/`module.exports`),
   Tailwind CSS, shadcn/ui (`@/components/ui/*`), lucide-react icons, react-router-dom v6.
-- **Backend:** Base44's built-in database. Data = **entities** (JSON schemas in
-  `base44/entities/*.jsonc`). Access via the pre-initialized SDK:
+- **Backend:** Supabase (Postgres + Auth + Storage + Edge Functions), project
+  `fcituvmbtqxpjgbyzpbf`. Data = **tables** under RLS, created via SQL migrations in
+  `supabase/migrations/`. Access from the frontend via `db.<Entity>` wrappers:
   ```js
-  import { base44 } from '@/api/base44Client';
-  base44.entities.Product.list();
-  base44.entities.Order.create({ ... });
+  import { db } from '@/api/entities';
+  db.Product.list();
+  db.Order.create({ ... });
   ```
-  Built-in fields on every record (never declare them): `id`, `created_date`,
-  `updated_date`, `created_by_id`.
-- **Backend functions** (external API / secure server logic) live in
-  `base44/functions/<name>/entry.ts`. Reuse existing ones before creating new ones — see
-  the list below. Shared logic goes in `base44/shared/` and is imported by functions.
-- **Auth** is platform-managed. Boilerplate pages already exist at
-  `src/pages/{Login,Register,ForgotPassword,ResetPassword}.jsx` — do **not** recreate them.
-  Routes for all four are registered in `src/App.jsx`. `ProtectedRoute` gates authed pages.
+  `createEntity.js` mirrors the old Base44 SDK's `list/get/filter/create/update/delete/
+  bulkUpdate` shape closely enough that call sites read the same either way. Built-in
+  columns on every table: `id`, `created_date`, `updated_date`. `sanitize()` in
+  `createEntity.js` converts `''` → `null` on every write (Postgres rejects `''` for
+  non-text columns).
+- **Backend functions** (secure server logic — order totals, loyalty ledger, wheel spins,
+  admin-only actions, etc.) are mostly `SECURITY DEFINER` Postgres RPCs defined in
+  `supabase/migrations/`, called via small wrappers in `src/lib/*Functions.js`
+  (`orderFunctions.js`, `loyaltyFunctions.js`, `wheelFunctions.js`, `challengeFunctions.js`).
+  A few that need something Postgres can't do alone (calling an external API, admin auth
+  actions) are Deno Edge Functions under `supabase/functions/<name>/index.ts`, called via
+  `invokeFunction(name, body)` from `src/lib/supabaseFunctions.js`. Reuse existing ones
+  before creating new ones — see the list below.
+- **Auth** is Supabase Auth. Pages at `src/pages/{Login,Register,ForgotPassword,
+  ResetPassword}.jsx` — do **not** recreate them. Routes for all four are registered in
+  `src/App.jsx`. `ProtectedRoute` gates authed pages. `auth.uid()` / `auth.jwt()->>'email'`
+  inside a `SECURITY DEFINER` function reflect the calling user, same role
+  `createClientFromRequest(req)` played under Base44.
 
 ### Import rules that break the build if ignored
-- Use the `@/` alias for all `src/` imports — **never** relative `src/` paths.
+- Use the `@/` alias for all `src/` imports — **never** relative `src/` paths. (Defined in
+  both `vite.config.js`'s `resolve.alias` and `jsconfig.json`'s `paths` — keep them in
+  sync if either changes.)
 - `cn` comes from `@/lib/utils`; `createPageUrl` from `@/utils`. Don't reimplement them.
 - Each shadcn primitive is imported from its own file (`Label` from
   `@/components/ui/label`, etc.) — files don't re-export each other.
@@ -63,8 +76,9 @@ file adds **project-specific** conventions on top.
   `"// Add page imports here"` + one `<Route>` inside `<Routes>`. Keep the auth/layout
   wrappers (`AuthProvider`, `QueryClientProvider`, `Router`, `Toaster`) intact. The main
   page is always `/` — don't add a duplicate route under the component name.
-- **Images:** render content images (any `media.base44.com` / `static.wixstatic.com` URL)
-  with `<Image />` from `@/components/ui/image`, never a plain `<img>`.
+- **Images:** render content images (any `media.base44.com` / `static.wixstatic.com` URL —
+  legacy asset hosts, still in use for existing product images) with `<Image />` from
+  `@/components/ui/image`, never a plain `<img>`.
 - **Cart/wishlist:** custom React context providers in `src/context/` using `localStorage`
   for persistence. Don't swap for an external store.
 - **Errors:** let them bubble up unless it's a user-facing form/auth flow (those catch and
@@ -74,53 +88,70 @@ file adds **project-specific** conventions on top.
 
 ## Backend functions that already exist (reuse, don't duplicate)
 
-Loyalty: `adjustLoyaltyPoints`, `awardLoyaltyPoints`, `redeemLoyaltyPoints`,
-`releaseLoyaltyPoints`, `reverseOrderLoyalty`, `getLoyaltyBalance`, `adminLoyaltyWallet`,
-`loyaltyDashboard`, `setWalletStatus`.
-Wheel/rewards: `wheelSpin`, `wheelState`, `wheelGrantFirstSpin`, `finalizeWheelRewards`,
-`reverseWheelRewards`.
-Challenges: `challengesClaim`, `challengesReview`, `challengesSubmitPhoto`.
-Orders/stock: `onOrderPlaced`, `commitOrderStock`, `secureOrder` (authoritative
-server-side price verification — **always** use this for order totals, never trust
-client-side totals).
-Reviews: `submitPhotoReview`, `reviewPhoto`.
-Discounts: `validateDiscount`, `redeemDiscount`.
-Purchase orders/suppliers: `postPurchaseOrder`, `cancelPurchaseOrder`,
+Loyalty (Postgres RPCs, `src/lib/loyaltyFunctions.js`): `adjustLoyaltyPoints`,
+`awardLoyaltyPoints`, `redeemLoyaltyPoints`, `releaseLoyaltyPoints`, `reverseOrderLoyalty`,
+`getLoyaltyBalance`, `adminLoyaltyWallet`, `loyaltyDashboard`, `setWalletStatus`.
+Wheel/rewards (Postgres RPCs, `src/lib/wheelFunctions.js`): `wheelSpin`, `wheelState`,
+`wheelGrantFirstSpin`, `finalizeWheelRewards`, `reverseWheelRewards`.
+Challenges (Postgres RPCs, `src/lib/challengeFunctions.js`): `challengesClaim`,
+`challengesReview`, `challengesSubmitPhoto`.
+Orders/stock (Postgres RPCs, `src/lib/orderFunctions.js`): `commitOrderStock`,
+`secureOrder` (authoritative server-side price verification — **always** use this for
+order totals, never trust client-side totals).
+Discounts: `redeemDiscount` (Postgres RPC).
+Purchase orders/suppliers (Edge Functions): `postPurchaseOrder`, `cancelPurchaseOrder`,
 `recordSupplierPayment`.
-Inventory: `shopProducts` (server-side paginated product listing), `validateBarcode`.
-Analytics: `gaInsights` (uses the authorized `google_analytics` connector).
-Account/audit: `deleteAccount`, `logAuditActivity`, `recordShareView`.
+Inventory (Edge Functions): `shopProducts` (server-side paginated product listing),
+`validateBarcode` (barcode-uniqueness check).
+Account/audit (Edge Functions): `deleteAccount`, `logAuditActivity`, `recordShareView`,
+`inviteUser` (admin-only staff invite — sends a Supabase auth invite email),
+`chatAssistant` (storefront shopping-assistant chat; needs an `ANTHROPIC_API_KEY` secret
+on the project before it will actually answer — see its file header).
+Reviews (Edge Functions): `submitPhotoReview`, `reviewPhoto`.
 
-Shared backend modules: `base44/shared/loyalty.ts`, `rewards.ts`, `challenges.ts`,
-`permissions.ts`.
+**Not yet connected** (need external credentials only the store owner can supply — flagged
+clearly in-app rather than faked):
+- `chatAssistant` needs an `ANTHROPIC_API_KEY` project secret.
+- Transactional order-confirmation emails need an email provider + API key.
+- `Analytics.jsx` (Insights page) needs a real Google Cloud OAuth client and the store
+  owner re-authorizing a GA4 property — Base44's `gaInsights` relied on a
+  platform-managed connector with no Supabase equivalent.
+
+Shared backend logic lives directly in the relevant `supabase/migrations/*.sql` file (SQL
+helpers) or `supabase/functions/_shared/` (Edge Function helpers — `client.ts` for
+caller-scoped/service-role Supabase clients, `cors.ts` for the CORS headers every Edge
+Function needs).
 
 ## Security posture (don't regress these)
 
-- **Order totals** are recomputed server-side via `secureOrder`; the `Order.secured`
+- **Order totals** are recomputed server-side via `secureOrder`; the `orders.secured`
   flag marks verified financials. Never submit a client-computed `total`.
-- **Row-Level Security (RLS)** is configured per entity in its `base44/entities/*.jsonc`
-  under `rls`. Customer-facing entities (`Order`, `Review`, `LoyaltyAccount`,
-  `LoyaltyTransaction`, `WheelProgress`, `ChallengeProgress`, `RewardHistory`,
-  `WheelSpin`, `ChallengeSubmission`) restrict reads to the owning user + admins.
-  Admin-only entities (`Product`, `Category`, `DiscountCode`, `PurchaseOrder`, …) gate
-  create/update/delete to `role: admin`. When adding an entity, set RLS explicitly.
-- **Photo reviews** (`Review`) hide pending/rejected photos from non-owners/non-admins.
+- **Row-Level Security (RLS)** is configured per table in `supabase/migrations/`.
+  Customer-facing tables (`orders`, `reviews`, `loyalty_accounts`, `loyalty_transactions`,
+  `wheel_progress`, `challenge_progress`, `reward_history`, `wheel_spins`,
+  `challenge_submissions`) restrict reads to the owning user + admins/permission-holders.
+  Admin-only tables (`products`, `categories`, `discount_codes`, `purchase_orders`, …) gate
+  create/update/delete to `role: admin` (via the `is_admin()` / `has_permission(perm)` SQL
+  helpers). When adding a table, set RLS explicitly.
+- **Photo reviews** (`reviews`) hide pending/rejected photos from non-owners/non-admins.
 
 ## Development commands
 
 ```bash
 npm install
-base44 dev        # full local backend + frontend (preferred)
-npm run dev       # frontend only against the hosted backend (needs .env.local)
+npm run dev       # frontend against the hosted Supabase project (needs .env.local)
 npm run build     # production build
 npm run lint      # eslint
 npm run typecheck # tsc via jsconfig
 ```
 
-`.env.local` (frontend-only mode):
+`.env.local`:
 ```
-VITE_BASE44_APP_ID=<app id>
-VITE_BASE44_APP_BASE_URL=https://hikids.base44.app
+VITE_SUPABASE_URL=<project URL>
+VITE_SUPABASE_PUBLISHABLE_KEY=<anon/publishable key>
+
+# Server-side only — never prefix with VITE_ (that would ship it to the browser).
+SUPABASE_SECRET_KEY=<service role key>
 ```
 
 ## Workflow guidance
@@ -128,7 +159,8 @@ VITE_BASE44_APP_BASE_URL=https://hikids.base44.app
 - Make the **minimum** change the request needs; don't refactor unrelated code.
 - Before editing an existing file, read it first — don't guess its contents.
 - After frontend changes, run `npm run lint` and `npm run build` to catch breakages.
+- After a schema/RLS/RPC change, apply it as a new migration (don't hand-edit an
+  already-applied one) and re-run the affected `npm run lint`/`build` plus a live check
+  against the Supabase project before considering it done.
 - Don't install new npm packages unless explicitly requested; the installed set is curated
-  and sufficient. Never uninstall `@base44/sdk` or `@base44/vite-plugin`.
-- For Base44 platform-feature questions (publishing, billing, connectors, workflows,
-  agents), prefer the Base44 docs over guessing.
+  and sufficient.

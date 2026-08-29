@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, Lock, X, ImagePlus, Trash2, Plus, Minus } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { uploadFile } from '@/lib/uploadFile';
 import { Image } from '@/components/ui/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -37,10 +38,10 @@ export default function BundleEditor() {
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   useEffect(() => {
-    base44.entities.Product.list('-updated_date', 500).then(setProducts).catch(() => setProducts([]));
+    db.Product.list('-updated_date', 500).then(setProducts).catch(() => setProducts([]));
     if (isNew) setLoading(false);
     else {
-      base44.entities.Bundle.get(id)
+      db.Bundle.get(id)
         .then((b) => setForm({
           ...EMPTY,
           ...b,
@@ -102,7 +103,7 @@ export default function BundleEditor() {
     if (!file) return;
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await uploadFile(file);
       set('image_url', file_url);
     } catch {
       toast({ title: ar ? 'فشل الرفع' : 'Upload failed', variant: 'destructive' });
@@ -136,8 +137,8 @@ export default function BundleEditor() {
         active: !!form.active,
         sort_order: Number(form.sort_order) || 0,
       };
-      if (isNew) await base44.entities.Bundle.create(payload);
-      else await base44.entities.Bundle.update(id, payload);
+      if (isNew) await db.Bundle.create(payload);
+      else await db.Bundle.update(id, payload);
       toast({ title: ar ? 'تم الحفظ' : 'Saved' });
       navigate('/admin/bundles');
     } catch (err) {

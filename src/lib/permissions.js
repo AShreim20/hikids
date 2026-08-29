@@ -8,7 +8,7 @@ import {
   isCustomer,
   can,
   canAccessStaffArea,
-} from '../../base44/shared/permissions';
+} from './permissionsCore';
 
 export {
   PERMISSIONS,

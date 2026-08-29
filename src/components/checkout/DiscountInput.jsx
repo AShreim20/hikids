@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Tag, Loader2, X, Check } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -14,8 +14,7 @@ export default function DiscountInput({ subtotal, applied, onApplied, onRemoved 
     if (!code.trim() || applied) return;
     setBusy(true);
     try {
-      const raw = await base44.functions.invoke('validateDiscount', { code: code.trim(), subtotal });
-      const res = raw?.data ?? raw;
+      const res = await invokeFunction('validateDiscount', { code: code.trim(), subtotal });
       if (res.valid) {
         onApplied({ id: res.code.id, code: res.code.code, amount: res.discount_amount });
         toast({ title: t('checkout.discountApplied') });

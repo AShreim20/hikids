@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { SlidersHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
-import { unwrap } from '@/lib/invoke';
+import { db } from '@/api/entities';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import PageHeader from '@/components/PageHeader';
@@ -54,12 +54,12 @@ export default function Shop() {
   // Load active bundles + a projected stock map of their component products
   // (so bundle availability stays correct without loading the full catalog).
   useEffect(() => {
-    base44.entities.Bundle.list('-updated_date', 100)
+    db.Bundle.list('-updated_date', 100)
       .then((list) => {
         const active = (list || []).filter(isBundleActive);
         setBundles(active);
         if (active.length) {
-          base44.entities.Product.list(null, 10000, 0, ['id', 'stock'])
+          db.Product.list(null, 10000, 0, ['id', 'stock'])
             .then((all) => {
               const m = {};
               for (const p of all || []) m[p.id] = p;
@@ -78,23 +78,21 @@ export default function Shop() {
     const pb = priceBoundsRef.current;
     const activePrice = price || pb;
     const priceActive = !!price && (price[0] !== pb[0] || price[1] !== pb[1]);
-    base44.functions
-      .invoke('shopProducts', {
-        page,
-        perPage,
-        sort,
-        cats,
-        ages,
-        gender,
-        priceMin: activePrice[0],
-        priceMax: activePrice[1],
-        priceActive,
-        search,
-        includeMeta: !metaLoaded.current,
-      })
-      .then((raw) => {
+    invokeFunction('shopProducts', {
+      page,
+      perPage,
+      sort,
+      cats,
+      ages,
+      gender,
+      priceMin: activePrice[0],
+      priceMax: activePrice[1],
+      priceActive,
+      search,
+      includeMeta: !metaLoaded.current,
+    })
+      .then((d) => {
         if (cancelled) return;
-        const d = unwrap(raw);
         setPageData({ items: d.items || [], total: d.total ?? null, hasMore: !!d.hasMore });
         if (d.priceBounds) setPriceBounds(d.priceBounds);
         if (d.usedCategories) setUsedCategoryNames(d.usedCategories);

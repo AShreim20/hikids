@@ -2,33 +2,36 @@
 
 ## Project Context
 
-This is a Base44 app repository. Treat it as user-owned application code, keep changes focused on the user's request, and preserve existing project conventions.
+This is a Supabase-backed React/Vite app repository (migrated off the Base44 platform).
+Treat it as user-owned application code, keep changes focused on the user's request, and
+preserve existing project conventions.
 
-Start with `README.md` for local setup, environment variables, and publish workflow.
-
-## Base44 References
-
-- CLI overview: https://docs.base44.com/developers/references/cli/get-started/overview.md
-- Agent skills: https://docs.base44.com/developers/backend/overview/skills.md
-
-If your agent supports Agent Skills, install or update Base44 skills before Base44-specific work:
-
-```bash
-npx skills add base44/skills
-```
+Start with `CLAUDE.md` for stack conventions and `README.md` for local setup.
 
 ## Key Files
 
 - `src/`: frontend application source.
-- `src/api/base44Client.js`: frontend Base44 SDK client.
-- `vite.config.js`: Vite config and Base44 Vite plugin setup.
-- `.env.local`: local-only environment values; never commit secrets.
+- `src/api/supabaseClient.js`: frontend Supabase client.
+- `src/api/entities/`: `db.<Entity>` wrappers over Supabase tables (mirrors the old
+  `base44.entities.<Entity>` call shape — see `createEntity.js`).
+- `src/lib/supabaseFunctions.js`: `invokeFunction(name, body)` — calls a Supabase Edge
+  Function and throws on error (mirrors the old `base44.functions.invoke` behavior).
+- `supabase/migrations/`: SQL migrations — schema, RLS policies, and `SECURITY DEFINER`
+  Postgres functions (the backend "functions" layer; see CLAUDE.md's list of these).
+- `supabase/functions/`: Deno Edge Functions, for backend logic that doesn't fit a plain
+  Postgres RPC (calling an external API, admin-only auth actions, etc).
+- `vite.config.js`: Vite config, including the `@` → `src/` path alias.
+- `.env.local`: local-only environment values (`VITE_SUPABASE_URL`,
+  `VITE_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SECRET_KEY`); never commit secrets.
 
 ## Working Notes
 
-- Use `base44 dev` as the default local development command when you need the local Base44 backend. It can run the backend and frontend together.
-- When docs or code mention the frontend being started automatically, that usually means the Base44 project config includes `site.serveCommand`, for example `"serveCommand": "npm run dev"` in `base44/config.jsonc`.
-- Use `npm run dev` only for frontend-only work against the hosted Base44 backend.
-- Prefer the existing Base44 CLI workflow over adding new npm scripts for Base44-specific tasks.
-- Reuse the existing SDK client and Vite plugin patterns before adding new Base44 integration paths.
-- Run the relevant checks from `package.json` before finishing code changes.
+- `npm run dev` runs the frontend against the hosted Supabase project configured in
+  `.env.local` — there is no local backend process to start separately.
+- Database/RLS/function changes go in a new file under `supabase/migrations/`, applied via
+  the Supabase MCP tools (or `supabase db push`) — never edit an already-applied migration
+  file in place once it's landed.
+- Edge Functions are deployed individually (Supabase MCP `deploy_edge_function`, or
+  `supabase functions deploy <name>`); they aren't picked up by `npm run build`.
+- Run the relevant checks from `package.json` (`npm run lint`, `npm run build`) before
+  finishing code changes.

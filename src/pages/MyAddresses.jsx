@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Plus, Pencil, Trash2, X, Star, MapPin } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { useToast } from '@/components/ui/use-toast';
 import PageHeader from '@/components/PageHeader';
 import SheetSelect from '@/components/ui/SheetSelect';
@@ -24,8 +24,8 @@ export default function MyAddresses() {
     setLoading(true);
     try {
       const [a, c] = await Promise.all([
-        base44.entities.Address.list('-created_date', 100),
-        base44.entities.DeliveryCity.filter({ active: true }).catch(() => []),
+        db.Address.list('-created_date', 100),
+        db.DeliveryCity.filter({ active: true }).catch(() => []),
       ]);
       setAddresses(a);
       setCities(c);
@@ -71,11 +71,11 @@ export default function MyAddresses() {
     try {
       const payload = { ...form };
       const isNew = editing === 'new';
-      if (isNew) await base44.entities.Address.create(payload);
-      else await base44.entities.Address.update(editing, payload);
+      if (isNew) await db.Address.create(payload);
+      else await db.Address.update(editing, payload);
       if (payload.is_default) {
         const others = addresses.filter((a) => a.id !== editing && a.is_default);
-        await base44.entities.Address.bulkUpdate(others.map((a) => ({ id: a.id, is_default: false }))).catch(() => {});
+        await db.Address.bulkUpdate(others.map((a) => ({ id: a.id, is_default: false }))).catch(() => {});
       }
       toast({ title: t('address.saved') });
       close();
@@ -90,7 +90,7 @@ export default function MyAddresses() {
   const remove = async (a) => {
     if (!window.confirm(t('address.confirmDelete'))) return;
     try {
-      await base44.entities.Address.delete(a.id);
+      await db.Address.delete(a.id);
       load();
     } catch (err) {
       toast({ title: err.message || 'Error', variant: 'destructive' });

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { Search, X, Package } from 'lucide-react';
 
 // Product selector for wheel "Product" rewards — searches the live catalog by
@@ -13,7 +13,7 @@ export default function WheelProductPicker({ value, productName, onSelect }) {
   const search = async (text) => {
     setQ(text);
     if (!text.trim()) { setResults([]); setOpen(false); return; }
-    const all = await base44.entities.Product.list('-created_date', 100).catch(() => []);
+    const all = await db.Product.list('-created_date', 100).catch(() => []);
     const t = text.toLowerCase();
     const matched = (all || []).filter((p) => {
       if ((p.name || '').toLowerCase().includes(t)) return true;

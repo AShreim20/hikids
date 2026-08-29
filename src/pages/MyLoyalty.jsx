@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Loader2, ArrowLeft, Gift, ShieldAlert } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import WalletCard from '@/components/loyalty/WalletCard';
@@ -9,7 +8,7 @@ import WalletStats from '@/components/loyalty/WalletStats';
 import TransactionList from '@/components/loyalty/TransactionList';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
-import { unwrap } from '@/lib/invoke';
+import { getLoyaltyBalance } from '@/lib/loyaltyFunctions';
 
 export default function MyLoyalty() {
   const { t } = useLanguage();
@@ -21,8 +20,8 @@ export default function MyLoyalty() {
   useEffect(() => {
     if (!user) { setLoading(false); return; }
     setLoading(true);
-    base44.functions.invoke('getLoyaltyBalance', { limit: showAll ? 200 : 6 })
-      .then((raw) => { const res = unwrap(raw); if (res.success) setData(res); })
+    getLoyaltyBalance({ limit: showAll ? 200 : 6 })
+      .then((res) => { if (res.success) setData(res); })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [user, showAll]);

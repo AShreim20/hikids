@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Loader2, Pencil, Trash2, Wallet, ArrowDownLeft } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
 import { supplierBalance } from '@/lib/suppliers';
@@ -34,7 +35,7 @@ export default function SupplierDetailDialog({ open, onOpenChange, supplier, txs
     }
     setSaving(true);
     try {
-      const res = await base44.functions.invoke('recordSupplierPayment', {
+      const res = await invokeFunction('recordSupplierPayment', {
         supplier_id: supplier.id,
         amount,
         reason: payReason || (ar ? 'دفعة للمورد' : 'Supplier payment'),
@@ -53,7 +54,7 @@ export default function SupplierDetailDialog({ open, onOpenChange, supplier, txs
   const del = async () => {
     if (!window.confirm(ar ? 'حذف هذا المورّد؟ لن يتم حذف حركته المحاسبية.' : 'Delete this supplier? Ledger entries are kept.')) return;
     try {
-      await base44.entities.Supplier.delete(supplier.id);
+      await db.Supplier.delete(supplier.id);
       toast({ title: ar ? 'تم الحذف' : 'Deleted' });
       onOpenChange(false);
       onDeleted?.();

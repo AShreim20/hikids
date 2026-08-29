@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
-import { unwrap } from '@/lib/invoke';
+import { getLoyaltyBalance } from '@/lib/loyaltyFunctions';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -18,10 +17,8 @@ export default function HeaderLoyaltyBalance() {
   useEffect(() => {
     if (!user) { setBalance(null); return; }
     let alive = true;
-    base44.functions
-      .invoke('getLoyaltyBalance', {})
-      .then((raw) => {
-        const res = unwrap(raw);
+    getLoyaltyBalance()
+      .then((res) => {
         if (alive && res?.success) setBalance(Number(res.balance) || 0);
       })
       .catch(() => { if (alive) setBalance(null); });

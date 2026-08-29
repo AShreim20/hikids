@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, Check, AlertCircle, Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
-import { unwrap } from '@/lib/invoke';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useLanguage } from '@/context/LanguageContext';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -19,9 +18,8 @@ export default function ShareLanding() {
     const c = params.get('c');
     const e = params.get('e');
     if (!c || !e) { setState({ loading: false, error: true }); return; }
-    base44.functions.invoke('recordShareView', { challenge_id: c, sharer_email: e })
-      .then((raw) => {
-        const res = unwrap(raw);
+    invokeFunction('recordShareView', { challenge_id: c, sharer_email: e })
+      .then((res) => {
         setState({ loading: false, counted: !!res.counted, self: !!res.self, duplicate: !!res.duplicate, need: res.need, progress: res.progress });
       })
       .catch(() => setState({ loading: false, error: true }));

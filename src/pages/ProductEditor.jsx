@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Lock } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import ProductFormFields, { CATEGORIES } from '@/components/admin/ProductFormFields';
-import { unwrap } from '@/lib/invoke';
 import { ageRangeToIds } from '@/lib/ages';
 
 const EMPTY = {
@@ -31,7 +31,7 @@ export default function ProductEditor() {
   useEffect(() => {
     if (isNew || user?.role !== 'admin') return;
     setLoading(true);
-    base44.entities.Product.get(id)
+    db.Product.get(id)
       .then((p) => setForm({
         name: p.name || '',
         name_en: p.name_en || '',
@@ -92,7 +92,7 @@ export default function ProductEditor() {
     const barcodeValue = (form.barcode || '').trim();
     if (barcodeValue) {
       try {
-        const res = unwrap(await base44.functions.invoke('validateBarcode', { barcode: barcodeValue, exclude_id: isNew ? '' : id }));
+        const res = await invokeFunction('validateBarcode', { barcode: barcodeValue, exclude_id: isNew ? '' : id });
         if (res && res.unique === false) {
           toast({ title: t('admin.barcodeInUse'), description: res.conflict?.name || '', variant: 'destructive' });
           setSaving(false);
@@ -141,15 +141,15 @@ export default function ProductEditor() {
     };
     try {
       if (isNew) {
-        const created = await base44.entities.Product.create(payload);
-        await base44.functions.invoke('logAuditActivity', {
+        const created = await db.Product.create(payload);
+        await invokeFunction('logAuditActivity', {
           action: 'product.created', target_type: 'product', target_id: created?.id || '',
           details: `Created product "${payload.name}"`,
         });
         toast({ title: lang === 'ar' ? 'أُضيف المنتج' : 'Product added' });
       } else {
-        await base44.entities.Product.update(id, payload);
-        await base44.functions.invoke('logAuditActivity', {
+        await db.Product.update(id, payload);
+        await invokeFunction('logAuditActivity', {
           action: 'product.updated', target_type: 'product', target_id: id,
           details: `Updated product "${payload.name}"`,
         });

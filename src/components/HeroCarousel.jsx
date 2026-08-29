@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { Image } from '@/components/ui/image';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -15,11 +15,11 @@ export default function HeroCarousel() {
   const [dir, setDir] = useState(1);
 
   useEffect(() => {
-    base44.entities.HeroSlide.list('sort_order', 20).
+    db.HeroSlide.list('sort_order', 20).
     then((rows) => {
       const active = (rows || []).filter((s) => s.active !== false && s.image_url);
       if (active.length) {setSlides(active);return;}
-      return base44.entities.Product.list('-updated_date', 20).then((products) => {
+      return db.Product.list('-updated_date', 20).then((products) => {
         const featured = products.filter((p) => p.featured || p.sale_price != null && p.sale_price < p.price);
         const picks = (featured.length ? featured : products).slice(0, 5);
         setSlides(picks.map((p) => ({

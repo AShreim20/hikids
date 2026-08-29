@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Wallet, Coins, TrendingUp, Gift, Clock, Hourglass, CalendarPlus, CalendarMinus } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { loyaltyDashboardStats } from '@/lib/loyaltyFunctions';
 import { useLanguage } from '@/context/LanguageContext';
 
 // Programme-wide loyalty statistics (server-computed).
@@ -9,7 +9,7 @@ export default function WalletDashboard() {
   const [stats, setStats] = useState(null);
 
   useEffect(() => {
-    base44.functions.invoke('loyaltyDashboard', {})
+    loyaltyDashboardStats()
       .then((res) => { if (res.success) setStats(res.stats); })
       .catch(() => {});
   }, []);

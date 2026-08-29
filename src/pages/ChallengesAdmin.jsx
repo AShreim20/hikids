@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Loader2, Lock, Trophy, X, Check, Image as ImageIcon } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { challengesReview } from '@/lib/challengeFunctions';
 import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { unwrap } from '@/lib/invoke';
 import { rewardLabel } from '@/lib/rewards';
 import { challengeName, submissionChallengeName } from '@/lib/bilingual';
 import ProductPicker from '@/components/admin/ProductPicker';
@@ -41,16 +41,16 @@ export default function ChallengesAdmin() {
   const load = async () => {
     setLoading(true);
     try {
-      const [chs, s, p, h] = await Promise.all([
-        base44.entities.Challenge.list('-updated_date', 200),
-        base44.entities.ChallengeSubmission.filter({ status: 'pending' }),
-        base44.entities.ChallengeProgress.list('-created_date', 500),
-        base44.entities.RewardHistory.filter({ source: 'challenge' }),
+      const [chs, s, p, h] = await Promise.allSettled([
+        db.Challenge.list('-updated_date', 200),
+        db.ChallengeSubmission.filter({ status: 'pending' }),
+        db.ChallengeProgress.list('-created_date', 500),
+        db.RewardHistory.filter({ source: 'challenge' }),
       ]);
-      setChallenges(chs || []);
-      setSubs(s || []);
-      setProgress(p || []);
-      setHistory(h || []);
+      setChallenges(chs.status === 'fulfilled' ? chs.value || [] : []);
+      setSubs(s.status === 'fulfilled' ? s.value || [] : []);
+      setProgress(p.status === 'fulfilled' ? p.value || [] : []);
+      setHistory(h.status === 'fulfilled' ? h.value || [] : []);
     } catch {} finally { setLoading(false); }
   };
   useEffect(() => { if (user?.role === 'admin') load(); else setLoading(false); }, [user]);
@@ -71,19 +71,19 @@ export default function ChallengesAdmin() {
     const c = editing;
     if (!c.name) { toast({ title: ar ? 'الاسم مطلوب' : 'Name required', variant: 'destructive' }); return; }
     try {
-      if (c.id) await base44.entities.Challenge.update(c.id, c);
-      else await base44.entities.Challenge.create({ ...c, created_by_email: user.email });
+      if (c.id) await db.Challenge.update(c.id, c);
+      else await db.Challenge.create({ ...c, created_by_email: user.email });
       toast({ title: ar ? 'تم الحفظ' : 'Saved' });
       setEditing(null);
       load();
     } catch (e) { toast({ title: e.message, variant: 'destructive' }); }
   };
-  const remove = async (c) => { if (!window.confirm(ar ? 'حذف التحدي؟' : 'Delete challenge?')) return; await base44.entities.Challenge.delete(c.id); load(); };
-  const toggle = async (c) => { await base44.entities.Challenge.update(c.id, { active: !c.active }); load(); };
+  const remove = async (c) => { if (!window.confirm(ar ? 'حذف التحدي؟' : 'Delete challenge?')) return; await db.Challenge.delete(c.id); load(); };
+  const toggle = async (c) => { await db.Challenge.update(c.id, { active: !c.active }); load(); };
 
   const review = async (sub, action) => {
     try {
-      const res = unwrap(await base44.functions.invoke('challengesReview', { submission_id: sub.id, action }));
+      const res = await challengesReview(sub.id, action);
       toast({ title: res.success ? (ar ? 'تم' : 'Done') : res.message, variant: res.success ? 'default' : 'destructive' });
       load();
     } catch (e) { toast({ title: e.message, variant: 'destructive' }); }

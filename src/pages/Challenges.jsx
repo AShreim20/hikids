@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Gift, Camera, Share2, Check, Trophy, Link2, ArrowUpRight, Lock } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { challengesClaim, challengesSubmitPhoto } from '@/lib/challengeFunctions';
+import { uploadFile } from '@/lib/uploadFile';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-import { unwrap } from '@/lib/invoke';
 import { rewardLabel } from '@/lib/rewards';
 import { challengeName } from '@/lib/bilingual';
 import RewardsAuthGate from '@/components/RewardsAuthGate';
@@ -29,16 +30,16 @@ export default function Challenges() {
     if (!user) { setLoading(false); return; }
     setLoading(true);
     try {
-      const [chs, prog, ords, subs] = await Promise.all([
-        base44.entities.Challenge.filter({ active: true }),
-        base44.entities.ChallengeProgress.filter({ user_email: user.email }),
-        base44.entities.Order.filter({ created_by_id: user.id }),
-        base44.entities.ChallengeSubmission.filter({ user_email: user.email }),
+      const [chs, prog, ords, subs] = await Promise.allSettled([
+        db.Challenge.filter({ active: true }),
+        db.ChallengeProgress.filter({ user_email: user.email }),
+        db.Order.filter({ created_by_id: user.id }),
+        db.ChallengeSubmission.filter({ user_email: user.email }),
       ]);
-      setChallenges(chs || []);
-      setProgress(prog || []);
-      setOrders(ords || []);
-      setSubmissions(subs || []);
+      setChallenges(chs.status === 'fulfilled' ? chs.value || [] : []);
+      setProgress(prog.status === 'fulfilled' ? prog.value || [] : []);
+      setOrders(ords.status === 'fulfilled' ? ords.value || [] : []);
+      setSubmissions(subs.status === 'fulfilled' ? subs.value || [] : []);
     } catch {} finally { setLoading(false); }
   };
   useEffect(() => { load(); }, [user]);
@@ -48,7 +49,7 @@ export default function Challenges() {
   const claim = async (c) => {
     setBusy((b) => ({ ...b, [c.id]: true }));
     try {
-      const res = unwrap(await base44.functions.invoke('challengesClaim', { challenge_id: c.id }));
+      const res = await challengesClaim(c.id);
       if (res.success) {
         toast({ title: ar ? 'تم استلام المكافأة! 🎉' : 'Reward earned! 🎉', description: rewardLabel(c, ar, formatPrice) });
       } else {
@@ -64,8 +65,8 @@ export default function Challenges() {
     if (!file) return;
     setUploading(c.id);
     try {
-      const up = await base44.integrations.Core.UploadFile({ file });
-      const res = unwrap(await base44.functions.invoke('challengesSubmitPhoto', { challenge_id: c.id, file_url: up.file_url }));
+      const up = await uploadFile(file);
+      const res = await challengesSubmitPhoto(c.id, up.file_url);
       toast({ title: res.success ? (ar ? 'تم الإرسال' : 'Submitted') : res.message, variant: res.success ? 'default' : 'destructive' });
       load();
     } catch (e) {

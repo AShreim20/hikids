@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { Tag, ArrowRight } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { Image } from '@/components/ui/image';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -13,7 +13,7 @@ export default function SaleBanner() {
   const { t, formatPrice, lang } = useLanguage();
 
   useEffect(() => {
-    base44.entities.Product.list('-updated_date', 50)
+    db.Product.list('-updated_date', 50)
       .then((products) => {
         const onSale = products.filter((p) => p.sale_price != null && p.sale_price < p.price);
         setItems(onSale);

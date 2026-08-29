@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Loader2, Sparkles, History, Plus, Minus, ShieldAlert } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { adjustLoyaltyPoints, adminLoyaltyWallet } from '@/lib/loyaltyFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
 import TransactionList from './TransactionList';
@@ -29,8 +29,8 @@ export default function WalletAdminRow({ account: incoming, perms, onChanged }) 
     if (!reason.trim()) { toast({ title: t('wallet.reasonRequired'), variant: 'destructive' }); return; }
     setBusy(true);
     try {
-      const res = await base44.functions.invoke('adjustLoyaltyPoints', {
-        user_email: account.user_email,
+      const res = await adjustLoyaltyPoints({
+        userEmail: account.user_email,
         points: mode === 'remove' ? -n : n,
         reason: reason.trim(),
       });
@@ -50,7 +50,7 @@ export default function WalletAdminRow({ account: incoming, perms, onChanged }) 
     setMode('history');
     if (history) return;
     try {
-      const res = await base44.functions.invoke('adminLoyaltyWallet', { user_email: account.user_email, limit: 100 });
+      const res = await adminLoyaltyWallet(account.user_email, 100);
       setHistory(res.success ? res.transactions || [] : []);
     } catch {
       setHistory([]);

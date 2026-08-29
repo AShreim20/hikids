@@ -1,8 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Lock, Loader2, Pencil, Trash2, Send, Ban, Search } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
-import { unwrap } from '@/lib/invoke';
+import { db } from '@/api/entities';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -33,8 +33,8 @@ export default function PurchaseOrders() {
   const load = () => {
     setLoading(true);
     Promise.all([
-      base44.entities.PurchaseOrder.list('-created_date', 500),
-      base44.entities.Supplier.list('name', 200),
+      db.PurchaseOrder.list('-created_date', 500),
+      db.Supplier.list('name', 200),
     ])
       .then(([list, s]) => { setPos(list || []); setSuppliers(s || []); })
       .catch(() => { setPos([]); setSuppliers([]); })
@@ -77,7 +77,7 @@ export default function PurchaseOrders() {
     if (!window.confirm(ar ? 'ترحيل هذا الأمر؟' : 'Post this order?')) return;
     setBusyId(p.id);
     try {
-      const out = unwrap(await base44.functions.invoke('postPurchaseOrder', { po_id: p.id }));
+      const out = await invokeFunction('postPurchaseOrder', { po_id: p.id });
       if (out.success === false) throw new Error(out.message);
       toast({ title: ar ? 'تم الترحيل' : 'Posted' });
       load();
@@ -92,7 +92,7 @@ export default function PurchaseOrders() {
     if (!window.confirm(ar ? 'إلغاء هذا الأمر؟ سيتم عكس أثره على المخزون ورصيد المورّد.' : 'Cancel this order? Inventory and supplier balance will be reversed.')) return;
     setBusyId(p.id);
     try {
-      const out = unwrap(await base44.functions.invoke('cancelPurchaseOrder', { po_id: p.id }));
+      const out = await invokeFunction('cancelPurchaseOrder', { po_id: p.id });
       if (out.success === false) throw new Error(out.message);
       toast({ title: ar ? 'تم الإلغاء' : 'Cancelled' });
       load();
@@ -107,7 +107,7 @@ export default function PurchaseOrders() {
     if (!window.confirm(ar ? 'حذف أمر الشراء؟' : 'Delete this purchase order?')) return;
     setBusyId(p.id);
     try {
-      await base44.entities.PurchaseOrder.delete(p.id);
+      await db.PurchaseOrder.delete(p.id);
       toast({ title: ar ? 'تم الحذف' : 'Deleted' });
       load();
     } catch (err) {

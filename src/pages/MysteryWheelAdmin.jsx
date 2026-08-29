@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Loader2, Lock, Sparkles, Save } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -36,16 +36,17 @@ export default function MysteryWheelAdmin() {
   const load = async () => {
     setLoading(true);
     try {
-      const [cfgs, rw, sp, h] = await Promise.all([
-        base44.entities.WheelConfig.list('-created_date', 50),
-        base44.entities.WheelReward.list('-created_date', 100),
-        base44.entities.WheelSpin.list('-created_date', 500),
-        base44.entities.RewardHistory.filter({ source: 'wheel' }),
+      const [cfgs, rw, sp, h] = await Promise.allSettled([
+        db.WheelConfig.list('-created_date', 50),
+        db.WheelReward.list('-created_date', 100),
+        db.WheelSpin.list('-created_date', 500),
+        db.RewardHistory.filter({ source: 'wheel' }),
       ]);
-      if (cfgs && cfgs[0]) { setConfig({ ...emptyConfig, ...cfgs[0] }); setConfigId(cfgs[0].id); }
-      setRewards(rw || []);
-      setSpins(sp || []);
-      setHistory(h || []);
+      const cfgList = cfgs.status === 'fulfilled' ? cfgs.value || [] : [];
+      if (cfgList[0]) { setConfig({ ...emptyConfig, ...cfgList[0] }); setConfigId(cfgList[0].id); }
+      setRewards(rw.status === 'fulfilled' ? rw.value || [] : []);
+      setSpins(sp.status === 'fulfilled' ? sp.value || [] : []);
+      setHistory(h.status === 'fulfilled' ? h.value || [] : []);
     } catch {} finally { setLoading(false); }
   };
   useEffect(() => { if (user?.role === 'admin') load(); else setLoading(false); }, [user]);
@@ -64,8 +65,8 @@ export default function MysteryWheelAdmin() {
 
   const saveConfig = async () => {
     try {
-      if (configId) await base44.entities.WheelConfig.update(configId, config);
-      else { const c = await base44.entities.WheelConfig.create(config); setConfigId(c.id); }
+      if (configId) await db.WheelConfig.update(configId, config);
+      else { const c = await db.WheelConfig.create(config); setConfigId(c.id); }
       toast({ title: ar ? 'تم حفظ الإعدادات' : 'Config saved' });
     } catch (e) { toast({ title: e.message, variant: 'destructive' }); }
   };
@@ -73,12 +74,12 @@ export default function MysteryWheelAdmin() {
     const r = editingReward;
     if (!r.label) { toast({ title: ar ? 'التسمية مطلوبة' : 'Label required', variant: 'destructive' }); return; }
     try {
-      if (r.id) await base44.entities.WheelReward.update(r.id, r);
-      else await base44.entities.WheelReward.create(r);
+      if (r.id) await db.WheelReward.update(r.id, r);
+      else await db.WheelReward.create(r);
       setEditingReward(null); load();
     } catch (e) { toast({ title: e.message, variant: 'destructive' }); }
   };
-  const removeReward = async (r) => { if (!window.confirm(ar ? 'حذف المكافأة؟' : 'Delete reward?')) return; await base44.entities.WheelReward.delete(r.id); load(); };
+  const removeReward = async (r) => { if (!window.confirm(ar ? 'حذف المكافأة؟' : 'Delete reward?')) return; await db.WheelReward.delete(r.id); load(); };
 
   const byType = {};
   spins.forEach((s) => { byType[s.reward_type] = (byType[s.reward_type] || 0) + 1; });

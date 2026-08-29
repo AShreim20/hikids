@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Minus, Plus, ShoppingBag, ShieldCheck, Leaf, Star, Heart, AlertTriangle } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import ProductGallery from '@/components/ProductGallery';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
@@ -41,16 +41,14 @@ export default function ProductDetail() {
 
   useEffect(() => {
     setLoading(true);
-    base44.entities.Product.get(id)
+    db.Product.get(id)
       .then((p) => {
         setProduct(p);
         setSelection(p ? defaultSelection(p) : {});
-        if (p) {
-          base44.analytics.track({
-            eventName: 'product_view',
-            properties: { product_id: p.id, product_name: p.name, category: p.category, price: p.price },
-          });
-        }
+        // Base44's platform analytics.track() had no Supabase equivalent and
+        // nothing in the app reads this event back (Insights/Analytics.jsx
+        // uses the separate gaInsights/GA4 integration) — dropped rather than
+        // ported.
       })
       .catch(() => setProduct(null))
       .finally(() => setLoading(false));

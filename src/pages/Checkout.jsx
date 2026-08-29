@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Banknote, ShieldCheck, Check, Lock, Sparkles } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { useToast } from '@/components/ui/use-toast';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
@@ -14,7 +14,9 @@ import DiscountInput from '@/components/checkout/DiscountInput';
 import LoyaltyRedeem from '@/components/checkout/LoyaltyRedeem';
 import CountryCodeSelect, { dialFor } from '@/components/checkout/CountryCodeSelect';
 import OrderConfirmDialog from '@/components/checkout/OrderConfirmDialog';
-import { unwrap } from '@/lib/invoke';
+import { secureOrder, commitOrderStock, redeemDiscount } from '@/lib/orderFunctions';
+import { getLoyaltyBalance, redeemLoyaltyPoints, releaseLoyaltyPoints, awardLoyaltyPoints } from '@/lib/loyaltyFunctions';
+import { finalizeWheelRewards } from '@/lib/wheelFunctions';
 import { getSetting } from '@/lib/storeSettings';
 import { lineItemName } from '@/lib/bilingual';
 
@@ -82,8 +84,8 @@ export default function Checkout() {
   const fullPhone = `${dialFor(phoneCountry)} ${form.phone}`.trim();
 
   useEffect(() => {
-    base44.entities.DeliveryCity.filter({ active: true }).then(setCities).catch(() => {});
-    if (user) base44.entities.Address.list('-created_date', 50).then(setAddresses).catch(() => {});
+    db.DeliveryCity.filter({ active: true }).then(setCities).catch(() => {});
+    if (user) db.Address.list('-created_date', 50).then(setAddresses).catch(() => {});
     getSetting('visa_payment_enabled', 1).then((v) => setCardEnabled(!!v)).catch(() => {});
   }, [user]);
 
@@ -101,8 +103,8 @@ export default function Checkout() {
 
   useEffect(() => {
     if (!user) return;
-    base44.functions.invoke('getLoyaltyBalance')
-      .then((raw) => { const res = unwrap(raw); if (res.success) { setLoyaltyBalance(res.balance || 0); if (res.redeem_rate) setLoyaltyRate(res.redeem_rate); } })
+    getLoyaltyBalance()
+      .then((res) => { if (res.success) { setLoyaltyBalance(res.balance || 0); if (res.redeem_rate) setLoyaltyRate(res.redeem_rate); } })
       .catch(() => {});
   }, [user]);
 
@@ -181,13 +183,13 @@ export default function Checkout() {
           return;
         }
         if (requiredPoints > 0) {
-          const res = unwrap(await base44.functions.invoke('redeemLoyaltyPoints', {
+          const res = await redeemLoyaltyPoints({
             points: requiredPoints,
             subtotal: total,
-            delivery_cost: deliveryCost,
-            discount_amount: discountAmount,
-            idempotency_key: checkoutKey,
-          }));
+            deliveryCost,
+            discountAmount,
+            idempotencyKey: checkoutKey,
+          });
           if (!res.success) {
             toast({ title: res.message || 'Loyalty error', variant: 'destructive' });
             setPlacing(false);
@@ -198,13 +200,13 @@ export default function Checkout() {
           reserved = true;
         }
       } else if (loyaltyRedeem && user) {
-        const res = unwrap(await base44.functions.invoke('redeemLoyaltyPoints', {
+        const res = await redeemLoyaltyPoints({
           points: loyaltyRedeem.points,
           subtotal: total,
-          delivery_cost: deliveryCost,
-          discount_amount: discountAmount,
-          idempotency_key: checkoutKey,
-        }));
+          deliveryCost,
+          discountAmount,
+          idempotencyKey: checkoutKey,
+        });
         if (!res.success) {
           toast({ title: res.message || 'Loyalty error', variant: 'destructive' });
           setPlacing(false);
@@ -214,7 +216,15 @@ export default function Checkout() {
         loyaltyAmount = res.amount;
         reserved = true;
       }
-      const order = await base44.entities.Order.create({
+      // Generated client-side (not returned by the insert): orders are
+      // publicly insertable (guest checkout) but only owner/admin-readable,
+      // and Postgres RLS errors an INSERT...RETURNING whose new row fails the
+      // SELECT policy rather than just omitting it — so the create below
+      // skips RETURNING entirely (`returning: false`) and this id is used
+      // for every subsequent call instead of reading the row back.
+      const orderId = crypto.randomUUID();
+      await db.Order.create({
+        id: orderId,
         items: items.map((i) => ({
           id: i.id, name: i.name, name_en: i.name_en || null, price: i.price, qty: i.qty,
           variant_key: i.variant_key || null,
@@ -244,14 +254,14 @@ export default function Checkout() {
         status: 'new',
         payment_status: payment === 'card' || payment === 'loyalty' ? 'paid' : 'unpaid',
         gift_message: giftMessage.trim() || undefined,
-      });
+      }, { returning: false });
 
       // Recompute every price/total server-side from the real product, category,
       // delivery, discount and loyalty records so a forged client payload can
       // never lower what the customer pays. Defensive: a transient failure
       // keeps the client totals rather than blocking the happy path.
       try {
-        await base44.functions.invoke('secureOrder', { order_id: order.id });
+        await secureOrder(orderId);
       } catch { /* non-blocking */ }
 
       // Authoritative stock check + atomic deduction. The cart display is NOT
@@ -259,14 +269,14 @@ export default function Checkout() {
       // two customers racing for the last item can never oversell.
       let commit;
       try {
-        commit = unwrap(await base44.functions.invoke('commitOrderStock', { orderId: order.id }));
+        commit = await commitOrderStock(orderId);
       } catch {
         // Possibly a lost response — retry (the call is idempotent).
         try {
-          commit = unwrap(await base44.functions.invoke('commitOrderStock', { orderId: order.id }));
+          commit = await commitOrderStock(orderId);
         } catch {
           if (reserved) {
-            await base44.functions.invoke('releaseLoyaltyPoints', { idempotency_key: checkoutKey }).catch(() => {});
+            await releaseLoyaltyPoints(checkoutKey).catch(() => {});
           }
           toast({ title: ar ? 'تعذر تأكيد المخزون، حاول مجددًا' : 'Could not confirm stock, please try again', variant: 'destructive' });
           setPlacing(false);
@@ -278,7 +288,7 @@ export default function Checkout() {
         // rolled back any partial deductions. Release the reserved loyalty
         // points and adjust the cart so the customer sees what changed.
         if (reserved) {
-          await base44.functions.invoke('releaseLoyaltyPoints', { idempotency_key: checkoutKey }).catch(() => {});
+          await releaseLoyaltyPoints(checkoutKey).catch(() => {});
         }
         const adj = adjustForInsufficient(commit?.insufficient || []);
         const parts = adj.map((a) =>
@@ -297,7 +307,7 @@ export default function Checkout() {
       }
 
       if (saveAddr && user && form.address) {
-        base44.entities.Address.create({
+        db.Address.create({
           label: 'Home',
           recipient_name: form.name,
           phone: fullPhone,
@@ -307,24 +317,25 @@ export default function Checkout() {
         }).catch(() => {});
       }
       if (appliedDiscount) {
-        base44.functions.invoke('redeemDiscount', { code_id: appliedDiscount.id, order_id: order.id }).catch(() => {});
+        redeemDiscount(appliedDiscount.id, orderId).catch(() => {});
       }
       setConfirmOpen(false);
-      setOrderId(order.id);
+      setOrderId(orderId);
       // Remove only what was actually purchased; keep any unselected cart lines.
       removeItems(items.map(lineIdOf));
       setCheckoutSelection(null);
       setDone(true);
-      base44.functions.invoke('onOrderPlaced', { orderId: order.id }).catch(() => {});
-      base44.functions.invoke('finalizeWheelRewards', { order_id: order.id }).catch(() => {});
-      if (user) base44.functions.invoke('awardLoyaltyPoints', { order_id: order.id }).catch(() => {});
+      // Order confirmation email is deferred — Base44's onOrderPlaced sent it
+      // via a platform email integration with no Supabase equivalent yet;
+      // needs a transactional email provider decision (not made yet). Admins
+      // still get a real-time new-order alert via NewOrderNotifier.
+      finalizeWheelRewards(orderId).catch(() => {});
+      if (user) awardLoyaltyPoints(orderId).catch(() => {});
       toast({ title: lang === 'ar' ? 'تم تأكيد الطلب' : 'Order placed' });
     } catch (err) {
       // The order never made it — give the reserved loyalty points straight back.
       if (reserved) {
-        await base44.functions
-          .invoke('releaseLoyaltyPoints', { idempotency_key: checkoutKey })
-          .catch(() => {});
+        await releaseLoyaltyPoints(checkoutKey).catch(() => {});
       }
       toast({ title: lang === 'ar' ? 'حدث خطأ' : 'Something went wrong', variant: 'destructive' });
     } finally {

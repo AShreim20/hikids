@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Minus, Plus, ShoppingBag, Package, AlertTriangle, Check } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { Image } from '@/components/ui/image';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
@@ -31,8 +31,8 @@ export default function BundleDetail() {
   useEffect(() => {
     setLoading(true);
     Promise.all([
-      base44.entities.Bundle.get(id),
-      base44.entities.Product.list('-updated_date', 500),
+      db.Bundle.get(id),
+      db.Product.list('-updated_date', 500),
     ])
       .then(([b, p]) => { setBundle(b); setProducts(p || []); })
       .catch(() => setBundle(null))

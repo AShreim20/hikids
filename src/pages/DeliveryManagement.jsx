@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Lock, Plus, Pencil, Trash2, X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -21,7 +22,7 @@ export default function DeliveryManagement() {
   const load = async () => {
     setLoading(true);
     try {
-      setCities(await base44.entities.DeliveryCity.list('-created_date', 200));
+      setCities(await db.DeliveryCity.list('-created_date', 200));
     } catch {
       setCities([]);
     } finally {
@@ -75,8 +76,8 @@ export default function DeliveryManagement() {
         active: !!form.active,
       };
       const isNew = editing === 'new';
-      const id = isNew ? await base44.entities.DeliveryCity.create(payload) : await base44.entities.DeliveryCity.update(editing, payload);
-      await base44.functions.invoke('logAuditActivity', {
+      const id = isNew ? await db.DeliveryCity.create(payload) : await db.DeliveryCity.update(editing, payload);
+      await invokeFunction('logAuditActivity', {
         action: isNew ? 'delivery.city_created' : 'delivery.city_updated',
         target_type: 'delivery_city',
         target_id: isNew ? id?.id || '' : editing,
@@ -95,8 +96,8 @@ export default function DeliveryManagement() {
   const remove = async (c) => {
     if (!window.confirm(t('delivery.confirmDelete'))) return;
     try {
-      await base44.entities.DeliveryCity.delete(c.id);
-      await base44.functions.invoke('logAuditActivity', {
+      await db.DeliveryCity.delete(c.id);
+      await invokeFunction('logAuditActivity', {
         action: 'delivery.city_deleted', target_type: 'delivery_city', target_id: c.id, details: c.name,
       });
       load();

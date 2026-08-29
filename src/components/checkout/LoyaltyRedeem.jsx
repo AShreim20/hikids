@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Sparkles, X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
 import { pointsToValue } from '@/lib/loyalty';
-import { unwrap } from '@/lib/invoke';
+import { getLoyaltyBalance } from '@/lib/loyaltyFunctions';
 
 // Checkout wallet panel: opt in, choose how many points to spend (or use max),
 // see the live money value and how much of the order remains to pay.
@@ -16,10 +15,8 @@ export default function LoyaltyRedeem({ subtotal, deliveryCost = 0, discountAmou
   const [points, setPoints] = useState('');
 
   useEffect(() => {
-    base44.functions.invoke('getLoyaltyBalance', {
-      subtotal, delivery_cost: deliveryCost, discount_amount: discountAmount, limit: 1,
-    })
-      .then((raw) => { const res = unwrap(raw); if (res.success) setWallet(res); })
+    getLoyaltyBalance({ subtotal, deliveryCost, discountAmount, limit: 1 })
+      .then((res) => { if (res.success) setWallet(res); })
       .catch(() => {});
   }, [subtotal, deliveryCost, discountAmount]);
 

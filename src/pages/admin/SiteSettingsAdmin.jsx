@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Save, Upload, Lock, FileText } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { uploadFile } from '@/lib/uploadFile';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useToast } from '@/components/ui/use-toast';
@@ -45,7 +45,7 @@ export default function SiteSettingsAdmin() {
   const uploadLogo = async (file) => {
     setUploading(true);
     try {
-      const res = await base44.integrations.Core.UploadFile({ file });
+      const res = await uploadFile(file);
       set('logoUrl', res.file_url);
       toast({ title: 'Logo uploaded' });
     } catch (e) {

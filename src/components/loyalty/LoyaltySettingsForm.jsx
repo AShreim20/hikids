@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -53,7 +54,7 @@ export default function LoyaltySettingsForm({ canEdit }) {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    base44.entities.Setting.list()
+    db.Setting.list()
       .then((rows) => {
         const map = { ...DEFAULTS };
         (rows || []).forEach((r) => { if (r.key in map) map[r.key] = r.value; });
@@ -67,11 +68,11 @@ export default function LoyaltySettingsForm({ canEdit }) {
     try {
       for (const key of Object.keys(DEFAULTS)) {
         const value = Number(settings[key]) || 0;
-        const existing = await base44.entities.Setting.filter({ key });
-        if (existing.length) await base44.entities.Setting.update(existing[0].id, { value });
-        else await base44.entities.Setting.create({ key, value });
+        const existing = await db.Setting.filter({ key });
+        if (existing.length) await db.Setting.update(existing[0].id, { value });
+        else await db.Setting.create({ key, value });
       }
-      await base44.functions.invoke('logAuditActivity', {
+      await invokeFunction('logAuditActivity', {
         action: 'loyalty.settings_updated',
         target_type: 'setting',
         details: JSON.stringify(settings),

@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { variantLabel } from '@/lib/variants';
 
 const CartContext = createContext(null);
@@ -147,7 +147,7 @@ export function CartProvider({ children }) {
     if (items.length === 0) return [];
     const ids = Array.from(new Set(items.filter((i) => i.id && !i.is_bundle).map((i) => i.id)));
     if (ids.length === 0) return [];
-    const products = await Promise.all(ids.map((id) => base44.entities.Product.get(id).catch(() => null)));
+    const products = await Promise.all(ids.map((id) => db.Product.get(id).catch(() => null)));
     const map = {};
     products.forEach((p) => { if (p) map[p.id] = p; });
     const adjustments = [];

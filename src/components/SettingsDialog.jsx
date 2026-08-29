@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Trash2, Loader2, Check, Sun, Moon, Monitor, LogOut, User as UserIcon, Globe } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { supabase } from '@/api/supabaseClient';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useAuth } from '@/lib/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { useLanguage } from '@/context/LanguageContext';
@@ -36,7 +37,8 @@ export default function SettingsDialog({ open, onOpenChange }) {
     setBusy(true);
     setError(null);
     try {
-      await base44.auth.updateMe({ full_name: name });
+      const { error: updateError } = await supabase.from('profiles').update({ full_name: name }).eq('id', user.id);
+      if (updateError) throw updateError;
       setSavedName(true);
       setTimeout(() => setSavedName(false), 2000);
     } catch (e) {
@@ -59,7 +61,7 @@ export default function SettingsDialog({ open, onOpenChange }) {
     setBusy(true);
     setError(null);
     try {
-      await base44.functions.invoke('deleteAccount', {});
+      await invokeFunction('deleteAccount', {});
       onOpenChange(false);
       logout();
     } catch (e) {

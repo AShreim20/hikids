@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Loader2, Lock, Search, Tag, X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -26,7 +26,7 @@ export default function Categories() {
 
   useEffect(() => {
     if (user?.role === 'admin') {
-      base44.entities.Product.list('-updated_date', 500)
+      db.Product.list('-updated_date', 500)
         .then(setProducts)
         .catch(() => setProducts([]))
         .finally(() => setLoading(false));
@@ -64,7 +64,7 @@ export default function Categories() {
 
   const saveDiscount = async (c, patch) => {
     try {
-      await base44.entities.Category.update(c.id, patch);
+      await db.Category.update(c.id, patch);
       refresh();
       toast({ title: ar ? 'تم التحديث' : 'Updated' });
     } catch (err) {
@@ -80,7 +80,7 @@ export default function Categories() {
     }
     if (!window.confirm(ar ? 'حذف هذه الفئة؟' : 'Delete this category?')) return;
     try {
-      await base44.entities.Category.delete(c.id);
+      await db.Category.delete(c.id);
       refresh();
       toast({ title: ar ? 'تم الحذف' : 'Deleted' });
     } catch (err) {
@@ -230,8 +230,8 @@ function CategoryDialog({ initial, onClose, onSaved }) {
         discount_active: !!form.discount_active,
         active: form.active !== false,
       };
-      if (initial?.id) await base44.entities.Category.update(initial.id, payload);
-      else await base44.entities.Category.create(payload);
+      if (initial?.id) await db.Category.update(initial.id, payload);
+      else await db.Category.create(payload);
       toast({ title: ar ? 'تم الحفظ' : 'Saved' });
       onSaved();
     } catch (err) {

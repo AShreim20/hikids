@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Loader2, Lock, Search, Package, X, Power } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
@@ -24,7 +24,7 @@ export default function Bundles() {
 
   const load = () => {
     setLoading(true);
-    base44.entities.Bundle.list('-updated_date', 200)
+    db.Bundle.list('-updated_date', 200)
       .then(setBundles)
       .catch(() => setBundles([]))
       .finally(() => setLoading(false));
@@ -58,7 +58,7 @@ export default function Bundles() {
 
   const toggleActive = async (b) => {
     try {
-      await base44.entities.Bundle.update(b.id, { active: !b.active });
+      await db.Bundle.update(b.id, { active: !b.active });
       load();
       toast({ title: ar ? 'تم التحديث' : 'Updated' });
     } catch (err) {
@@ -69,7 +69,7 @@ export default function Bundles() {
   const remove = async (b) => {
     if (!window.confirm(ar ? 'حذف هذه الحزمة؟' : 'Delete this bundle?')) return;
     try {
-      await base44.entities.Bundle.delete(b.id);
+      await db.Bundle.delete(b.id);
       toast({ title: ar ? 'تم الحذف' : 'Deleted' });
       load();
     } catch (err) {
