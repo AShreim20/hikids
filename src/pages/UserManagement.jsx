@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Lock, Search, Crown, ShieldCheck, UserCog, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Button } from '@/components/ui/button';
@@ -66,7 +67,7 @@ export default function UserManagement() {
   const load = async () => {
     setLoading(true);
     try {
-      setUsers(await base44.entities.User.list('-created_date', 200));
+      setUsers(await db.Profile.list('-created_at', 200));
     } catch {
       setUsers([]);
     } finally {
@@ -84,7 +85,7 @@ export default function UserManagement() {
     if (!admins.length) return null;
     return admins
       .slice()
-      .sort((a, b) => new Date(a.created_date) - new Date(b.created_date))[0].id;
+      .sort((a, b) => new Date(a.created_at) - new Date(b.created_at))[0].id;
   }, [users]);
 
   const filtered = useMemo(() => {
@@ -136,8 +137,8 @@ export default function UserManagement() {
       const newRole = action === 'promote' ? 'admin' : 'user';
       // Updates the user's actual authorization role — promoted admins gain
       // full Owner-level access (isOwner/can) immediately on their next auth.
-      await base44.entities.User.update(u.id, { role: newRole });
-      await base44.functions.invoke('logAuditActivity', {
+      await db.Profile.update(u.id, { role: newRole });
+      await invokeFunction('logAuditActivity', {
         action: action === 'promote' ? 'user.promoted' : 'user.demoted',
         target_type: 'user',
         target_id: u.id,
@@ -250,7 +251,7 @@ export default function UserManagement() {
                       </td>
                       <td className="px-5 py-3"><RoleBadge role={u._role} t={t} /></td>
                       <td className="px-5 py-3 text-muted-foreground">
-                        {u.created_date ? new Date(u.created_date).toLocaleDateString() : '—'}
+                        {u.created_at ? new Date(u.created_at).toLocaleDateString() : '—'}
                       </td>
                       <td className="px-5 py-3 text-end">
                         <ActionButton u={u} />

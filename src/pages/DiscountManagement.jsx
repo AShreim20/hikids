@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Lock, Plus, Pencil, Trash2, X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
@@ -22,7 +23,7 @@ export default function DiscountManagement() {
   const load = async () => {
     setLoading(true);
     try {
-      setCodes(await base44.entities.DiscountCode.list('-created_date', 200));
+      setCodes(await db.DiscountCode.list('-created_date', 200));
     } catch {
       setCodes([]);
     } finally {
@@ -83,8 +84,8 @@ export default function DiscountManagement() {
       };
       const isNew = editing === 'new';
       if (isNew) payload.used_count = 0;
-      const id = isNew ? await base44.entities.DiscountCode.create(payload) : await base44.entities.DiscountCode.update(editing, payload);
-      await base44.functions.invoke('logAuditActivity', {
+      const id = isNew ? await db.DiscountCode.create(payload) : await db.DiscountCode.update(editing, payload);
+      await invokeFunction('logAuditActivity', {
         action: isNew ? 'discount.created' : 'discount.updated',
         target_type: 'discount_code',
         target_id: isNew ? id?.id || '' : editing,
@@ -103,8 +104,8 @@ export default function DiscountManagement() {
   const remove = async (c) => {
     if (!window.confirm(t('discount.confirmDelete'))) return;
     try {
-      await base44.entities.DiscountCode.delete(c.id);
-      await base44.functions.invoke('logAuditActivity', { action: 'discount.deleted', target_type: 'discount_code', target_id: c.id, details: c.code });
+      await db.DiscountCode.delete(c.id);
+      await invokeFunction('logAuditActivity', { action: 'discount.deleted', target_type: 'discount_code', target_id: c.id, details: c.code });
       load();
     } catch (err) {
       toast({ title: err.message || 'Error', variant: 'destructive' });

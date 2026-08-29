@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Gift } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
-import { unwrap } from '@/lib/invoke';
+import { wheelState } from '@/lib/wheelFunctions';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 
@@ -19,9 +18,8 @@ export default function HeaderWheelSpins() {
   useEffect(() => {
     if (!user) { setAvailable(null); return; }
     let alive = true;
-    base44.functions.invoke('wheelState', {})
-      .then((raw) => {
-        const res = unwrap(raw);
+    wheelState()
+      .then((res) => {
         if (!alive) return;
         if (res?.success && res.active !== false) setAvailable(Number(res.available) || 0);
         else setAvailable(null);
@@ -33,9 +31,8 @@ export default function HeaderWheelSpins() {
   useEffect(() => {
     if (!user) return;
     const handler = () => {
-      base44.functions.invoke('wheelState', {})
-        .then((raw) => {
-          const res = unwrap(raw);
+      wheelState()
+        .then((res) => {
           if (res?.success && res.active !== false) setAvailable(Number(res.available) || 0);
           else setAvailable(null);
         })

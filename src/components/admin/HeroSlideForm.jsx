@@ -1,6 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Loader2, Upload, X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { uploadFile } from '@/lib/uploadFile';
 import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
@@ -29,7 +30,7 @@ export default function HeroSlideForm({ initial, onSaved, onCancel }) {
     if (!file) return;
     setUploading(true);
     try {
-      const { file_url } = await base44.integrations.Core.UploadFile({ file });
+      const { file_url } = await uploadFile(file);
       set('image_url', file_url);
     } catch {
       toast({ title: ar ? 'فشل الرفع' : 'Upload failed', variant: 'destructive' });
@@ -47,8 +48,8 @@ export default function HeroSlideForm({ initial, onSaved, onCancel }) {
     setSaving(true);
     const payload = { ...form, sort_order: Number(form.sort_order) || 0 };
     try {
-      if (initial?.id) await base44.entities.HeroSlide.update(initial.id, payload);
-      else await base44.entities.HeroSlide.create(payload);
+      if (initial?.id) await db.HeroSlide.update(initial.id, payload);
+      else await db.HeroSlide.create(payload);
       toast({ title: ar ? 'تم الحفظ' : 'Saved' });
       onSaved();
     } catch (err) {

@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Trophy, Gift, Sparkles, Ticket } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
@@ -27,7 +27,7 @@ export default function RewardsHistory() {
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
-    base44.entities.RewardHistory.filter({ user_email: user.email })
+    db.RewardHistory.filter({ user_email: user.email })
       .then((r) => setRows((r || []).sort((a, b) => new Date(b.created_date) - new Date(a.created_date))))
       .catch(() => setRows([]))
       .finally(() => setLoading(false));

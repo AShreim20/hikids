@@ -1,11 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Star, MessageSquare, Camera, Loader2, Image as ImageIcon, Clock, Check, X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { invokeFunction } from '@/lib/supabaseFunctions';
+import { uploadFile } from '@/lib/uploadFile';
 import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
-import { unwrap } from '@/lib/invoke';
 
 const STATUS = {
   pending: { en: 'Pending review', ar: 'قيد المراجعة', cls: 'bg-mist text-muted-foreground', icon: Clock },
@@ -35,7 +36,7 @@ export default function Reviews({ productId }) {
 
   const load = () => {
     setLoading(true);
-    base44.entities.Review.filter({ product_id: productId }, '-created_date', 50)
+    db.Review.filter({ product_id: productId }, '-created_date', 50)
       .then(setReviews)
       .catch(() => setReviews([]))
       .finally(() => setLoading(false));
@@ -82,16 +83,14 @@ export default function Reviews({ productId }) {
       }
       setSubmitting(true);
       try {
-        const up = await base44.integrations.Core.UploadFile({ file: photo });
-        const res = unwrap(
-          await base44.functions.invoke('submitPhotoReview', {
-            product_id: productId,
-            rating,
-            name: name.trim() || user.full_name || user.email,
-            comment: comment.trim(),
-            file_url: up.file_url,
-          })
-        );
+        const up = await uploadFile(photo);
+        const res = await invokeFunction('submitPhotoReview', {
+          product_id: productId,
+          rating,
+          name: name.trim() || user.full_name || user.email,
+          comment: comment.trim(),
+          file_url: up.file_url,
+        });
         if (!res.success) {
           toast({ title: res.message || t('reviews.error'), variant: 'destructive' });
         } else {
@@ -110,7 +109,7 @@ export default function Reviews({ productId }) {
     // Text-only review — unchanged existing flow (no approval needed).
     setSubmitting(true);
     try {
-      await base44.entities.Review.create({
+      await db.Review.create({
         product_id: productId,
         rating,
         name: name.trim() || t('reviews.anonymous'),

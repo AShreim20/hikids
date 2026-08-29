@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Sparkles, Gift, History, Trophy } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { wheelState, wheelSpin, wheelGrantFirstSpin } from '@/lib/wheelFunctions';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useToast } from '@/components/ui/use-toast';
-import { unwrap } from '@/lib/invoke';
 import { rewardLabel } from '@/lib/rewards';
 import { spinRewardName } from '@/lib/bilingual';
 import { useCart } from '@/context/CartContext';
@@ -31,9 +31,9 @@ export default function MysteryWheel() {
     // animation can finish instead of being unmounted and reset.
     if (!state) setLoading(true);
     try {
-      const res = unwrap(await base44.functions.invoke('wheelState', {}));
+      const res = await wheelState();
       if (res.success) setState(res);
-      const s = await base44.entities.WheelSpin.filter({ user_email: user.email }, '-created_date', 5);
+      const s = await db.WheelSpin.filter({ user_email: user.email }, '-created_date', 5);
       setSpins(s || []);
     } catch {} finally { setLoading(false); }
   };
@@ -43,7 +43,7 @@ export default function MysteryWheel() {
 
   const claimFirstSpin = async () => {
     try {
-      const res = unwrap(await base44.functions.invoke('wheelGrantFirstSpin', {}));
+      const res = await wheelGrantFirstSpin();
       if (res.success) { toast({ title: ar ? 'حصلت على دورة مجانية! 🎉' : 'Free spin unlocked! 🎉' }); load(); }
       else toast({ title: res.message || 'Error', variant: 'destructive' });
     } catch (e) { toast({ title: e.message, variant: 'destructive' }); }
@@ -55,7 +55,7 @@ export default function MysteryWheel() {
   const handleSpin = async () => {
     if (!state || state.available <= 0) return null;
     try {
-      const res = unwrap(await base44.functions.invoke('wheelSpin', {}));
+      const res = await wheelSpin();
       if (res.success) {
         if (res.reward?.product && !cartItems.some((i) => i.lineId === `wheel::${res.reward.id}`)) {
           addWheelReward(res.reward.product, res.reward.id, res.reward.product.price);

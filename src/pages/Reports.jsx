@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lock, Loader2, BarChart3, Receipt, CreditCard, ShoppingCart, TrendingUp } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
@@ -35,14 +35,20 @@ export default function Reports() {
 
   useEffect(() => {
     if (user?.role !== 'admin') { setLoading(false); return; }
-    Promise.all([
-      base44.entities.Order.list('-created_date', 500),
-      base44.entities.Product.list('-updated_date', 500),
-      base44.entities.PurchaseOrder.list('-created_date', 500),
-      base44.entities.SupplierTransaction.list('-created_date', 500),
+    // allSettled: one failing list (e.g. an RLS/permission hiccup on a
+    // single entity) shouldn't blank out the rest of the report.
+    Promise.allSettled([
+      db.Order.list('-created_date', 500),
+      db.Product.list('-updated_date', 500),
+      db.PurchaseOrder.list('-created_date', 500),
+      db.SupplierTransaction.list('-created_date', 500),
     ])
-      .then(([o, p, po, tx]) => { setOrders(o || []); setProducts(p || []); setPos(po || []); setTxs(tx || []); })
-      .catch(() => {})
+      .then(([o, p, po, tx]) => {
+        setOrders(o.status === 'fulfilled' ? o.value || [] : []);
+        setProducts(p.status === 'fulfilled' ? p.value || [] : []);
+        setPos(po.status === 'fulfilled' ? po.value || [] : []);
+        setTxs(tx.status === 'fulfilled' ? tx.value || [] : []);
+      })
       .finally(() => setLoading(false));
   }, [user]);
 

@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Plus, X, Upload, Loader2, Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Image } from '@/components/ui/image';
-import { base44 } from '@/api/base44Client';
+import { uploadFile } from '@/lib/uploadFile';
 import { useLanguage } from '@/context/LanguageContext';
 import { isColorOption } from '@/lib/variants';
 
@@ -43,7 +43,7 @@ export default function OptionsEditor({ options, onChange }) {
     try {
       const urls = [];
       for (const file of files) {
-        const { file_url } = await base44.integrations.Core.UploadFile({ file });
+        const { file_url } = await uploadFile(file);
         urls.push(file_url);
       }
       updateValue(oi, vi, { images: [...(options[oi].values[vi].images || []), ...urls] });

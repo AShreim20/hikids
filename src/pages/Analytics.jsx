@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
-import { BarChart3, Eye, Users, ArrowLeft, ExternalLink } from 'lucide-react';
+import { BarChart3, Eye, Users, ArrowLeft } from 'lucide-react';
 import PageHeader from '@/components/PageHeader';
 import { useLanguage } from '@/context/LanguageContext';
 import Footer from '@/components/Footer';
@@ -15,17 +14,15 @@ export default function Analytics() {
   const [error, setError] = useState(null);
   const [propertyId, setPropertyId] = useState('');
 
-  const load = (pid) => {
-    setLoading(true);
-    setError(null);
-    base44.functions
-      .invoke('gaInsights', { propertyId: pid || undefined, days: 30 })
-      .then((res) => {
-        setData(res.data);
-        setPropertyId(res.data.propertyId);
-      })
-      .catch((e) => setError(e.response?.data?.error || e.message || 'Failed to load analytics'))
-      .finally(() => setLoading(false));
+  // gaInsights read from Base44's platform-managed Google Analytics connector
+  // (a stored GA4 OAuth token) — there's no Supabase equivalent yet, and
+  // building one means a real Google Cloud OAuth client + re-authorizing a
+  // GA4 property, which needs the store owner's input, not something this
+  // migration can do on its own. Surfaced clearly rather than left silently
+  // broken or crashing now that Base44 itself is gone (Phase 9 cutover).
+  const load = () => {
+    setLoading(false);
+    setError('Google Analytics is not connected yet.');
   };
 
   useEffect(() => {
@@ -76,7 +73,7 @@ export default function Analytics() {
           <div className="mt-12 rounded-3xl bg-destructive/10 border border-destructive/30 p-8 text-center">
             <p className="font-heading font-bold text-xl text-destructive">{error}</p>
             <p className="mt-2 text-sm text-muted-foreground">
-              Make sure your Google Analytics property is collecting data, then try again.
+              Connecting a Google Analytics property needs a one-time setup by the store owner.
             </p>
           </div>
         ) : (

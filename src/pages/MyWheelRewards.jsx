@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Sparkles, Ticket, Package, Plus, Check, ShoppingBag, ArrowRight } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { Image } from '@/components/ui/image';
@@ -44,7 +44,7 @@ export default function MyWheelRewards() {
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
-    base44.entities.WheelSpin.filter({ user_email: user.email })
+    db.WheelSpin.filter({ user_email: user.email })
       .then((r) => setSpins((r || []).sort((a, b) => new Date(b.created_date) - new Date(a.created_date))))
       .catch(() => setSpins([]))
       .finally(() => setLoading(false));

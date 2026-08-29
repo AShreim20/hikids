@@ -27,6 +27,7 @@ export function WishlistProvider({ children }) {
             {
               id: product.id,
               name: product.name,
+              name_en: product.name_en,
               price: product.price,
               image_url: product.image_url,
               category: product.category,

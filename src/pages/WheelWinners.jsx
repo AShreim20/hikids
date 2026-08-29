@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Lock, Phone, Mail, Search, Trophy, Ticket, Package, Sparkles } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
@@ -36,7 +36,7 @@ export default function WheelWinners() {
 
   const load = async () => {
     setLoading(true);
-    base44.entities.WheelSpin.list('-created_date', 500)
+    db.WheelSpin.list('-created_date', 500)
       .then(setSpins)
       .catch(() => setSpins([]))
       .finally(() => setLoading(false));
@@ -58,7 +58,7 @@ export default function WheelWinners() {
     });
   }, [spins, q, type, status, from, to]);
 
-  const setSpinStatus = async (s, st) => { await base44.entities.WheelSpin.update(s.id, { status: st }); load(); };
+  const setSpinStatus = async (s, st) => { await db.WheelSpin.update(s.id, { status: st }); load(); };
 
   if (user?.role !== 'admin') {
     return (

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { Image } from '@/components/ui/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
@@ -20,7 +20,7 @@ export default function WorldOfPlay() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.entities.Product.list('-updated_date', 200)
+    db.Product.list('-updated_date', 200)
       .then(setProducts)
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));

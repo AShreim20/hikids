@@ -1,77 +1,47 @@
-# Base44 Project
+# HiKids
 
-Use this repository to run and edit the app locally, then publish changes back through Base44.
-
-Any change pushed to the repo will also be reflected in the Base44 Builder.
+A bilingual (Arabic/English, RTL-first) online toy store — React + Vite frontend, Supabase
+(Postgres + Auth + Storage + Edge Functions) backend.
 
 ## Prerequisites
 
-1. Clone the repository using the project's Git URL.
+1. Clone the repository.
 2. Navigate to the project directory.
 3. Install dependencies: `npm install`.
-4. Install the Base44 CLI: `npm install -g base44@latest`.
-
-See the [Base44 CLI docs](https://docs.base44.com/developers/references/cli/get-started/overview) if you want to run Base44 commands directly.
 
 ## Run Locally
-
-Run the full local development environment from the project root:
-
-```bash
-base44 dev
-```
-
-`base44 dev` starts the local Base44 development backend and, when this app is configured for it, also starts the frontend dev server for you. Use the frontend URL printed by the command.
-
-For example, when the Base44 project config includes a `serveCommand`, `base44 dev` can launch the frontend too:
-
-```json5
-{
-  "site": {
-    "serveCommand": "npm run dev"
-  }
-}
-```
-
-In a Base44 project this lives in `base44/config.jsonc`.
-
-## Run Only The Frontend
-
-If you only want to work on the frontend against the hosted Base44 backend, run:
 
 ```bash
 npm run dev
 ```
 
-Open the local URL printed by Vite.
+Open the local URL printed by Vite. The frontend talks directly to the hosted Supabase
+project configured in `.env.local` — there's no separate local backend process to start.
 
-## Use The Hosted Backend
+## Environment
 
-For frontend-only development, create or update `.env.local` in the project root:
-
-```bash
-VITE_BASE44_APP_ID=your_app_id
-VITE_BASE44_APP_BASE_URL=https://your-app.base44.app
-```
-
-`VITE_BASE44_APP_ID` identifies the Base44 app.
-
-`VITE_BASE44_APP_BASE_URL` tells the Base44 Vite plugin where to send local `/api` requests. Point it at your deployed Base44 app URL when you want the local frontend to use the hosted backend.
-
-When you use `base44 dev`, the command injects the local Base44 values for you, so `.env.local` is mainly needed for frontend-only workflows.
-
-## Publish Your Changes
-
-After pushing your changes to git, open the Base44 dashboard and publish the app:
+Create `.env.local` in the project root:
 
 ```bash
-base44 dashboard open
+VITE_SUPABASE_URL=your_project_url
+VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_or_publishable_key
+
+# Server-side only — never prefix with VITE_ (that would ship it to the browser).
+# Used by scripts/tools that need to bypass RLS with the service role.
+SUPABASE_SECRET_KEY=your_service_role_key
 ```
 
-## Docs & Support
+## Other commands
 
-Documentation: [https://docs.base44.com/Integrations/Using-GitHub](https://docs.base44.com/Integrations/Using-GitHub)
+```bash
+npm run build     # production build
+npm run lint      # eslint
+npm run typecheck # tsc via jsconfig
+```
 
-Base44 CLI command reference: [https://docs.base44.com/developers/references/cli/commands/introduction](https://docs.base44.com/developers/references/cli/commands/introduction)
+## Backend
 
-Support: [https://app.base44.com/support](https://app.base44.com/support)
+Database schema, RLS policies, and Postgres RPC functions live in `supabase/migrations/`.
+Deno Edge Functions (for logic that needs more than a plain RPC — external API calls,
+admin-only auth actions) live in `supabase/functions/`. See [CLAUDE.md](./CLAUDE.md) for
+the full list of backend functions and project conventions.

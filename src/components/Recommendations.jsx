@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Tag, Flame, ThumbsUp, ArrowRight, Plus, Check, Heart } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { Image } from '@/components/ui/image';
 import { useCart } from '@/context/CartContext';
 import { useCartFly } from '@/context/CartFlyContext';
@@ -26,12 +26,16 @@ export default function Recommendations() {
   const { t, formatPrice, lang } = useLanguage();
 
   useEffect(() => {
-    Promise.all([
-      base44.entities.Product.list('-updated_date', 50),
-      base44.entities.Review.list(),
-      base44.entities.Order.list(),
+    // allSettled: one failing list shouldn't blank out the rest.
+    Promise.allSettled([
+      db.Product.list('-updated_date', 50),
+      db.Review.list(),
+      db.Order.list(),
     ])
       .then(([products, reviews, orders]) => {
+        products = products.status === 'fulfilled' ? products.value : [];
+        reviews = reviews.status === 'fulfilled' ? reviews.value : [];
+        orders = orders.status === 'fulfilled' ? orders.value : [];
         const purchases = {};
         orders.forEach((o) =>
           (o.items || []).forEach((it) => {

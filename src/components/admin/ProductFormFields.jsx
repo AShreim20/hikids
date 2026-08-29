@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { Plus, X, Loader2, Upload } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { uploadFile } from '@/lib/uploadFile';
 import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
@@ -33,7 +33,7 @@ export default function ProductFormFields({ form, set }) {
   const videoRef = useRef(null);
 
   const upload = async (file) => {
-    const { file_url } = await base44.integrations.Core.UploadFile({ file });
+    const { file_url } = await uploadFile(file);
     return file_url;
   };
   const fail = () => toast({ title: lang === 'ar' ? 'فشل الرفع' : 'Upload failed', variant: 'destructive' });

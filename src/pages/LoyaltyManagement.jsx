@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Lock, Search } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import LoyaltySettingsForm from '@/components/loyalty/LoyaltySettingsForm';
@@ -30,7 +30,7 @@ export default function LoyaltyManagement() {
   const load = async () => {
     setLoading(true);
     try {
-      setAccounts(await base44.entities.LoyaltyAccount.list('-balance', 200));
+      setAccounts(await db.LoyaltyAccount.list('-balance', 200));
     } catch {
       setAccounts([]);
     } finally {
@@ -41,7 +41,7 @@ export default function LoyaltyManagement() {
   useEffect(() => {
     if (!canView) { setLoading(false); return; }
     load();
-    base44.entities.Setting.filter({ key: 'loyalty_redeem_rate' })
+    db.Setting.filter({ key: 'loyalty_redeem_rate' })
       .then((rows) => { if (rows && rows.length) setRedeemRate(rows[0].value || 0.1); })
       .catch(() => {});
   }, [canView]);

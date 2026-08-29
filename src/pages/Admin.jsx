@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Loader2, Lock, LayoutGrid, List, Copy, X, Link2, Search } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
@@ -32,7 +33,7 @@ export default function Admin() {
 
   const load = () => {
     setLoading(true);
-    base44.entities.Product.list('-updated_date', 500)
+    db.Product.list('-updated_date', 500)
       .then(setProducts)
       .catch(() => setProducts([]))
       .finally(() => setLoading(false));
@@ -99,8 +100,8 @@ export default function Admin() {
   const remove = async (p) => {
     if (!window.confirm(t('admin.confirmDelete'))) return;
     try {
-      await base44.entities.Product.delete(p.id);
-      await base44.functions.invoke('logAuditActivity', {
+      await db.Product.delete(p.id);
+      await invokeFunction('logAuditActivity', {
         action: 'product.deleted', target_type: 'product', target_id: p.id,
         details: `Deleted product "${p.name}"`,
       });
@@ -119,7 +120,7 @@ export default function Admin() {
       const suffix = lang === 'ar' ? '(نسخة)' : '(copy)';
       for (const p of targets) {
         const { id, created_date, updated_date, created_by_id, ...rest } = p;
-        await base44.entities.Product.create({
+        await db.Product.create({
           ...rest,
           name: `${p.name} ${suffix}`,
           barcode: '',
@@ -145,7 +146,7 @@ export default function Admin() {
     const targets = products.filter((p) => selected.has(p.id));
     setBusy(true);
     try {
-      for (const p of targets) await base44.entities.Product.delete(p.id);
+      for (const p of targets) await db.Product.delete(p.id);
       toast({ title: lang === 'ar' ? `تم حذف ${targets.length} منتج` : `${targets.length} deleted` });
       clearSel();
       setConfirmOpen(false);

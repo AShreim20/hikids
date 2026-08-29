@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Send, Loader2, Sparkles, ArrowUpRight, ShoppingCart } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
 
@@ -43,7 +44,7 @@ export default function ChatPanel({ onClose }) {
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    base44.entities.Product.list('-created_date', 50)
+    db.Product.list('-created_date', 50)
       .then(setProducts)
       .catch(() => {});
   }, []);
@@ -100,42 +101,10 @@ Current product catalog (ID | name | category | ages | price | stock | url):\n${
         const c = typeof m.content === 'string' ? m.content : m.content.text;
         return `${m.role === 'user' ? 'Customer' : 'Assistant'}: ${c}`;
       }).join('\n');
-      const schema = {
-        type: 'object',
-        properties: {
-          reply: { type: 'string' },
-          products: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: {
-                id: { type: 'string' },
-                name: { type: 'string' },
-                url: { type: 'string' },
-              },
-              required: ['id'],
-            },
-          },
-          add_to_cart: {
-            type: 'array',
-            items: {
-              type: 'object',
-              properties: { product_id: { type: 'string' }, qty: { type: 'integer' } },
-              required: ['product_id'],
-            },
-          },
-        },
-        required: ['reply'],
-      };
-      const res = await base44.integrations.Core.InvokeLLM({
-        prompt: `${sys}\n\n${convo}\nAssistant:`,
-        response_json_schema: schema,
-      });
-      let data = res;
-      if (typeof res === 'string') {
-        try { data = JSON.parse(res); } catch { data = { reply: res }; }
-      }
-      data = data || {};
+      const data = (await invokeFunction('chatAssistant', {
+        system: sys,
+        prompt: `${convo}\nAssistant:`,
+      })) || {};
       // Strip any stray raw URLs from the reply as a safety net — links are
       // rendered from the products array instead.
       let reply = (data.reply || '').replace(/https?:\/\/\S+/g, '').replace(/\s{2,}/g, ' ').trim();

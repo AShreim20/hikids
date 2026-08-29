@@ -25,8 +25,12 @@ export default function Cart() {
   const ar = lang === 'ar';
   const { toast } = useToast();
 
-  // Per-line selection (a Set of lineIds) for the bulk delete actions.
-  const [selected, setSelected] = useState(() => new Set());
+  // Per-line selection (a Set of lineIds) for the bulk delete actions and for
+  // which lines go to checkout. Defaults to every purchasable line selected
+  // (the normal "everything in my cart" expectation) rather than empty —
+  // starting empty meant Checkout always rejected the first click with
+  // "select at least one item" even though the cart wasn't empty.
+  const [selected, setSelected] = useState(() => new Set(items.filter((i) => !i.unavailable).map(lineIdOf)));
   const [confirmOpen, setConfirmOpen] = useState(false);
 
   const allIds = items.map(lineIdOf);

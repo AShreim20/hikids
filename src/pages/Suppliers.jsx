@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Lock, Loader2 } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -28,9 +28,9 @@ export default function Suppliers() {
   const load = () => {
     setLoading(true);
     Promise.all([
-      base44.entities.Supplier.list('name', 500),
-      base44.entities.SupplierTransaction.list('-created_date', 500),
-      base44.entities.PurchaseOrder.list('-created_date', 500),
+      db.Supplier.list('name', 500),
+      db.SupplierTransaction.list('-created_date', 500),
+      db.PurchaseOrder.list('-created_date', 500),
     ])
       .then(([s, tx, po]) => { setSuppliers(s || []); setTxs(tx || []); setPos(po || []); })
       .catch(() => { setSuppliers([]); setTxs([]); setPos([]); })

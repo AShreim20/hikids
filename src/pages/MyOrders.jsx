@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Package } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
@@ -20,7 +20,7 @@ export default function MyOrders() {
       setLoading(false);
       return;
     }
-    base44.entities.Order.list('-created_date', 50)
+    db.Order.list('-created_date', 50)
       .then(setOrders)
       .catch(() => setOrders([]))
       .finally(() => setLoading(false));

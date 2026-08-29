@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { categoryName as categoryNameFn } from '@/lib/bilingual';
 
 const CategoryContext = createContext({
@@ -13,7 +13,7 @@ const CategoryContext = createContext({
 export function CategoryProvider({ children }) {
   const [categories, setCategories] = useState([]);
   const load = useCallback(() => {
-    return base44.entities.Category.list('sort_order', 500)
+    return db.Category.list('sort_order', 500)
       .then((list) => setCategories(list || []))
       .catch(() => setCategories([]));
   }, []);

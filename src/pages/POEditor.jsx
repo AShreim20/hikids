@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Lock, Save, Send } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
-import { unwrap } from '@/lib/invoke';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
@@ -53,9 +53,9 @@ export default function POEditor() {
 
   const loadMeta = async () => {
     const [s, p, tx] = await Promise.all([
-      base44.entities.Supplier.list('name', 200),
-      base44.entities.Product.list('-updated_date', 500),
-      base44.entities.SupplierTransaction.list('-created_date', 500),
+      db.Supplier.list('name', 200),
+      db.Product.list('-updated_date', 500),
+      db.SupplierTransaction.list('-created_date', 500),
     ]);
     setSuppliers(s || []);
     setProducts(p || []);
@@ -65,13 +65,13 @@ export default function POEditor() {
   useEffect(() => {
     loadMeta();
     if (isNew) {
-      base44.entities.PurchaseOrder.list('-created_date', 500).then((list) => {
+      db.PurchaseOrder.list('-created_date', 500).then((list) => {
         setForm((f) => ({ ...f, po_number: generatePoNumber(list || []) }));
       });
       setLoading(false);
     } else {
       setLoading(true);
-      base44.entities.PurchaseOrder.get(id)
+      db.PurchaseOrder.get(id)
         .then((po) => setForm({ ...EMPTY, ...po, paid_amount: po.paid_amount ?? '' }))
         .catch(() => toast({ title: ar ? 'الأمر غير موجود' : 'Order not found', variant: 'destructive' }))
         .finally(() => setLoading(false));
@@ -152,7 +152,7 @@ export default function POEditor() {
     };
   };
 
-  const persist = async (payload) => (isNew ? base44.entities.PurchaseOrder.create(payload) : base44.entities.PurchaseOrder.update(id, payload));
+  const persist = async (payload) => (isNew ? db.PurchaseOrder.create(payload) : db.PurchaseOrder.update(id, payload));
 
   const saveDraft = async (e) => {
     e.preventDefault();
@@ -163,7 +163,7 @@ export default function POEditor() {
       const payload = buildPayload('draft');
       const res = await persist(payload);
       const newId = isNew ? res?.id : id;
-      await base44.functions.invoke('logAuditActivity', {
+      await invokeFunction('logAuditActivity', {
         action: isNew ? 'po.created' : 'po.updated', target_type: 'purchase_order', target_id: newId,
         details: `${payload.po_number} — ${payload.total}`,
       }).catch(() => {});
@@ -185,7 +185,7 @@ export default function POEditor() {
       const payload = buildPayload('draft');
       const res = await persist(payload);
       const poId = isNew ? res?.id : id;
-      const out = unwrap(await base44.functions.invoke('postPurchaseOrder', { po_id: poId }));
+      const out = await invokeFunction('postPurchaseOrder', { po_id: poId });
       if (out.success === false) throw new Error(out.message || 'Post failed');
       toast({ title: ar ? 'تم الترحيل — تحقق من المخزون' : 'Posted — inventory updated' });
       navigate('/admin/po');
@@ -285,7 +285,7 @@ export default function POEditor() {
                     </button>
                   </>
                 ) : (
-                  <button type="button" onClick={() => navigate('/admin/po')} className="squish h-12 px-6 rounded-full bg-mist font-heading font-bold">{t('admin.back') || t('pd.back')}</button>
+                  <button type="button" onClick={() => navigate('/admin/po')} className="squish h-12 px-6 rounded-full bg-mist font-heading font-bold">{t('common.back')}</button>
                 )}
                 {!readOnly && (
                   <button type="button" onClick={() => navigate('/admin/po')} className="squish h-12 px-6 rounded-full bg-mist font-heading font-bold">{t('admin.cancel')}</button>

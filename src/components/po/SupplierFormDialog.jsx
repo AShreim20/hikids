@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
 import FormInput from '@/components/admin/FormInput';
@@ -38,8 +38,8 @@ export default function SupplierFormDialog({ open, onOpenChange, initial, onSave
         notes: form.notes || '',
       };
       let saved;
-      if (initial?.id) saved = await base44.entities.Supplier.update(initial.id, payload);
-      else saved = await base44.entities.Supplier.create(payload);
+      if (initial?.id) saved = await db.Supplier.update(initial.id, payload);
+      else saved = await db.Supplier.create(payload);
       toast({ title: ar ? 'تم الحفظ' : 'Saved' });
       onSaved?.(saved);
       onOpenChange(false);

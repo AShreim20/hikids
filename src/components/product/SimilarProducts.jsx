@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Star, Plus, Check, ArrowRight } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { Image } from '@/components/ui/image';
 import { useCart } from '@/context/CartContext';
 import { useCartFly } from '@/context/CartFlyContext';
@@ -34,7 +34,7 @@ export default function SimilarProducts({ product }) {
 
   useEffect(() => {
     let alive = true;
-    base44.entities.Product.list('-updated_date', 100)
+    db.Product.list('-updated_date', 100)
       .then((all) => {
         const pool = (all || []).filter((p) => p.id !== product.id);
         const scored = pool.map((p) => {

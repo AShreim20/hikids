@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Loader2, Lock, Check, X } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -23,7 +23,7 @@ export default function HeroSlides() {
 
   const load = () => {
     setLoading(true);
-    base44.entities.HeroSlide.list('sort_order', 50)
+    db.HeroSlide.list('sort_order', 50)
       .then((list) => { setSlides(list); setOrder(list); })
       .catch(() => { setSlides([]); setOrder([]); })
       .finally(() => setLoading(false));
@@ -59,7 +59,7 @@ export default function HeroSlides() {
   const remove = async (s) => {
     if (!window.confirm(ar ? 'حذف هذه الشريحة؟' : 'Delete this slide?')) return;
     try {
-      await base44.entities.HeroSlide.delete(s.id);
+      await db.HeroSlide.delete(s.id);
       toast({ title: ar ? 'تم الحذف' : 'Deleted' });
       load();
     } catch (err) {
@@ -71,7 +71,7 @@ export default function HeroSlides() {
     setSaving(true);
     try {
       const updates = order.map((s, i) => ({ id: s.id, sort_order: i }));
-      await base44.entities.HeroSlide.bulkUpdate(updates);
+      await db.HeroSlide.bulkUpdate(updates);
       setSlides(order); // commit working order as saved
       toast({ title: ar ? 'تم حفظ الترتيب' : 'Order saved' });
     } catch (err) {

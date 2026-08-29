@@ -1,6 +1,6 @@
-import React, { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { base44 } from '@/api/base44Client';
+import { subscribeOrders } from '@/lib/orderRealtime';
 import { toast } from '@/components/ui/use-toast';
 import { usePermissions } from '@/lib/permissions';
 import { useLanguage } from '@/context/LanguageContext';
@@ -16,7 +16,7 @@ export default function NewOrderNotifier() {
 
   useEffect(() => {
     if (!allowed) return;
-    const unsubscribe = base44.entities.Order.subscribe((event) => {
+    const unsubscribe = subscribeOrders((event) => {
       if (event.type !== 'create' || !event.data) return;
       const o = event.data;
       if (seen.current.has(o.id)) return;

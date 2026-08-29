@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ShieldAlert } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
+import { awardLoyaltyPoints, reverseOrderLoyalty } from '@/lib/loyaltyFunctions';
+import { reverseWheelRewards } from '@/lib/wheelFunctions';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import OrderTimeline from '@/components/orders/OrderTimeline';
@@ -35,17 +37,17 @@ export default function OrderDetail() {
 
   useEffect(() => {
     if (!allowed) { setLoading(false); return; }
-    base44.entities.Order.get(id)
+    db.Order.get(id)
       .then(async (o) => {
         setOrder(o);
         if (o?.customer_email) {
-          const all = await base44.entities.Order.filter({ customer_email: o.customer_email }, '-created_date', 20).catch(() => []);
+          const all = await db.Order.filter({ customer_email: o.customer_email }, '-created_date', 20).catch(() => []);
           setHistory(all.filter((x) => x.id !== o.id));
         }
       })
       .catch(() => setOrder(null))
       .finally(() => setLoading(false));
-    base44.entities.DeliveryCity.filter({ active: true })
+    db.DeliveryCity.filter({ active: true })
       .then((list) => setCities(list.map((c) => c.name)))
       .catch(() => {});
   }, [id, allowed]);
@@ -55,7 +57,7 @@ export default function OrderDetail() {
   const persist = async (patch, entry) => {
     setSaving(true);
     try {
-      const updated = await base44.entities.Order.update(order.id, {
+      const updated = await db.Order.update(order.id, {
         ...patch,
         handled_by: user?.email || order.handled_by,
         activity: appendActivity(order, entry),
@@ -75,16 +77,16 @@ export default function OrderDetail() {
     try {
       if (!['cancelled', 'returned', 'return_approved'].includes(to)) {
         // The server decides whether the reward is now available or still pending.
-        const res = await base44.functions.invoke('awardLoyaltyPoints', { order_id: order.id });
+        const res = await awardLoyaltyPoints(order.id);
         if (res?.awarded > 0) {
           toast({ title: ar ? `تم إضافة ${res.awarded} نقطة للزبون` : `${res.awarded} points credited to the customer` });
         }
       } else {
-        const res = await base44.functions.invoke('reverseOrderLoyalty', { order_id: order.id });
+        const res = await reverseOrderLoyalty(order.id);
         if (res?.reversed || res?.refunded) {
           toast({ title: ar ? 'تم تسوية نقاط الولاء لهذا الطلب' : 'Loyalty points settled for this order' });
         }
-        base44.functions.invoke('reverseWheelRewards', { order_id: order.id }).catch(() => {});
+        reverseWheelRewards(order.id).catch(() => {});
       }
     } catch {
       // non-blocking: the status change itself already succeeded

@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Check, Loader2, ShoppingBag, Package } from 'lucide-react';
-import { base44 } from '@/api/base44Client';
+import { db } from '@/api/entities';
 import { Image } from '@/components/ui/image';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
@@ -53,8 +53,8 @@ export default function SharedCart() {
       setLoading(true);
       try {
         const [allProducts, allBundles] = await Promise.all([
-          productIds.length ? base44.entities.Product.list('-updated_date', 200) : Promise.resolve([]),
-          bundleIds.length ? base44.entities.Bundle.list('-updated_date', 200) : Promise.resolve([]),
+          productIds.length ? db.Product.list('-updated_date', 200) : Promise.resolve([]),
+          bundleIds.length ? db.Bundle.list('-updated_date', 200) : Promise.resolve([]),
         ]);
         if (!alive) return;
         setProducts((allProducts || []).filter((p) => productIds.includes(p.id)));
