@@ -83,7 +83,7 @@ export default function MyOrders() {
                   </span>
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">
-                  {t('track.placed')} {new Date(o.created_date).toLocaleDateString(lang === 'ar' ? 'ar' : 'en')}
+                  {t('track.placed')} {new Date(o.created_date).toLocaleDateString(lang === 'ar' ? 'ar-u-nu-latn' : 'en')}
                 </p>
                 <div className="mt-4 pt-4 border-t border-border/60 space-y-2">
                   {(o.items || []).map((it, i) => (

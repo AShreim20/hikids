@@ -1,8 +1,10 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Loader2, Lock, Search, Tag, X } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Lock, Search, Tag, X, Upload, ImageIcon, AlertTriangle } from 'lucide-react';
 import { db } from '@/api/entities';
 import { useToast } from '@/components/ui/use-toast';
+import { uploadFile } from '@/lib/uploadFile';
+import { Image } from '@/components/ui/image';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
@@ -11,6 +13,11 @@ import { useCategories } from '@/context/CategoryContext';
 import FormInput from '@/components/admin/FormInput';
 import WorldOfPlaySelector from '@/components/admin/WorldOfPlaySelector';
 import { categoryName } from '@/lib/bilingual';
+
+// Recommended category image proportions, shown as a hint only — any image
+// is still accepted (see item 5: recommendation, not a requirement).
+const RECOMMENDED_RATIO = 1200 / 800; // 3:2
+const RATIO_WARN_TOLERANCE = 0.35; // relative difference before we show a hint
 
 export default function Categories() {
   const { user } = useAuth();
@@ -124,6 +131,13 @@ export default function Categories() {
           <div className="mt-8 grid gap-3">
             {filtered.map((c) => (
               <div key={c.id} className={`rounded-3xl bg-card border border-border/60 p-4 sm:p-5 flex flex-wrap items-center gap-4 ${c.active === false ? 'opacity-50' : ''}`}>
+                <div className="w-14 h-12 rounded-xl overflow-hidden bg-mist shrink-0 grid place-items-center">
+                  {c.image_url ? (
+                    <Image src={c.image_url} alt="" fittingType="fill" className="w-full h-full" />
+                  ) : (
+                    <ImageIcon className="w-5 h-5 text-muted-foreground/50" aria-hidden="true" />
+                  )}
+                </div>
                 <div className="min-w-0 flex-1">
                   <p className="font-heading font-bold truncate">{categoryName(c, lang)}</p>
                   {c.name_en ? <p className="text-xs text-muted-foreground truncate">{c.name_en}</p> : null}
@@ -206,6 +220,7 @@ function CategoryDialog({ initial, onClose, onSaved }) {
     name_en: initial?.name_en || '',
     description: initial?.description || '',
     description_en: initial?.description_en || '',
+    image_url: initial?.image_url || '',
     sort_order: initial?.sort_order ?? 0,
     discount_percent: initial?.discount_percent ?? 0,
     discount_active: !!initial?.discount_active,
@@ -225,6 +240,7 @@ function CategoryDialog({ initial, onClose, onSaved }) {
         name_en: form.name_en.trim(),
         description: form.description.trim(),
         description_en: form.description_en.trim(),
+        image_url: form.image_url.trim(),
         sort_order: Number(form.sort_order) || 0,
         discount_percent: Math.max(0, Math.min(100, Number(form.discount_percent) || 0)),
         discount_active: !!form.discount_active,
@@ -251,9 +267,10 @@ function CategoryDialog({ initial, onClose, onSaved }) {
         </div>
         <div className="px-6 pb-6 overflow-y-auto flex-1 grid gap-4">
           <FormInput label={ar ? 'الاسم (عربي)' : 'Name (Arabic)'} value={form.name} onChange={(e) => set('name', e.target.value)} required />
-          <FormInput label={ar ? 'الاسم (إنجليزي) — اختياري' : 'Name (English) — optional'} value={form.name_en} onChange={(e) => set('name_en', e.target.value)} />
+          <FormInput label={ar ? 'الاسم (إنجليزي) — اختياري' : 'Name (English) — optional'} value={form.name_en} onChange={(e) => set('name_en', e.target.value)} dir="ltr" />
           <FormInput label={ar ? 'الوصف (عربي)' : 'Description (Arabic)'} value={form.description} onChange={(e) => set('description', e.target.value)} textarea required />
-          <FormInput label={ar ? 'الوصف (إنجليزي) — اختياري' : 'Description (English) — optional'} value={form.description_en} onChange={(e) => set('description_en', e.target.value)} textarea />
+          <FormInput label={ar ? 'الوصف (إنجليزي) — اختياري' : 'Description (English) — optional'} value={form.description_en} onChange={(e) => set('description_en', e.target.value)} textarea dir="ltr" />
+          <CategoryImagePicker ar={ar} url={form.image_url} onChange={(url) => set('image_url', url)} />
           <FormInput label={ar ? 'ترتيب الفرز' : 'Sort order'} type="number" value={form.sort_order} onChange={(e) => set('sort_order', e.target.value)} />
           <div className="grid grid-cols-2 gap-4">
             <FormInput label={ar ? 'نسبة الخصم %' : 'Discount %'} type="number" value={form.discount_percent} onChange={(e) => set('discount_percent', e.target.value)} />
@@ -274,6 +291,112 @@ function CategoryDialog({ initial, onClose, onSaved }) {
           <button type="button" onClick={onClose} className="h-12 px-6 rounded-full bg-mist font-heading font-bold">{t('admin.cancel')}</button>
         </div>
       </form>
+    </div>
+  );
+}
+
+// Category image: upload/replace/remove + a preview shaped like the actual
+// World of Play card (aspect-[3/2], object-cover) so what the admin sees
+// here is a fair approximation of the live card. Optional — reuses the
+// project's existing uploadFile()/Supabase Storage pipeline, no new storage
+// system. Removing the image only clears the reference (the same
+// non-destructive convention already used for product images elsewhere in
+// admin) — it never deletes the file from storage, so nothing else that
+// might reference it is ever affected.
+function CategoryImagePicker({ ar, url, onChange }) {
+  const fileRef = useRef(null);
+  const [uploading, setUploading] = useState(false);
+  const [ratioWarning, setRatioWarning] = useState(false);
+  const { toast } = useToast();
+
+  const checkRatio = (file) => {
+    const img = new window.Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      const ratio = img.naturalWidth / img.naturalHeight;
+      const off = Math.abs(ratio - RECOMMENDED_RATIO) / RECOMMENDED_RATIO;
+      setRatioWarning(off > RATIO_WARN_TOLERANCE);
+      URL.revokeObjectURL(objectUrl);
+    };
+    img.src = objectUrl;
+  };
+
+  const handleFile = async (file) => {
+    if (!file.type.startsWith('image/')) {
+      toast({ title: ar ? 'الرجاء اختيار ملف صورة' : 'Please choose an image file', variant: 'destructive' });
+      return;
+    }
+    checkRatio(file);
+    setUploading(true);
+    try {
+      const { file_url } = await uploadFile(file);
+      onChange(file_url);
+    } catch (err) {
+      toast({ title: err.message, variant: 'destructive' });
+    } finally {
+      setUploading(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  };
+
+  const removeImage = () => {
+    onChange('');
+    setRatioWarning(false);
+  };
+
+  return (
+    <div>
+      <span className="text-sm font-medium text-foreground/80">{ar ? 'صورة الفئة — اختياري' : 'Category Image — optional'}</span>
+      <div className="mt-1.5 flex items-center gap-4">
+        <div className="relative w-28 h-[74px] rounded-2xl overflow-hidden bg-mist shrink-0 grid place-items-center">
+          {url ? (
+            <>
+              <Image src={url} alt="" fittingType="fill" className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={removeImage}
+                aria-label={ar ? 'إزالة الصورة' : 'Remove image'}
+                className="absolute top-1 end-1 grid place-items-center w-6 h-6 rounded-full bg-black/60 text-white"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </>
+          ) : (
+            <ImageIcon className="w-6 h-6 text-muted-foreground/50" aria-hidden="true" />
+          )}
+        </div>
+        <div className="flex-1 min-w-0">
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/jpg"
+            onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); }}
+            className="hidden"
+          />
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            disabled={uploading}
+            className="squish inline-flex items-center gap-2 h-11 px-5 rounded-full bg-mist border border-border font-heading font-bold text-sm disabled:opacity-60"
+          >
+            {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+            {url ? (ar ? 'استبدال الصورة' : 'Replace image') : (ar ? 'رفع صورة' : 'Upload image')}
+          </button>
+          <p className="mt-2 text-xs text-muted-foreground">
+            {ar ? (
+              <>الحجم الموصى به: <bdi dir="ltr">1200×800</bdi> بكسل (نسبة <bdi dir="ltr">3:2</bdi>)</>
+            ) : (
+              <>Recommended: <bdi dir="ltr">1200×800px</bdi> (<bdi dir="ltr">3:2</bdi> ratio)</>
+            )}
+          </p>
+          {ratioWarning && (
+            <p className="mt-1 flex items-center gap-1.5 text-xs text-accent">
+              <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
+              {ar ? 'نسبة هذه الصورة مختلفة عن الموصى بها — سيتم استخدامها مع اقتصاص لملء البطاقة.' : "This image's ratio differs from the recommendation — it will still be used, cropped to fill the card."}
+            </p>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

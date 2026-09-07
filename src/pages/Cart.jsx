@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Minus, Plus, Trash2, ArrowRight, ArrowLeft, Package } from 'lucide-react';
 import { Image } from '@/components/ui/image';
@@ -9,6 +9,7 @@ import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { lineItemName } from '@/lib/bilingual';
 import ShareCartButton from '@/components/cart/ShareCartButton';
+import { resolveCheckoutItems, cartLineTotal } from '@/lib/cartSelection';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
@@ -19,7 +20,7 @@ import {
 const lineIdOf = (i) => i.lineId || i.id;
 
 export default function Cart() {
-  const { items, updateQty, removeItem, removeItems, clear, total, count, revalidateStock, setCheckoutSelection } = useCart();
+  const { items, updateQty, removeItem, removeItems, clear, count, revalidateStock, setCheckoutSelection } = useCart();
   const navigate = useNavigate();
   const { t, formatPrice, lang } = useLanguage();
   const ar = lang === 'ar';
@@ -40,6 +41,14 @@ export default function Cart() {
   const availIds = items.filter((i) => !i.unavailable).map(lineIdOf);
   const allSelected = availIds.length > 0 && availIds.every((id) => selected.has(id));
   const someSelected = selected.size > 0 && !allSelected;
+
+  // The Summary must reflect exactly the set Checkout will receive: the
+  // selected lines when any are checked, the whole (available) cart when
+  // none are — same resolveCheckoutItems() Checkout.jsx uses on its own
+  // snapshotted selection, so the two pages can never disagree.
+  const effectiveItems = useMemo(() => resolveCheckoutItems(items, selected), [items, selected]);
+  const effectiveTotal = cartLineTotal(effectiveItems);
+  const isPartialSelection = selected.size > 0 && effectiveItems.length < availIds.length;
 
   // Keep the selection set in sync with the cart — drop ids whose lines no
   // longer exist OR have become unavailable, so the "N selected" count and
@@ -88,18 +97,16 @@ export default function Cart() {
     toast({ title: ar ? 'تم إفراغ السلة' : 'Cart cleared' });
   };
 
-  // Only the currently-selected lines go to checkout. Unselected items stay
-  // in the cart untouched.
+  // Only the currently-selected lines go to checkout; unselected items stay
+  // in the cart untouched. No selection = checkout the whole (available)
+  // cart — the same rule the Summary above just used — so passing `null`
+  // here (never an empty Set) matches Checkout.jsx's own "no filter" branch.
   const goCheckout = () => {
     if (availIds.length === 0) {
       toast({ title: ar ? 'كل المنتجات غير متوفرة حاليًا' : 'All items are currently unavailable', variant: 'destructive' });
       return;
     }
-    if (selected.size === 0) {
-      toast({ title: ar ? 'اختر منتجًا متوفرًا واحدًا على الأقل' : 'Please select at least one available item', variant: 'destructive' });
-      return;
-    }
-    setCheckoutSelection(new Set(selected));
+    setCheckoutSelection(selected.size > 0 ? new Set(selected) : null);
     navigate('/checkout');
   };
 
@@ -291,10 +298,17 @@ export default function Cart() {
 
           <div className="lg:sticky lg:top-28 h-fit rounded-3xl bg-mist p-6 md:p-8">
             <h2 className="font-heading font-extrabold text-2xl">{t('cart.summary')}</h2>
+            {/* Only shown when the total below is a subset of the cart, so it
+                never clutters the common "everything selected" case. */}
+            {isPartialSelection && (
+              <p className="mt-1 text-xs text-muted-foreground">
+                {ar ? `العناصر المحددة: ${effectiveItems.length}` : `Selected items: ${effectiveItems.length}`}
+              </p>
+            )}
             <div className="mt-5 space-y-3 text-sm">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('common.subtotal')}</span>
-                <span className="font-heading font-bold">{formatPrice(total)}</span>
+                <span className="font-heading font-bold">{formatPrice(effectiveTotal)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">{t('common.delivery')}</span>
@@ -303,7 +317,7 @@ export default function Cart() {
             </div>
             <div className="mt-5 pt-5 border-t border-border/60 flex justify-between items-center">
               <span className="font-heading font-bold">{t('common.total')}</span>
-              <span className="font-heading font-extrabold text-2xl">{formatPrice(total)}</span>
+              <span className="font-heading font-extrabold text-2xl">{formatPrice(effectiveTotal)}</span>
             </div>
             <div className="mt-4">
               <ShareCartButton />

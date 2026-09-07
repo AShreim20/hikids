@@ -39,12 +39,24 @@ export function ageRangeToIds(a) {
   return AGE_OPTIONS.filter((o) => o.min >= min && o.max <= hi).map((o) => o.id);
 }
 
+function resolveAgeIds(product) {
+  const ids = Array.isArray(product?.ages) && product.ages.length ? product.ages : null;
+  if (ids) return ids;
+  if (product?.age_range) return ageRangeToIds(product.age_range);
+  return [];
+}
+
 // Human-readable age label(s) for a product, preferring the structured `ages`
 // array and falling back to the legacy `age_range` string (mapped).
 export function ageLabels(product, t) {
-  const ids = Array.isArray(product?.ages) && product.ages.length ? product.ages : null;
-  let list = ids;
-  if (!list && product?.age_range) list = ageRangeToIds(product.age_range);
-  if (!list || !list.length) return product?.age_range || '';
+  const list = resolveAgeIds(product);
+  if (!list.length) return product?.age_range || '';
   return list.map((id) => t(`age.${id}`)).join(' · ');
+}
+
+// Same data as ageLabels, but as an array of individual labels instead of one
+// joined string — for presentations that render each age range as its own
+// chip/badge rather than a single long sentence (e.g. Product Detail).
+export function ageLabelList(product, t) {
+  return resolveAgeIds(product).map((id) => t(`age.${id}`));
 }

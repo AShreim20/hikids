@@ -178,7 +178,7 @@ export default function SiteContentAdmin() {
                     </div>
                     <div>
                       <label className="text-xs font-heading font-bold text-cosmic">Question (EN)</label>
-                      <input value={it.q_en} onChange={(e) => updateItem(i, 'q_en', e.target.value)} className={`mt-1 ${input}`} />
+                      <input value={it.q_en} onChange={(e) => updateItem(i, 'q_en', e.target.value)} className={`mt-1 ${input}`} dir="ltr" />
                     </div>
                     <div>
                       <label className="text-xs font-heading font-bold text-cosmic">Answer (AR)</label>
@@ -186,7 +186,7 @@ export default function SiteContentAdmin() {
                     </div>
                     <div>
                       <label className="text-xs font-heading font-bold text-cosmic">Answer (EN)</label>
-                      <textarea value={it.a_en} onChange={(e) => updateItem(i, 'a_en', e.target.value)} className={`mt-1 ${area}`} />
+                      <textarea value={it.a_en} onChange={(e) => updateItem(i, 'a_en', e.target.value)} className={`mt-1 ${area}`} dir="ltr" />
                     </div>
                   </div>
                 </div>
@@ -208,19 +208,19 @@ export default function SiteContentAdmin() {
             <div className="rounded-3xl bg-card border border-border/60 p-4 space-y-4">
               <div className="grid sm:grid-cols-2 gap-3">
                 <div><label className="text-xs font-heading font-bold text-cosmic">Story label (AR)</label><input value={about.storyLabelAr || ''} onChange={(e) => setAboutField('storyLabelAr', e.target.value)} className={`mt-1 ${input}`} dir="rtl" /></div>
-                <div><label className="text-xs font-heading font-bold text-cosmic">Story label (EN)</label><input value={about.storyLabelEn || ''} onChange={(e) => setAboutField('storyLabelEn', e.target.value)} className={`mt-1 ${input}`} /></div>
+                <div><label className="text-xs font-heading font-bold text-cosmic">Story label (EN)</label><input value={about.storyLabelEn || ''} onChange={(e) => setAboutField('storyLabelEn', e.target.value)} className={`mt-1 ${input}`} dir="ltr" /></div>
                 <div><label className="text-xs font-heading font-bold text-cosmic">Story title (AR)</label><input value={about.storyTitleAr || ''} onChange={(e) => setAboutField('storyTitleAr', e.target.value)} className={`mt-1 ${input}`} dir="rtl" /></div>
-                <div><label className="text-xs font-heading font-bold text-cosmic">Story title (EN)</label><input value={about.storyTitleEn || ''} onChange={(e) => setAboutField('storyTitleEn', e.target.value)} className={`mt-1 ${input}`} /></div>
+                <div><label className="text-xs font-heading font-bold text-cosmic">Story title (EN)</label><input value={about.storyTitleEn || ''} onChange={(e) => setAboutField('storyTitleEn', e.target.value)} className={`mt-1 ${input}`} dir="ltr" /></div>
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
                 <div><label className="text-xs font-heading font-bold text-cosmic">Story paragraphs (AR) — one per line</label><textarea value={(about.storyAr || []).join('\n')} onChange={(e) => setAboutField('storyAr', e.target.value.split('\n'))} className={`mt-1 ${area}`} dir="rtl" /></div>
-                <div><label className="text-xs font-heading font-bold text-cosmic">Story paragraphs (EN) — one per line</label><textarea value={(about.storyEn || []).join('\n')} onChange={(e) => setAboutField('storyEn', e.target.value.split('\n'))} className={`mt-1 ${area}`} /></div>
+                <div><label className="text-xs font-heading font-bold text-cosmic">Story paragraphs (EN) — one per line</label><textarea value={(about.storyEn || []).join('\n')} onChange={(e) => setAboutField('storyEn', e.target.value.split('\n'))} className={`mt-1 ${area}`} dir="ltr" /></div>
               </div>
               <div className="grid sm:grid-cols-2 gap-3">
                 <div><label className="text-xs font-heading font-bold text-cosmic">Values label (AR)</label><input value={about.valuesLabelAr || ''} onChange={(e) => setAboutField('valuesLabelAr', e.target.value)} className={`mt-1 ${input}`} dir="rtl" /></div>
-                <div><label className="text-xs font-heading font-bold text-cosmic">Values label (EN)</label><input value={about.valuesLabelEn || ''} onChange={(e) => setAboutField('valuesLabelEn', e.target.value)} className={`mt-1 ${input}`} /></div>
+                <div><label className="text-xs font-heading font-bold text-cosmic">Values label (EN)</label><input value={about.valuesLabelEn || ''} onChange={(e) => setAboutField('valuesLabelEn', e.target.value)} className={`mt-1 ${input}`} dir="ltr" /></div>
                 <div><label className="text-xs font-heading font-bold text-cosmic">Values title (AR)</label><input value={about.valuesTitleAr || ''} onChange={(e) => setAboutField('valuesTitleAr', e.target.value)} className={`mt-1 ${input}`} dir="rtl" /></div>
-                <div><label className="text-xs font-heading font-bold text-cosmic">Values title (EN)</label><input value={about.valuesTitleEn || ''} onChange={(e) => setAboutField('valuesTitleEn', e.target.value)} className={`mt-1 ${input}`} /></div>
+                <div><label className="text-xs font-heading font-bold text-cosmic">Values title (EN)</label><input value={about.valuesTitleEn || ''} onChange={(e) => setAboutField('valuesTitleEn', e.target.value)} className={`mt-1 ${input}`} dir="ltr" /></div>
               </div>
               {['Ar', 'En'].map((lng) => (
                 <div key={lng}>
@@ -228,8 +228,8 @@ export default function SiteContentAdmin() {
                   <div className="mt-1 space-y-2">
                     {(about[`values${lng}`] || []).map((v, i) => (
                       <div key={i} className="grid sm:grid-cols-2 gap-2">
-                        <input value={v.title || ''} onChange={(e) => { const arr = [...about[`values${lng}`]]; arr[i] = { ...arr[i], title: e.target.value }; setAboutField(`values${lng}`, arr); }} className={input} placeholder="Title" dir={lng === 'Ar' ? 'rtl' : undefined} />
-                        <input value={v.desc || ''} onChange={(e) => { const arr = [...about[`values${lng}`]]; arr[i] = { ...arr[i], desc: e.target.value }; setAboutField(`values${lng}`, arr); }} className={input} placeholder="Description" dir={lng === 'Ar' ? 'rtl' : undefined} />
+                        <input value={v.title || ''} onChange={(e) => { const arr = [...about[`values${lng}`]]; arr[i] = { ...arr[i], title: e.target.value }; setAboutField(`values${lng}`, arr); }} className={input} placeholder="Title" dir={lng === 'Ar' ? 'rtl' : 'ltr'} />
+                        <input value={v.desc || ''} onChange={(e) => { const arr = [...about[`values${lng}`]]; arr[i] = { ...arr[i], desc: e.target.value }; setAboutField(`values${lng}`, arr); }} className={input} placeholder="Description" dir={lng === 'Ar' ? 'rtl' : 'ltr'} />
                       </div>
                     ))}
                   </div>
@@ -237,11 +237,11 @@ export default function SiteContentAdmin() {
               ))}
               <div className="grid sm:grid-cols-2 gap-3">
                 <div><label className="text-xs font-heading font-bold text-cosmic">CTA title (AR)</label><input value={about.ctaTitleAr || ''} onChange={(e) => setAboutField('ctaTitleAr', e.target.value)} className={`mt-1 ${input}`} dir="rtl" /></div>
-                <div><label className="text-xs font-heading font-bold text-cosmic">CTA title (EN)</label><input value={about.ctaTitleEn || ''} onChange={(e) => setAboutField('ctaTitleEn', e.target.value)} className={`mt-1 ${input}`} /></div>
+                <div><label className="text-xs font-heading font-bold text-cosmic">CTA title (EN)</label><input value={about.ctaTitleEn || ''} onChange={(e) => setAboutField('ctaTitleEn', e.target.value)} className={`mt-1 ${input}`} dir="ltr" /></div>
                 <div><label className="text-xs font-heading font-bold text-cosmic">CTA description (AR)</label><input value={about.ctaDescAr || ''} onChange={(e) => setAboutField('ctaDescAr', e.target.value)} className={`mt-1 ${input}`} dir="rtl" /></div>
-                <div><label className="text-xs font-heading font-bold text-cosmic">CTA description (EN)</label><input value={about.ctaDescEn || ''} onChange={(e) => setAboutField('ctaDescEn', e.target.value)} className={`mt-1 ${input}`} /></div>
+                <div><label className="text-xs font-heading font-bold text-cosmic">CTA description (EN)</label><input value={about.ctaDescEn || ''} onChange={(e) => setAboutField('ctaDescEn', e.target.value)} className={`mt-1 ${input}`} dir="ltr" /></div>
                 <div><label className="text-xs font-heading font-bold text-cosmic">CTA button (AR)</label><input value={about.ctaBtnAr || ''} onChange={(e) => setAboutField('ctaBtnAr', e.target.value)} className={`mt-1 ${input}`} dir="rtl" /></div>
-                <div><label className="text-xs font-heading font-bold text-cosmic">CTA button (EN)</label><input value={about.ctaBtnEn || ''} onChange={(e) => setAboutField('ctaBtnEn', e.target.value)} className={`mt-1 ${input}`} /></div>
+                <div><label className="text-xs font-heading font-bold text-cosmic">CTA button (EN)</label><input value={about.ctaBtnEn || ''} onChange={(e) => setAboutField('ctaBtnEn', e.target.value)} className={`mt-1 ${input}`} dir="ltr" /></div>
               </div>
             </div>
             <StickySaveBar>

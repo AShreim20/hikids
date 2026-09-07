@@ -8,7 +8,7 @@ import { txTypeLabel, orderRef } from '@/lib/loyalty';
 export default function TransactionList({ transactions = [], showBalance = true, showActor = false }) {
   const { t, lang } = useLanguage();
   const [openId, setOpenId] = useState(null);
-  const locale = lang === 'ar' ? 'ar' : 'en-GB';
+  const locale = lang === 'ar' ? 'ar-u-nu-latn' : 'en-GB';
 
   if (!transactions.length) {
     return <p className="py-8 text-center text-sm text-muted-foreground">{t('wallet.noActivity')}</p>;

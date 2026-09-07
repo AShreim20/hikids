@@ -1,7 +1,23 @@
 import React, { createContext, useState, useContext, useEffect, useCallback } from 'react';
 import { supabase } from '@/api/supabaseClient';
+import { queryClientInstance } from '@/lib/query-client';
+import { clearUserScopedQueries } from '@/lib/queryKeys';
 
 const AuthContext = createContext();
+
+// Every field that actually matters to the rest of the app for deciding
+// "is this the same user, unchanged" — used to avoid handing out a new
+// `user` object reference (see setStableUser below) when nothing in it
+// actually changed.
+const USER_FIELDS = ['id', 'email', 'phone', 'full_name', 'role', 'permissions'];
+function sameUser(a, b) {
+  if (a === b) return true;
+  if (!a || !b) return false;
+  return USER_FIELDS.every((k) => {
+    if (k === 'permissions') return JSON.stringify(a[k] || []) === JSON.stringify(b[k] || []);
+    return a[k] === b[k];
+  });
+}
 
 async function loadUser(session) {
   if (!session?.user) return null;
@@ -27,12 +43,27 @@ export const AuthProvider = ({ children }) => {
   const [authChecked, setAuthChecked] = useState(false);
   const [authError, setAuthError] = useState(null);
 
+  // Supabase fires onAuthStateChange (SIGNED_IN/TOKEN_REFRESHED) on its own
+  // periodic token refresh and again whenever the tab regains focus/
+  // visibility — by design, to keep the session valid, and this must keep
+  // happening. The bug was never that refresh firing; it's that every fire
+  // used to hand out a brand-new `user` object (loadUser() always builds a
+  // fresh literal) even when nothing about the user actually changed. Any
+  // component effect depending on `user` — e.g. Product Edit's old fetch
+  // effect — saw that as a real change and re-ran, silently refetching and
+  // overwriting whatever was being edited. Comparing field-by-field here and
+  // keeping the *same* object when nothing changed stops that cascade for
+  // every consumer at once, without touching Supabase's refresh behavior.
+  const setStableUser = (nextUser) => {
+    setUser((prev) => (sameUser(prev, nextUser) ? prev : nextUser));
+  };
+
   const checkUserAuth = useCallback(async () => {
     setIsLoadingAuth(true);
     try {
       const { data: { session } } = await supabase.auth.getSession();
       const nextUser = await loadUser(session);
-      setUser(nextUser);
+      setStableUser(nextUser);
       setIsAuthenticated(!!nextUser);
       setAuthError(null);
     } catch (error) {
@@ -50,7 +81,7 @@ export const AuthProvider = ({ children }) => {
     checkUserAuth();
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       loadUser(session).then((nextUser) => {
-        setUser(nextUser);
+        setStableUser(nextUser);
         setIsAuthenticated(!!nextUser);
         setAuthChecked(true);
         setIsLoadingAuth(false);
@@ -63,6 +94,11 @@ export const AuthProvider = ({ children }) => {
     await supabase.auth.signOut();
     setUser(null);
     setIsAuthenticated(false);
+    // Any cached loyalty/wallet/rewards/challenges/favorites/notifications/
+    // account query must not still answer from cache for whoever signs in
+    // next on this device (cart/wishlist are cleared the same way, on their
+    // own SIGNED_OUT listener — see CartContext/WishlistContext).
+    clearUserScopedQueries(queryClientInstance);
     if (shouldRedirect) {
       window.location.href = '/login';
     }

@@ -28,11 +28,14 @@ const Contact = lazy(() => import('./pages/Contact'));
 const Admin = lazy(() => import('./pages/Admin'));
 const ProductEditor = lazy(() => import('./pages/ProductEditor'));
 const HeroSlides = lazy(() => import('./pages/HeroSlides'));
+const HeroSlidePreview = lazy(() => import('./pages/HeroSlidePreview'));
 const PurchaseOrders = lazy(() => import('./pages/PurchaseOrders'));
 const POEditor = lazy(() => import('./pages/POEditor'));
 const Suppliers = lazy(() => import('./pages/Suppliers'));
 const Categories = lazy(() => import('./pages/Categories'));
 const Reports = lazy(() => import('./pages/Reports'));
+const ExpensesManagement = lazy(() => import('./pages/ExpensesManagement'));
+const ExpenseCategories = lazy(() => import('./pages/ExpenseCategories'));
 const MyOrders = lazy(() => import('./pages/MyOrders'));
 const StaffManagement = lazy(() => import('./pages/StaffManagement'));
 const UserManagement = lazy(() => import('./pages/UserManagement'));
@@ -90,6 +93,7 @@ function AnimatedRoutes() {
       <Route path="/contact" element={<Contact />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="/admin/carousel" element={<HeroSlides />} />
+      <Route path="/admin/hero-slide-preview/:id" element={<HeroSlidePreview />} />
       <Route path="/admin/suppliers" element={<Suppliers />} />
       <Route path="/admin/po" element={<PurchaseOrders />} />
       <Route path="/admin/po/new" element={<POEditor />} />
@@ -114,8 +118,11 @@ function AnimatedRoutes() {
       <Route path="/terms" element={<Terms />} />
       <Route path="/cart/shared" element={<SharedCart />} />
       <Route path="/admin/reports" element={<Reports />} />
+      <Route path="/admin/expenses" element={<ExpensesManagement />} />
+      <Route path="/admin/expense-categories" element={<ExpenseCategories />} />
       <Route path="/admin/product/new" element={<ProductEditor />} />
       <Route path="/admin/product/:id" element={<ProductEditor />} />
+      <Route path="/admin/product/:id/preview" element={<ProductDetail preview />} />
       <Route path="/staff" element={<StaffManagement />} />
       <Route path="/delivery" element={<DeliveryManagement />} />
       <Route path="/addresses" element={<MyAddresses />} />

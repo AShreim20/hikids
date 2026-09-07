@@ -45,7 +45,7 @@ export default function OrderTimeline({ order }) {
                 </p>
                 {at && (
                   <p className="text-xs text-muted-foreground">
-                    {at.toLocaleDateString(ar ? 'ar' : 'en')} · {at.toLocaleTimeString(ar ? 'ar' : 'en', { hour: '2-digit', minute: '2-digit' })}
+                    {at.toLocaleDateString(ar ? 'ar-u-nu-latn' : 'en')} · {at.toLocaleTimeString(ar ? 'ar-u-nu-latn' : 'en', { hour: '2-digit', minute: '2-digit' })}
                     {entry.by ? ` · ${entry.by}` : ''}
                   </p>
                 )}

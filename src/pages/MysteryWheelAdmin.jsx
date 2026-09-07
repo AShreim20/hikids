@@ -161,7 +161,7 @@ export default function MysteryWheelAdmin() {
             <h2 className="font-heading font-extrabold text-xl">{editingReward.id ? (ar ? 'تعديل' : 'Edit') : (ar ? 'مكافأة جديدة' : 'New reward')}</h2>
             <div className="mt-4 space-y-3">
               <L label={ar ? 'التسمية (عربي) — مطلوب' : 'Label (Arabic) — required'}><input className={input} value={editingReward.label} onChange={(e) => setEditingReward({ ...editingReward, label: e.target.value })} /></L>
-              <L label={ar ? 'التسمية (إنجليزي) — اختياري' : 'Label (English) — optional'}><input className={input} value={editingReward.label_en || ''} onChange={(e) => setEditingReward({ ...editingReward, label_en: e.target.value })} /></L>
+              <L label={ar ? 'التسمية (إنجليزي) — اختياري' : 'Label (English) — optional'}><input className={input} dir="ltr" value={editingReward.label_en || ''} onChange={(e) => setEditingReward({ ...editingReward, label_en: e.target.value })} /></L>
               <L label={ar ? 'النوع' : 'Type'}><select className={input} value={editingReward.type} onChange={(e) => setEditingReward({ ...editingReward, type: e.target.value })}>{REWARD_TYPES.map((r) => <option key={r} value={r}>{r}</option>)}</select></L>
               <L label={ar ? 'القيمة' : 'Value'}><input type="number" className={input} value={editingReward.value} onChange={(e) => setEditingReward({ ...editingReward, value: Number(e.target.value) })} /></L>
               {editingReward.type === 'product' && (

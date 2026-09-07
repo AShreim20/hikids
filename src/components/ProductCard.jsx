@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Heart } from 'lucide-react';
+import { ShoppingBag, Heart, Star } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
 import { useCart } from '@/context/CartContext';
@@ -22,7 +22,15 @@ const CAT_LABEL = {
   'Arts & Crafts': 'cat.arts',
 };
 
-export default function ProductCard({ product, large = false }) {
+// avgRating/reviewCount are optional — only passed by callers that already
+// have review data on hand (e.g. SimilarProducts, which fetches it once for
+// the whole grid). Omitted entirely, the card renders exactly as before
+// (existing callers like Shop.jsx are unaffected). When passed, reviewCount
+// — never a raw averageRating — decides whether a real rating or a "New"
+// label shows, so a product with zero published reviews is never displayed
+// as a fake 0-star item (see lib/reviews.js for the approved-review rule
+// this count is expected to already reflect).
+export default function ProductCard({ product, large = false, avgRating = 0, reviewCount }) {
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { flyToCart } = useCartFly();
@@ -125,6 +133,22 @@ export default function ProductCard({ product, large = false }) {
         <h3 className="mt-1 font-display font-semibold text-xl leading-tight tracking-tight">
           {productName(product, lang)}
         </h3>
+        {typeof reviewCount === 'number' && (
+          <div className="mt-1 flex items-center gap-1.5">
+            {reviewCount > 0 ? (
+              <>
+                <div className="flex items-center gap-0.5">
+                  {Array.from({ length: 5 }).map((_, i) => (
+                    <Star key={i} className={`w-3.5 h-3.5 ${i < Math.round(avgRating) ? 'fill-accent text-accent' : 'text-border'}`} />
+                  ))}
+                </div>
+                <span className="text-xs text-muted-foreground">{avgRating.toFixed(1)} ({reviewCount})</span>
+              </>
+            ) : (
+              <span className="text-xs text-muted-foreground">{t('rec.new')}</span>
+            )}
+          </div>
+        )}
         <p className="mt-1 text-sm text-muted-foreground">{t('pd.ages')} {ageLabels(product, t)}</p>
         <p className="mt-2 font-heading font-extrabold text-xl">
           {formatPrice(final)}

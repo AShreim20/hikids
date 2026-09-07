@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Lock, Save, Send } from 'lucide-react';
 import { db } from '@/api/entities';
@@ -15,6 +15,9 @@ import ProductSearch from '@/components/po/ProductSearch';
 import POLineItems from '@/components/po/POLineItems';
 import { PAYMENT_METHODS, computePaymentStatus, generatePoNumber, lineTotal, poSubtotal, productSku } from '@/lib/po';
 import { supplierBalance } from '@/lib/suppliers';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
+import UnsavedChangesDialog from '@/components/admin/UnsavedChangesDialog';
+import { snapshotsEqual } from '@/lib/formDirty';
 
 const EMPTY = {
   po_number: '',
@@ -45,6 +48,8 @@ export default function POEditor() {
   const [posting, setPosting] = useState(false);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
+  // Last known saved/loaded snapshot — dirty = form no longer matches it.
+  const baselineRef = useRef(EMPTY);
 
   const selectedSupplierBalance = useMemo(
     () => supplierBalance(txs.filter((x) => x.supplier_id === form.supplier_id)),
@@ -66,18 +71,30 @@ export default function POEditor() {
     loadMeta();
     if (isNew) {
       db.PurchaseOrder.list('-created_date', 500).then((list) => {
-        setForm((f) => ({ ...f, po_number: generatePoNumber(list || []) }));
+        const generated = generatePoNumber(list || []);
+        // Also folded into the baseline — an auto-generated PO number isn't
+        // a user edit, so a freshly opened "new PO" must not immediately
+        // read as dirty before the user has touched anything.
+        baselineRef.current = { ...baselineRef.current, po_number: generated };
+        setForm((f) => ({ ...f, po_number: generated }));
       });
       setLoading(false);
     } else {
       setLoading(true);
       db.PurchaseOrder.get(id)
-        .then((po) => setForm({ ...EMPTY, ...po, paid_amount: po.paid_amount ?? '' }))
+        .then((po) => {
+          const next = { ...EMPTY, ...po, paid_amount: po.paid_amount ?? '' };
+          baselineRef.current = next;
+          setForm(next);
+        })
         .catch(() => toast({ title: ar ? 'الأمر غير موجود' : 'Order not found', variant: 'destructive' }))
         .finally(() => setLoading(false));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isNew]);
+
+  const isDirty = useMemo(() => !snapshotsEqual(form, baselineRef.current), [form]);
+  const { confirmOpen, stay, leave } = useUnsavedChangesGuard(isDirty);
 
   if (user?.role !== 'admin') {
     return (
@@ -168,6 +185,7 @@ export default function POEditor() {
         details: `${payload.po_number} — ${payload.total}`,
       }).catch(() => {});
       toast({ title: ar ? 'تم الحفظ كمسودة' : 'Saved as draft' });
+      baselineRef.current = JSON.parse(JSON.stringify(form));
       navigate('/admin/po');
     } catch (err) {
       toast({ title: err.message, variant: 'destructive' });
@@ -188,6 +206,7 @@ export default function POEditor() {
       const out = await invokeFunction('postPurchaseOrder', { po_id: poId });
       if (out.success === false) throw new Error(out.message || 'Post failed');
       toast({ title: ar ? 'تم الترحيل — تحقق من المخزون' : 'Posted — inventory updated' });
+      baselineRef.current = JSON.parse(JSON.stringify(form));
       navigate('/admin/po');
     } catch (err) {
       toast({ title: err.message, variant: 'destructive' });
@@ -219,7 +238,7 @@ export default function POEditor() {
             <fieldset disabled={readOnly} className="contents">
             {/* Header */}
             <section className="rounded-3xl bg-card border border-border/60 p-5 sm:p-6 grid sm:grid-cols-2 gap-4">
-              <FormInput label={ar ? 'رقم أمر الشراء' : 'PO number'} value={form.po_number} onChange={(e) => set('po_number', e.target.value)} required readOnly={readOnly} />
+              <FormInput label={ar ? 'رقم أمر الشراء' : 'PO number'} value={form.po_number} onChange={(e) => set('po_number', e.target.value)} required readOnly={readOnly} dir="ltr" />
               <FormInput label={ar ? 'تاريخ الشراء' : 'Purchase date'} type="date" value={form.purchase_date} onChange={(e) => set('purchase_date', e.target.value)} required readOnly={readOnly} />
               <div className="sm:col-span-2">
                 <span className="text-sm font-medium text-foreground/80">{ar ? 'المورّد' : 'Supplier'} <span className="text-accent">*</span></span>
@@ -233,7 +252,7 @@ export default function POEditor() {
                   />
                 </div>
               </div>
-              <FormInput label={ar ? 'رقم فاتورة المورّد / المرجع' : 'Supplier invoice / reference'} value={form.supplier_invoice_ref} onChange={(e) => set('supplier_invoice_ref', e.target.value)} readOnly={readOnly} />
+              <FormInput label={ar ? 'رقم فاتورة المورّد / المرجع' : 'Supplier invoice / reference'} value={form.supplier_invoice_ref} onChange={(e) => set('supplier_invoice_ref', e.target.value)} readOnly={readOnly} dir="ltr" />
               <label className="block">
                 <span className="text-sm font-medium text-foreground/80">{ar ? 'طريقة الدفع' : 'Payment method'}</span>
                 <SheetSelect
@@ -296,6 +315,7 @@ export default function POEditor() {
         )}
       </div>
       <Footer />
+      <UnsavedChangesDialog open={confirmOpen} onStay={stay} onLeave={leave} />
     </div>
   );
 }

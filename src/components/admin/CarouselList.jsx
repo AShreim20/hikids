@@ -1,14 +1,27 @@
 import React from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { GripVertical, Pencil, Trash2, EyeOff } from 'lucide-react';
+import { GripVertical, Pencil, Trash2 } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { useLanguage } from '@/context/LanguageContext';
+import { slideStatus } from '@/lib/heroVisibility';
+
+const STATUS_CLASS = {
+  active: 'bg-cosmic/10 text-cosmic', inactive: 'bg-mist text-muted-foreground',
+  scheduled: 'bg-accent/15 text-accent', expired: 'bg-destructive/10 text-destructive',
+};
 
 // Drag-and-drop reorderable list of homepage carousel slides.
 // Only the grip handle initiates a drag, so Edit/Delete stay click-safe.
+// Reordering only ever touches sort_order (see saveOrder in HeroSlides.jsx)
+// — every other field on each slide (media, mobile media, content, CTAs,
+// duration, schedule, design settings) is untouched by drag-and-drop.
 export default function CarouselList({ items, onReorder, onEdit, onDelete }) {
   const { t, lang } = useLanguage();
   const ar = lang === 'ar';
+  const STATUS_LABEL = {
+    active: ar ? 'نشطة' : 'Active', inactive: ar ? 'غير مفعلة' : 'Inactive',
+    scheduled: ar ? 'مجدولة' : 'Scheduled', expired: ar ? 'منتهية' : 'Expired',
+  };
 
   const onDragEnd = (res) => {
     if (!res.destination || res.destination.index === res.source.index) return;
@@ -54,11 +67,14 @@ export default function CarouselList({ items, onReorder, onEdit, onDelete }) {
                         {s.cta_link ? s.cta_link : '\u00A0'}
                       </p>
                     </div>
-                    {s.active === false && (
-                      <span className="hidden sm:inline-flex items-center gap-1.5 px-3 h-8 rounded-full bg-mist text-xs text-muted-foreground shrink-0">
-                        <EyeOff className="w-3.5 h-3.5" /> {ar ? 'مخفية' : 'Hidden'}
-                      </span>
-                    )}
+                    {(() => {
+                      const status = slideStatus(s);
+                      return (
+                        <span className={`hidden sm:inline-flex items-center px-3 h-8 rounded-full text-xs font-heading font-bold shrink-0 ${STATUS_CLASS[status]}`}>
+                          {STATUS_LABEL[status]}
+                        </span>
+                      );
+                    })()}
                     <div className="flex items-center gap-2 shrink-0">
                       <button onClick={() => onEdit(s)} className="squish h-10 px-4 rounded-full bg-mist font-heading font-bold text-sm inline-flex items-center gap-1.5">
                         <Pencil className="w-4 h-4" /> <span className="hidden sm:inline">{t('admin.edit')}</span>

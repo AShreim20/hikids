@@ -128,6 +128,9 @@ export default function VariantTable({ options, variants, onChange }) {
   );
 }
 
+// Every variant field is English-only — prices, costs, stock, SKU, barcode,
+// weight — so they all force LTR rather than inheriting the page's RTL
+// direction in Arabic.
 function Field({ label, value, onChange, type = 'text' }) {
   return (
     <label className="block">
@@ -136,6 +139,7 @@ function Field({ label, value, onChange, type = 'text' }) {
         type={type}
         value={value ?? ''}
         onChange={(e) => onChange(e.target.value)}
+        dir="ltr"
         className="mt-1 w-full h-12 px-3 rounded-xl bg-background border border-border text-sm"
       />
     </label>
@@ -148,6 +152,7 @@ function Cell({ value, onChange, type = 'text', w = 'w-20' }) {
       type={type}
       value={value ?? ''}
       onChange={(e) => onChange(e.target.value)}
+      dir="ltr"
       className={`${w} h-10 px-2 rounded-xl bg-mist border border-border text-sm`}
     />
   );

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, Lock, X, ImagePlus, Trash2, Plus, Minus } from 'lucide-react';
 import { db } from '@/api/entities';
@@ -14,6 +14,9 @@ import { productSku } from '@/lib/po';
 import {
   bundleOriginalPrice, bundleSellingPrice, bundleDiscountPercent,
 } from '@/lib/bundles';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
+import UnsavedChangesDialog from '@/components/admin/UnsavedChangesDialog';
+import { snapshotsEqual } from '@/lib/formDirty';
 
 const EMPTY = {
   name: '', description: '', image_url: '', items: [],
@@ -34,26 +37,37 @@ export default function BundleEditor() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const imgInputRef = useRef(null);
+  // Last known saved/loaded snapshot — dirty = form no longer matches it.
+  const baselineRef = useRef(EMPTY);
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   useEffect(() => {
     db.Product.list('-updated_date', 500).then(setProducts).catch(() => setProducts([]));
-    if (isNew) setLoading(false);
-    else {
+    if (isNew) {
+      baselineRef.current = EMPTY;
+      setLoading(false);
+    } else {
       db.Bundle.get(id)
-        .then((b) => setForm({
-          ...EMPTY,
-          ...b,
-          bundle_price: b.bundle_price ?? '',
-          discount_percent: b.discount_percent ?? 0,
-          start_date: b.start_date || '',
-          end_date: b.end_date || '',
-        }))
+        .then((b) => {
+          const next = {
+            ...EMPTY,
+            ...b,
+            bundle_price: b.bundle_price ?? '',
+            discount_percent: b.discount_percent ?? 0,
+            start_date: b.start_date || '',
+            end_date: b.end_date || '',
+          };
+          baselineRef.current = next;
+          setForm(next);
+        })
         .catch(() => toast({ title: ar ? 'الحزمة غير موجودة' : 'Bundle not found', variant: 'destructive' }))
         .finally(() => setLoading(false));
     }
   }, [id, isNew]);
+
+  const isDirty = useMemo(() => !snapshotsEqual(form, baselineRef.current), [form]);
+  const { confirmOpen, stay, leave } = useUnsavedChangesGuard(isDirty);
 
   // items helpers
   const addItem = (p) => {
@@ -140,6 +154,7 @@ export default function BundleEditor() {
       if (isNew) await db.Bundle.create(payload);
       else await db.Bundle.update(id, payload);
       toast({ title: ar ? 'تم الحفظ' : 'Saved' });
+      baselineRef.current = JSON.parse(JSON.stringify(form));
       navigate('/admin/bundles');
     } catch (err) {
       toast({ title: err.message, variant: 'destructive' });
@@ -223,7 +238,7 @@ export default function BundleEditor() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-heading font-bold text-sm truncate">{it.name}</p>
-                    <p className="text-xs text-muted-foreground">{it.sku ? `#${it.sku} · ` : ''}{formatPrice(it.unit_price)}</p>
+                    <p className="text-xs text-muted-foreground">{it.sku ? <><bdi>{`#${it.sku}`}</bdi>{' · '}</> : ''}{formatPrice(it.unit_price)}</p>
                   </div>
                   <div className="flex items-center rounded-full bg-card">
                     <button type="button" onClick={() => setItemQty(it.product_id, it.quantity - 1)} className="grid place-items-center w-9 h-9 rounded-full"><Minus className="w-4 h-4" /></button>
@@ -285,6 +300,7 @@ export default function BundleEditor() {
         </form>
       </div>
       <Footer />
+      <UnsavedChangesDialog open={confirmOpen} onStay={stay} onLeave={leave} />
     </div>
   );
 }

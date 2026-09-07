@@ -7,11 +7,18 @@ import { useSiteContent } from '@/context/SiteContentContext';
 import { WHATSAPP_NUMBER } from '@/lib/businessContact';
 import { useAuth } from '@/lib/AuthContext';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useFloatingOffset } from '@/hooks/useFloatingOffset';
+
 const DEFAULT_MESSAGE = {
   en: "Hi HiKids! I have a question about your toys.",
   ar: "مرحبًا هاي كيدز! لدي سؤال عن ألعابكم."
 };
 
+// Compact circular floating button — same scale as the assistant button
+// (see ChatWidget), stacked one slot above it via useFloatingOffset so the
+// two never need independent hand-tuned positions. Hidden entirely while the
+// assistant chat is open, to avoid two competing floating support actions at
+// once; destination/message/link behavior is unchanged.
 export default function WhatsAppButton() {
   const { lang } = useLanguage();
   const { settings } = useSiteContent();
@@ -19,6 +26,7 @@ export default function WhatsAppButton() {
   const chatOpen = useSyncExternalStore(subscribeChatOpen, getChatOpen);
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const { bottom } = useFloatingOffset(1);
   if (pathname === '/checkout' || chatOpen) return null;
   if (isMobile && user?.role === 'admin') return null;
   const whatsapp = settings.whatsapp || WHATSAPP_NUMBER;
@@ -31,10 +39,10 @@ export default function WhatsAppButton() {
       rel="noreferrer"
       title={label}
       aria-label={label}
-      className="fixed z-50 bottom-[9rem] md:bottom-24 end-4 md:end-6 inline-flex items-center gap-2 h-14 w-14 md:w-auto md:px-5 justify-center rounded-full bg-[#25D366] text-white shadow-lg shadow-[#25D366]/30 squish focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#25D366]/40"
+      style={{ bottom }}
+      className="fixed z-50 end-4 md:end-6 grid place-items-center w-14 h-14 rounded-full bg-[#25D366] text-white shadow-lg shadow-[#25D366]/30 squish hover:brightness-105 transition-[filter] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[#25D366]/40"
     >
       <WhatsAppIcon className="w-6 h-6 shrink-0" />
-      <span className="hidden md:inline font-heading font-bold text-sm whitespace-nowrap">{label}</span>
     </a>
   );
 }

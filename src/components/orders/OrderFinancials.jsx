@@ -8,10 +8,12 @@ export default function OrderFinancials({ order }) {
   const ar = lang === 'ar';
   const { subtotal, delivery, discount, loyalty, total } = orderTotals(order);
 
+  // bdi on the value: amounts are English/numeric and some are prefixed with a
+  // bidi-neutral "−", which the RTL page otherwise moves to the wrong end.
   const Row = ({ label, value, accent }) => (
     <div className="flex justify-between text-sm">
       <span className="text-muted-foreground">{label}</span>
-      <span className={`font-heading font-bold ${accent ? 'text-accent' : ''}`}>{value}</span>
+      <span className={`font-heading font-bold ${accent ? 'text-accent' : ''}`}><bdi>{value}</bdi></span>
     </div>
   );
 

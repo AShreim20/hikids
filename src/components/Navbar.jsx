@@ -86,8 +86,10 @@ export default function Navbar() {
   }, []);
 
   const links = [
-    { label: t('nav.home'), to: '/#categories' },
-    { label: t('nav.explore'), to: '/shop' },
+    // A hash-only link needs a real anchor: React Router's <Link> to a path
+    // + hash on a different route doesn't reliably scroll to the fragment.
+    { label: t('nav.home'), to: '/#categories', external: true },
+    { label: t('nav.explore'), to: '/shop', external: false },
   ];
 
   // Mobile second-line nav links (Explore, World of Play, Orders, Challenges,
@@ -188,15 +190,30 @@ export default function Navbar() {
         <div className="hidden md:block relative z-10">
           <div className="max-w-7xl mx-auto px-6 sm:px-10 h-12 md:h-14 flex items-center justify-between gap-4">
             <div className="hidden md:flex items-center gap-6 lg:gap-8">
-              {links.map((l) => (
-                <a
-                  key={l.label}
-                  href={l.to}
-                  className="text-sm font-medium text-white/85 hover:text-accent transition-colors"
-                >
-                  {l.label}
-                </a>
-              ))}
+              {links.map((l) =>
+                l.external ? (
+                  <a
+                    key={l.label}
+                    href={l.to}
+                    className="text-sm font-medium text-white/85 hover:text-accent transition-colors"
+                  >
+                    {l.label}
+                  </a>
+                ) : (
+                  // A plain <a> here silently full-page-reloads instead of
+                  // navigating client-side — defeating every in-memory cache
+                  // (React Query, component state) on every click. Only the
+                  // hash-scroll link above has a real reason to stay a
+                  // native anchor.
+                  <Link
+                    key={l.label}
+                    to={l.to}
+                    className="text-sm font-medium text-white/85 hover:text-accent transition-colors"
+                  >
+                    {l.label}
+                  </Link>
+                )
+              )}
               <ShopByGenderMenu />
               {user && (
                 <Link to="/orders" className="text-sm font-medium text-white/85 hover:text-accent transition-colors">

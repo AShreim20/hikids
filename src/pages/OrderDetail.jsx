@@ -172,7 +172,7 @@ export default function OrderDetail() {
           <div>
             <h1 className="font-heading font-extrabold text-3xl md:text-4xl">#{orderRef(order)}</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              {created.toLocaleDateString(ar ? 'ar' : 'en')} · {created.toLocaleTimeString(ar ? 'ar' : 'en', { hour: '2-digit', minute: '2-digit' })}
+              {created.toLocaleDateString(ar ? 'ar-u-nu-latn' : 'en')} · {created.toLocaleTimeString(ar ? 'ar-u-nu-latn' : 'en', { hour: '2-digit', minute: '2-digit' })}
               {order.handled_by ? ` · ${ar ? 'يعالجه' : 'Handled by'}: ${order.handled_by}` : ''}
             </p>
           </div>

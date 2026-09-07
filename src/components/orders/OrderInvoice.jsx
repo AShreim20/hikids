@@ -92,10 +92,10 @@ export function printInvoice(order, { lang = 'en' } = {}) {
 
   const dt = order.created_date ? new Date(order.created_date) : null;
   const dateStr = dt
-    ? dt.toLocaleDateString(ar ? 'ar' : 'en-GB', { year: 'numeric', month: 'short', day: 'numeric' })
+    ? dt.toLocaleDateString(ar ? 'ar-u-nu-latn' : 'en-GB', { year: 'numeric', month: 'short', day: 'numeric' })
     : '—';
   const timeStr = dt
-    ? dt.toLocaleTimeString(ar ? 'ar' : 'en-GB', { hour: '2-digit', minute: '2-digit' })
+    ? dt.toLocaleTimeString(ar ? 'ar-u-nu-latn' : 'en-GB', { hour: '2-digit', minute: '2-digit' })
     : '';
 
   const paid = order.payment_status === 'paid' ? total : 0;

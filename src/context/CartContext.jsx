@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { db } from '@/api/entities';
+import { supabase } from '@/api/supabaseClient';
 import { variantLabel } from '@/lib/variants';
 
 const CartContext = createContext(null);
@@ -19,6 +20,20 @@ export function CartProvider({ children }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch { /* ignore */ }
   }, [items]);
+
+  // The cart is device-local storage, not scoped to a signed-in user, so a
+  // signed-out browser handed to (or shared by) a different customer must
+  // never show whoever was last signed in here their cart. Cleared on actual
+  // sign-out, not merely on losing tab focus — a guest cart built before
+  // logging in is untouched, and nothing here reacts to a background token
+  // refresh (see AuthContext's stable-user-reference fix), only a real
+  // SIGNED_OUT event.
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') setItems([]);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   // Which cart lines the customer chose to check out (a Set of lineIds).
   // Set from the Cart page right before navigating to checkout; null means
@@ -158,7 +173,18 @@ export function CartProvider({ children }) {
     const next = items.map((i) => {
       if (i.is_bundle || !i.id) return i;
       const p = map[i.id];
-      if (!p) return i;
+      // No longer readable — deleted, or unpublished (RLS hides a draft from
+      // this anon/customer read exactly like a delete would). Either way the
+      // product can no longer be bought, so flag it unavailable instead of
+      // silently leaving the line untouched. Pushed into `adjustments` (not
+      // just returned) so the `setItems` below actually applies the change —
+      // otherwise a line that was previously available would flip
+      // `unavailable` in the returned array but that array is discarded
+      // whenever `adjustments` stays empty.
+      if (!p) {
+        if (!i.unavailable) adjustments.push({ id: i.id, name: i.name, variant_label: i.variant_label || null, oldQty: i.qty, newQty: 0, available: 0 });
+        return { ...i, unavailable: true, stock: 0 };
+      }
       let available;
       if (i.variant_key && Array.isArray(p.variants)) {
         const v = p.variants.find((x) => x && x.key === i.variant_key);

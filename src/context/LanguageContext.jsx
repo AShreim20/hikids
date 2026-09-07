@@ -36,9 +36,18 @@ export function LanguageProvider({ children }) {
     return (translations[lang] && translations[lang][key]) || translations.en[key] || key;
   };
 
+  // The Arabic form puts the ₪ after the number, and ₪ is a bidi-neutral
+  // character — so inside the RTL page it gets reordered and renders as
+  // "₪ 45.90". U+2068 (FSI) … U+2069 (PDI) isolate the number+currency as one
+  // run so the surrounding direction can't reorder it. The isolates live in the
+  // string itself, which is what keeps every price call site correct without
+  // each one needing its own wrapper element.
+  //
+  // These are invisible formatting characters: keep them out of anything
+  // persisted or sent to an API — use the raw number there, not formatPrice.
   const formatPrice = (n) => {
     const value = Number(n || 0).toFixed(2);
-    return lang === 'ar' ? `${value} ₪` : `₪${value}`;
+    return lang === 'ar' ? `⁨${value} ₪⁩` : `₪${value}`;
   };
 
   const setLang = (l) => setLangState(l);

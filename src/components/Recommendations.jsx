@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Star, Tag, Flame, ThumbsUp, ArrowRight, Plus, Check, Heart } from 'lucide-react';
 import { db } from '@/api/entities';
 import { Image } from '@/components/ui/image';
@@ -7,7 +8,10 @@ import { useCart } from '@/context/CartContext';
 import { useCartFly } from '@/context/CartFlyContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
-import { productName } from '@/lib/bilingual';
+import { useCategories } from '@/context/CategoryContext';
+import { productName, categoryName } from '@/lib/bilingual';
+import { queryKeys } from '@/lib/queryKeys';
+import { isPublishedReview } from '@/lib/reviews';
 
 function badgeFor(p, t) {
   if (p.onSale) return { label: t('rec.onSale'), icon: Tag, cls: 'bg-accent text-white' };
@@ -20,20 +24,39 @@ export default function Recommendations() {
   const { addItem } = useCart();
   const { flyToCart } = useCartFly();
   const { toggle, isSaved } = useWishlist();
+  const { byName } = useCategories();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [added, setAdded] = useState({});
   const { t, formatPrice, lang } = useLanguage();
 
+  // p.category is the legacy denormalized *name* (Arabic, since Arabic is
+  // mandatory) — resolve it through the real category record so English UI
+  // shows the English name instead of a raw Arabic string leaking through.
+  // Falls back to the stored string itself for an orphaned/legacy label.
+  const categoryLabel = (p) => {
+    const cat = byName(p.category);
+    return cat ? categoryName(cat, lang) : p.category;
+  };
+
+  // Recommendations and SaleBanner both build off "the recent catalog" —
+  // sharing this query key means React Query fetches it once and caches it
+  // for both (and for a repeat Home visit within the cache window), instead
+  // of two components independently firing the same request.
+  const { data: recentProducts, isSuccess: productsLoaded } = useQuery({
+    queryKey: queryKeys.recentProducts(50),
+    queryFn: () => db.Product.list('-updated_date', 50),
+  });
+
   useEffect(() => {
+    if (!productsLoaded) return;
     // allSettled: one failing list shouldn't blank out the rest.
     Promise.allSettled([
-      db.Product.list('-updated_date', 50),
       db.Review.list(),
       db.Order.list(),
     ])
-      .then(([products, reviews, orders]) => {
-        products = products.status === 'fulfilled' ? products.value : [];
+      .then(([reviews, orders]) => {
+        const products = recentProducts || [];
         reviews = reviews.status === 'fulfilled' ? reviews.value : [];
         orders = orders.status === 'fulfilled' ? orders.value : [];
         const purchases = {};
@@ -42,8 +65,14 @@ export default function Recommendations() {
             purchases[it.id] = (purchases[it.id] || 0) + (it.qty || 1);
           })
         );
+        // Only approved/published reviews count toward the rating shown on
+        // the card — a text review always counts, a photo review only once
+        // an admin approves it (same rule Reviews.jsx uses on the product
+        // page). A product with zero published reviews must never fall back
+        // to the legacy `products.rating` seed value — that field is not a
+        // real customer rating and showing it here would be a fake rating.
         const ratingMap = {};
-        reviews.forEach((r) => {
+        reviews.filter(isPublishedReview).forEach((r) => {
           const e = ratingMap[r.product_id] || { sum: 0, count: 0 };
           e.sum += r.rating || 0;
           e.count += 1;
@@ -54,7 +83,7 @@ export default function Recommendations() {
           const onSale = p.sale_price != null && p.sale_price < p.price;
           const purchaseCount = purchases[p.id] || 0;
           const r = ratingMap[p.id];
-          const avgRating = r ? r.sum / r.count : p.rating || 0;
+          const avgRating = r ? r.sum / r.count : 0;
           const reviewCount = r ? r.count : 0;
           const eligible = onSale || (purchaseCount >= 2 && avgRating >= 4) || (avgRating >= 4.5 && reviewCount >= 2);
           const score =
@@ -74,7 +103,7 @@ export default function Recommendations() {
       })
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
-  }, []);
+  }, [productsLoaded, recentProducts]);
 
   const quickAdd = (p, originEl) => {
     flyToCart(originEl);
@@ -84,16 +113,16 @@ export default function Recommendations() {
   };
 
   return (
-    <section className="max-w-7xl mx-auto px-5 sm:px-8 py-10 md:py-14">
-      <div className="flex items-end justify-between flex-wrap gap-4 mb-8">
+    <section className="max-w-7xl mx-auto px-5 sm:px-8 py-8 md:py-10">
+      <div className="flex items-end justify-between flex-wrap gap-4 mb-6 md:mb-8">
         <div>
           <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">
             {t('rec.label')}
           </p>
-          <h2 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl">
+          <h2 className="mt-1.5 font-heading font-extrabold text-3xl md:text-4xl">
             {t('rec.title')}
           </h2>
-          <p className="mt-3 text-muted-foreground max-w-lg">
+          <p className="mt-2 text-muted-foreground max-w-lg text-sm md:text-base">
             {t('rec.subtitle')}
           </p>
         </div>
@@ -133,23 +162,28 @@ export default function Recommendations() {
                   <Image src={p.image_url} alt={productName(p, lang)} fittingType="fill" className="w-full h-full transition-transform duration-700 group-hover:scale-105" />
                 </Link>
                 <div className="p-5 flex flex-col flex-1">
-                  <p className="text-xs text-muted-foreground">{p.category}</p>
+                  <p className="text-xs text-muted-foreground">{categoryLabel(p)}</p>
                   <Link to={`/product/${p.id}`} className="mt-1 font-display font-semibold text-xl leading-tight hover:text-cosmic line-clamp-2">
                     {productName(p, lang)}
                   </Link>
                   <div className="mt-2 flex items-center gap-1.5">
-                    <div className="flex items-center gap-0.5">
-                      {Array.from({ length: 5 }).map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-3.5 h-3.5 ${i < Math.round(p.avgRating) ? 'fill-accent text-accent' : 'text-border'}`}
-                        />
-                      ))}
-                    </div>
-                    <span className="text-xs text-muted-foreground">
-                      {p.avgRating ? p.avgRating.toFixed(1) : t('rec.new')}
-                      {p.reviewCount > 0 && ` (${p.reviewCount})`}
-                    </span>
+                    {p.reviewCount > 0 ? (
+                      <>
+                        <div className="flex items-center gap-0.5">
+                          {Array.from({ length: 5 }).map((_, i) => (
+                            <Star
+                              key={i}
+                              className={`w-3.5 h-3.5 ${i < Math.round(p.avgRating) ? 'fill-accent text-accent' : 'text-border'}`}
+                            />
+                          ))}
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {p.avgRating.toFixed(1)} ({p.reviewCount})
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">{t('rec.new')}</span>
+                    )}
                   </div>
                   <div className="mt-auto pt-4 flex items-center justify-between gap-3">
                     <div className="flex items-baseline gap-2">
