@@ -127,7 +127,8 @@ export default function MyAddresses() {
                       <p className="font-heading font-bold">{a.label || a.city}</p>
                       {a.is_default && <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-accent/15 text-accent text-[11px] font-bold"><Star className="w-3 h-3" /> {t('address.default')}</span>}
                     </div>
-                    <p className="text-sm text-muted-foreground">{a.recipient_name} · {a.phone}</p>
+                    {/* bdi keeps the phone from reordering beside the Arabic name. */}
+                    <p className="text-sm text-muted-foreground">{a.recipient_name} · <bdi>{a.phone}</bdi></p>
                     <p className="text-sm text-muted-foreground mt-0.5">{a.city}, {a.street}{a.details ? ` — ${a.details}` : ''}</p>
                   </div>
                 </div>

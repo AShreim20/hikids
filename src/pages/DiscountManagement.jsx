@@ -140,7 +140,7 @@ export default function DiscountManagement() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-heading font-bold text-lg">{c.code}</p>
-                    <p className="text-sm text-muted-foreground">{fmtVal(c)}{c.min_subtotal ? ` · min ${formatPrice(c.min_subtotal)}` : ''}</p>
+                    <p className="text-sm text-muted-foreground"><bdi>{fmtVal(c)}{c.min_subtotal ? ` · min ${formatPrice(c.min_subtotal)}` : ''}</bdi></p>
                     {c.description && <p className="text-xs text-muted-foreground mt-1">{c.description}</p>}
                   </div>
                   <span className={`px-2.5 py-1 rounded-full text-[11px] font-bold ${c.active ? 'bg-emerald-500/15 text-emerald-600' : 'bg-muted text-muted-foreground'}`}>
@@ -171,7 +171,7 @@ export default function DiscountManagement() {
             <div className="mt-5 space-y-4">
               <label className="block">
                 <span className="text-sm font-medium text-foreground/80">{t('discount.code')}<span className="text-accent"> *</span></span>
-                <input required value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))} className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic uppercase" />
+                <input required value={form.code} onChange={(e) => setForm((f) => ({ ...f, code: e.target.value.toUpperCase() }))} dir="ltr" className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic uppercase" />
               </label>
               <label className="block">
                 <span className="text-sm font-medium text-foreground/80">{t('discount.description')}</span>

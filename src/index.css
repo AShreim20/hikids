@@ -124,4 +124,53 @@
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
   @keyframes routeSlideIn { from { transform: translateX(24px); } to { transform: none; } }
   .route-slide-in { animation: routeSlideIn 0.26s cubic-bezier(0.22, 1, 0.36, 1) backwards; }
+
+  /* Assistant chat panel height: caps at a comfortable 32rem, but shrinks to
+     fit the actual viewport (minus the panel's own bottom offset — set per
+     instance via --chat-bottom, see useFloatingOffset — and a fixed 6rem top
+     safety margin for the navbar) so it never runs off a short laptop screen
+     and is never taller than it needs to be. 100dvh (the @supports block)
+     additionally reacts to the mobile on-screen keyboard shrinking the
+     visual viewport, where plain vh does not; browsers without dvh support
+     simply keep the vh rule above. */
+  .chat-panel-height {
+    height: min(32rem, calc(100vh - var(--chat-bottom, 0px) - 6rem));
+  }
+  @supports (height: 100dvh) {
+    .chat-panel-height {
+      height: min(32rem, calc(100dvh - var(--chat-bottom, 0px) - 6rem));
+    }
+  }
+}
+
+/* ── Text direction for English / numeric content ─────────────────────────
+   The whole document gets dir="rtl" in Arabic (LanguageContext), so fields
+   that only ever hold English, numbers or codes inherit RTL: the caret starts
+   on the right, the text right-aligns, and a value beginning with a neutral
+   character reorders — "(50%) -12.5" renders as "12.5- )50%(".
+
+   Browsers already force LTR on type="tel" and type="date" but not on email,
+   url, number or password, so those are set explicitly here.
+
+   text-align: start (not left) so that direction decides the alignment, which
+   keeps deliberately right-aligned numeric table cells working. */
+input[type="email"],
+input[type="url"],
+input[type="tel"],
+input[type="number"],
+input[type="password"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  direction: ltr;
+  text-align: start;
+}
+
+/* Opt-in for type="text" inputs and textareas that hold English-only data
+   (barcodes, SKUs, discount codes, URLs, the *_en translation fields). */
+.ltr-field,
+.ltr-field input,
+.ltr-field textarea {
+  direction: ltr;
+  text-align: start;
 }

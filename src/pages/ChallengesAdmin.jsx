@@ -174,7 +174,7 @@ function ChallengeDialog({ value, onChange, onClose, onSave, ar }) {
         <h2 className="font-heading font-extrabold text-2xl">{value.id ? (ar ? 'تعديل تحدي' : 'Edit challenge') : (ar ? 'تحدي جديد' : 'New challenge')}</h2>
         <div className="mt-4 space-y-3">
           <L label={ar ? 'الاسم (عربي) — مطلوب' : 'Name (Arabic) — required'}><input className={input} value={value.name} onChange={(e) => set('name', e.target.value)} /></L>
-          <L label={ar ? 'الاسم (إنجليزي) — اختياري' : 'Name (English) — optional'}><input className={input} value={value.name_en || ''} onChange={(e) => set('name_en', e.target.value)} /></L>
+          <L label={ar ? 'الاسم (إنجليزي) — اختياري' : 'Name (English) — optional'}><input className={input} dir="ltr" value={value.name_en || ''} onChange={(e) => set('name_en', e.target.value)} /></L>
           <L label={ar ? 'الوصف' : 'Description'}><textarea className={input} rows={2} value={value.description} onChange={(e) => set('description', e.target.value)} /></L>
           <L label={ar ? 'النوع' : 'Type'}><select className={input} value={value.type} onChange={(e) => set('type', e.target.value)}>{TYPES.map((x) => <option key={x.key} value={x.key}>{x.label[ar ? 'ar' : 'en']}</option>)}</select></L>
           {value.type === 'product_purchase' && (
@@ -195,7 +195,7 @@ function ChallengeDialog({ value, onChange, onClose, onSave, ar }) {
             <L label={ar ? 'قيمة المكافأة' : 'Reward value'}><input type="number" className={input} value={value.reward_value} onChange={(e) => set('reward_value', Number(e.target.value))} /></L>
           </div>
           <L label={ar ? 'تسمية المكافأة (عربي)' : 'Reward label (Arabic)'}><input className={input} value={value.reward_label || ''} onChange={(e) => set('reward_label', e.target.value)} /></L>
-          <L label={ar ? 'تسمية المكافأة (إنجليزي) — اختياري' : 'Reward label (English) — optional'}><input className={input} value={value.reward_label_en || ''} onChange={(e) => set('reward_label_en', e.target.value)} /></L>
+          <L label={ar ? 'تسمية المكافأة (إنجليزي) — اختياري' : 'Reward label (English) — optional'}><input className={input} dir="ltr" value={value.reward_label_en || ''} onChange={(e) => set('reward_label_en', e.target.value)} /></L>
           <div className="grid grid-cols-2 gap-3">
             <L label={ar ? 'تاريخ البداية' : 'Start date'}><input type="date" className={input} value={value.start_date || ''} onChange={(e) => set('start_date', e.target.value)} /></L>
             <L label={ar ? 'تاريخ النهاية' : 'End date'}><input type="date" className={input} value={value.end_date || ''} onChange={(e) => set('end_date', e.target.value)} /></L>

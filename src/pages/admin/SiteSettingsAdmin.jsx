@@ -11,20 +11,23 @@ import { useSiteContent } from '@/context/SiteContentContext';
 import { upsertSettings } from '@/lib/siteContent';
 import { DEFAULT_SETTINGS } from '@/lib/siteDefaults';
 import StickySaveBar from '@/components/admin/StickySaveBar';
+import VisaPaymentToggle from '@/components/admin/VisaPaymentToggle';
 
+// `ltr: true` marks fields that only ever hold English, numbers or a URL, so
+// they don't inherit the page's RTL direction when the admin UI is in Arabic.
 const FIELDS = [
   { key: 'storeName', en: 'Store name', ar: 'اسم المتجر' },
-  { key: 'logoUrl', en: 'Logo URL', ar: 'رابط الشعار', type: 'image' },
-  { key: 'phone', en: 'Phone (display)', ar: 'الهاتف (للعرض)' },
-  { key: 'phoneTel', en: 'Phone (tel link)', ar: 'هاتف (رابط الاتصال)' },
-  { key: 'whatsapp', en: 'WhatsApp number (digits only)', ar: 'رقم واتساب (أرقام فقط)' },
-  { key: 'email', en: 'Email', ar: 'البريد الإلكتروني' },
-  { key: 'instagram', en: 'Instagram URL', ar: 'رابط إنستغرام' },
-  { key: 'facebook', en: 'Facebook URL', ar: 'رابط فيسبوك' },
+  { key: 'logoUrl', en: 'Logo URL', ar: 'رابط الشعار', type: 'image', ltr: true },
+  { key: 'phone', en: 'Phone (display)', ar: 'الهاتف (للعرض)', ltr: true },
+  { key: 'phoneTel', en: 'Phone (tel link)', ar: 'هاتف (رابط الاتصال)', ltr: true },
+  { key: 'whatsapp', en: 'WhatsApp number (digits only)', ar: 'رقم واتساب (أرقام فقط)', ltr: true },
+  { key: 'email', en: 'Email', ar: 'البريد الإلكتروني', ltr: true },
+  { key: 'instagram', en: 'Instagram URL', ar: 'رابط إنستغرام', ltr: true },
+  { key: 'facebook', en: 'Facebook URL', ar: 'رابط فيسبوك', ltr: true },
   { key: 'addressAr', en: 'Address (Arabic)', ar: 'العنوان (عربي)' },
-  { key: 'addressEn', en: 'Address (English)', ar: 'العنوان (إنجليزي)' },
+  { key: 'addressEn', en: 'Address (English)', ar: 'العنوان (إنجليزي)', ltr: true },
   { key: 'hoursAr', en: 'Response hours (Arabic)', ar: 'ساعات الرد (عربي)' },
-  { key: 'hoursEn', en: 'Response hours (English)', ar: 'ساعات الرد (إنجليزي)' },
+  { key: 'hoursEn', en: 'Response hours (English)', ar: 'ساعات الرد (إنجليزي)', ltr: true },
 ];
 
 export default function SiteSettingsAdmin() {
@@ -100,17 +103,25 @@ export default function SiteSettingsAdmin() {
               <label className="text-sm font-heading font-bold">{f.en} <span className="text-muted-foreground font-normal">/ {f.ar}</span></label>
               {f.type === 'image' ? (
                 <div className="mt-1 flex items-center gap-3">
-                  <input value={form[f.key] || ''} onChange={(e) => set(f.key, e.target.value)} className="flex-1 h-11 px-3 rounded-2xl bg-mist border border-border/70 outline-none" placeholder="https://..." />
+                  <input value={form[f.key] || ''} onChange={(e) => set(f.key, e.target.value)} dir={f.ltr ? 'ltr' : undefined} className="flex-1 h-11 px-3 rounded-2xl bg-mist border border-border/70 outline-none" placeholder="https://..." />
                   <label className="squish inline-flex items-center gap-2 h-11 px-4 rounded-full bg-cosmic text-white font-heading font-bold cursor-pointer">
                     <Upload className="w-4 h-4" /> {uploading ? '…' : 'Upload'}
                     <input type="file" accept="image/*" className="hidden" onChange={(e) => { const file = e.target.files[0]; if (file) uploadLogo(file); }} disabled={uploading} />
                   </label>
                 </div>
               ) : (
-                <input value={form[f.key] || ''} onChange={(e) => set(f.key, e.target.value)} className="mt-1 w-full h-11 px-3 rounded-2xl bg-mist border border-border/70 outline-none" />
+                <input value={form[f.key] || ''} onChange={(e) => set(f.key, e.target.value)} dir={f.ltr ? 'ltr' : undefined} className="mt-1 w-full h-11 px-3 rounded-2xl bg-mist border border-border/70 outline-none" />
               )}
             </div>
           ))}
+        </div>
+
+        {/* Moved here from the Product Management page — it's a store-wide
+            checkout setting, not a product-management control. Same
+            component/logic, only relocated. */}
+        <div className="mt-6">
+          <h2 className="font-heading font-bold text-lg mb-3">Payment Settings <span className="text-muted-foreground font-normal">/ إعدادات الدفع</span></h2>
+          <VisaPaymentToggle />
         </div>
 
         <StickySaveBar>

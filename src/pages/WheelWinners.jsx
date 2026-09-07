@@ -136,7 +136,7 @@ export default function WheelWinners() {
                       <td className="p-3">
                         {s.discount_code ? <span className="font-mono text-xs">{s.discount_code}</span> : s.product_name ? <span className="text-xs">{spinProductName(s, lang)}</span> : '—'}
                       </td>
-                      <td className="p-3 text-xs text-muted-foreground whitespace-nowrap">{new Date(s.created_date).toLocaleDateString(ar ? 'ar' : 'en')}</td>
+                      <td className="p-3 text-xs text-muted-foreground whitespace-nowrap">{new Date(s.created_date).toLocaleDateString(ar ? 'ar-u-nu-latn' : 'en')}</td>
                       <td className="p-3"><span className={`px-2 py-0.5 rounded-full text-xs font-heading font-bold ${statusCls(statusOf(s))}`}>{statusLabel(statusOf(s), ar)}</span></td>
                       <td className="p-3">{s.redeemed_order_id ? <Link to={`/orders-admin/${s.redeemed_order_id}`} className="text-cosmic font-bold text-xs">#{String(s.redeemed_order_id).slice(-6).toUpperCase()}</Link> : '—'}</td>
                       <td className="p-3">

@@ -3,16 +3,19 @@ import { Link } from 'react-router-dom';
 import { ChevronDown, ChevronRight } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { AGE_OPTIONS } from '@/lib/ages';
+import { GENDER_MALE, GENDER_FEMALE } from '@/lib/gender';
 
 // "Shop by Gender" header menu — two levels.
-//   Level 1: Boys / Girls only.
-//   Level 2: an "Ages" list, revealed on hover (desktop) or tap (mobile) of a
-//            gender. Selecting an age navigates to /shop with gender + age
-//            pre-applied, reusing the existing product filters (no duplicate
-//            age system).
+//   Level 1: Boys / Girls. The label itself is a link straight to /shop with
+//            just that gender applied; a separate chevron affordance expands
+//            level 2 without navigating.
+//   Level 2: an "Ages" list, revealed on hover (desktop) or tap of the
+//            chevron (mobile) of a gender. Selecting an age navigates to
+//            /shop with gender + age pre-applied, reusing the existing
+//            product filters (no duplicate age system).
 const GENDERS = [
-  { key: 'Boy', labelKey: 'gender.boys' },
-  { key: 'Girl', labelKey: 'gender.girls' },
+  { key: GENDER_MALE, labelKey: 'gender.boys' },
+  { key: GENDER_FEMALE, labelKey: 'gender.girls' },
 ];
 
 export default function ShopByGenderMenu({ mobile = false, onNavigate }) {
@@ -22,6 +25,7 @@ export default function ShopByGenderMenu({ mobile = false, onNavigate }) {
   const [expanded, setExpanded] = useState(null); // mobile: opened gender accordion
 
   const linkFor = (gender, ageId) => `/shop?gender=${gender}&age=${ageId}`;
+  const genderLinkFor = (gender) => `/shop?gender=${gender}`;
   const closeAll = () => {
     setOpen(false);
     setHovered(null);
@@ -61,14 +65,27 @@ export default function ShopByGenderMenu({ mobile = false, onNavigate }) {
             <div className="absolute start-0 top-full mt-2 z-[60] min-w-[240px] max-w-[calc(100vw-2rem)] rounded-2xl bg-[#3A2660] border border-white/20 shadow-2xl p-3">
               {GENDERS.map((g) => (
                 <div key={g.key} className="mb-1">
-                  <button
-                    type="button"
-                    onClick={() => setExpanded(expanded === g.key ? null : g.key)}
-                    className="w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-heading font-bold text-white hover:bg-white/10 transition-colors"
-                  >
-                    {t(g.labelKey)}
-                    <ChevronDown className={`w-4 h-4 transition-transform ${expanded === g.key ? 'rotate-180' : ''}`} />
-                  </button>
+                  <div className="flex items-center rounded-lg text-white hover:bg-white/10 transition-colors">
+                    {/* Tapping the label navigates straight to the gender-only
+                        filter; the chevron is a separate target that only
+                        expands the age list, so neither action steals the
+                        other's tap. */}
+                    <Link
+                      to={genderLinkFor(g.key)}
+                      onClick={closeAll}
+                      className="flex-1 px-3 py-2 text-sm font-heading font-bold"
+                    >
+                      {t(g.labelKey)}
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setExpanded(expanded === g.key ? null : g.key)}
+                      className="px-3 py-2"
+                      aria-label={t('gender.ages')}
+                    >
+                      <ChevronDown className={`w-4 h-4 transition-transform ${expanded === g.key ? 'rotate-180' : ''}`} />
+                    </button>
+                  </div>
                   {expanded === g.key && (
                     <div className="mt-1 ps-3">
                       <p className="px-2 pb-1 text-[11px] uppercase tracking-wider text-white/50 font-heading font-bold">
@@ -109,18 +126,28 @@ export default function ShopByGenderMenu({ mobile = false, onNavigate }) {
           >
             <div>
               {GENDERS.map((g) => (
-                <button
+                <div
                   key={g.key}
-                  type="button"
                   onMouseEnter={() => setHovered(g.key)}
-                  onClick={() => setHovered(g.key)}
-                  className={`w-full flex items-center justify-between px-3 py-2 rounded-lg text-sm font-heading font-bold transition-colors ${
+                  className={`w-full flex items-center justify-between rounded-lg text-sm font-heading font-bold transition-colors ${
                     hovered === g.key ? 'bg-white/15 text-accent' : 'text-white hover:bg-white/10'
                   }`}
                 >
-                  {t(g.labelKey)}
-                  <ChevronRight className="w-4 h-4 rtl:rotate-180" />
-                </button>
+                  {/* Label navigates straight to the gender-only filter;
+                      the chevron only reveals the age submenu (hovering the
+                      row already does the same, this covers click/keyboard). */}
+                  <Link to={genderLinkFor(g.key)} onClick={closeAll} className="flex-1 px-3 py-2">
+                    {t(g.labelKey)}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => setHovered(g.key)}
+                    className="px-3 py-2"
+                    aria-label={t('gender.ages')}
+                  >
+                    <ChevronRight className="w-4 h-4 rtl:rotate-180" />
+                  </button>
+                </div>
               ))}
             </div>
             {hovered && (

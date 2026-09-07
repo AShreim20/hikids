@@ -11,13 +11,15 @@ import ProfitLossPanel from '@/components/reports/ProfitLossPanel';
 import SalesPanel from '@/components/reports/SalesPanel';
 import PaymentsPanel from '@/components/reports/PaymentsPanel';
 import PurchasesPanel from '@/components/reports/PurchasesPanel';
-import { periodRange, salesReport, paymentsReport, purchasesReport, profitLoss, buildProductMap } from '@/lib/reports';
+import ExpensesPanel from '@/components/reports/ExpensesPanel';
+import { periodRange, salesReport, paymentsReport, purchasesReport, profitLoss, expensesReport, buildProductMap } from '@/lib/reports';
 
 const TABS = [
   { id: 'pnl', labelKey: 'reports.pnl', icon: TrendingUp },
   { id: 'sales', labelKey: 'reports.sales', icon: BarChart3 },
   { id: 'payments', labelKey: 'reports.payments', icon: CreditCard },
   { id: 'purchases', labelKey: 'reports.purchases', icon: ShoppingCart },
+  { id: 'expenses', labelKey: 'reports.expensesTab', icon: Receipt },
 ];
 
 export default function Reports() {
@@ -31,6 +33,8 @@ export default function Reports() {
   const [products, setProducts] = useState([]);
   const [pos, setPos] = useState([]);
   const [txs, setTxs] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [expenseCategories, setExpenseCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,12 +46,16 @@ export default function Reports() {
       db.Product.list('-updated_date', 500),
       db.PurchaseOrder.list('-created_date', 500),
       db.SupplierTransaction.list('-created_date', 500),
+      db.Expense.list('-expense_date', 500),
+      db.ExpenseCategory.list('sort_order', 200),
     ])
-      .then(([o, p, po, tx]) => {
+      .then(([o, p, po, tx, exp, cat]) => {
         setOrders(o.status === 'fulfilled' ? o.value || [] : []);
         setProducts(p.status === 'fulfilled' ? p.value || [] : []);
         setPos(po.status === 'fulfilled' ? po.value || [] : []);
         setTxs(tx.status === 'fulfilled' ? tx.value || [] : []);
+        setExpenses(exp.status === 'fulfilled' ? exp.value || [] : []);
+        setExpenseCategories(cat.status === 'fulfilled' ? cat.value || [] : []);
       })
       .finally(() => setLoading(false));
   }, [user]);
@@ -56,11 +64,12 @@ export default function Reports() {
   const range = useMemo(() => periodRange(period, custom), [period, custom]);
 
   const data = useMemo(() => {
-    if (tab === 'pnl') return profitLoss(orders, productMap, range);
+    if (tab === 'pnl') return profitLoss(orders, productMap, range, expenses, expenseCategories);
     if (tab === 'sales') return salesReport(orders, productMap, range);
     if (tab === 'payments') return paymentsReport(orders, txs, range);
+    if (tab === 'expenses') return expensesReport(expenses, expenseCategories, range);
     return purchasesReport(pos, range);
-  }, [tab, orders, productMap, txs, pos, range]);
+  }, [tab, orders, productMap, txs, pos, expenses, expenseCategories, range]);
 
   if (user?.role !== 'admin') {
     return (
@@ -111,6 +120,8 @@ export default function Reports() {
           <SalesPanel data={data} />
         ) : tab === 'payments' ? (
           <PaymentsPanel data={data} />
+        ) : tab === 'expenses' ? (
+          <ExpensesPanel data={data} />
         ) : (
           <PurchasesPanel data={data} />
         )}

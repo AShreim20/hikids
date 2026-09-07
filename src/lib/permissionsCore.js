@@ -26,6 +26,8 @@ export const PERMISSIONS = [
   'returns.manage',
   'reports.view',
   'delivery.manage',
+  'expenses.view',
+  'expenses.manage',
 ];
 
 export const PERMISSION_GROUPS = [
@@ -44,6 +46,7 @@ export const PERMISSION_GROUPS = [
   { key: 'returns', label: 'Returns & Exchanges', perms: ['returns.manage'] },
   { key: 'reports', label: 'Reports', perms: ['reports.view'] },
   { key: 'delivery', label: 'Delivery Pricing', perms: ['delivery.manage'] },
+  { key: 'expenses', label: 'Expenses', perms: ['expenses.view', 'expenses.manage'] },
 ];
 
 // Custom `permissions` field may be exposed at the top level of the user

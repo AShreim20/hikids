@@ -94,10 +94,10 @@ export default function MyWheelRewards() {
                       <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-heading font-bold ${badge.cls}`}>{badge.label}</span>
                     </div>
                     <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      <span>{new Date(s.created_date).toLocaleDateString(ar ? 'ar' : 'en')}</span>
+                      <span>{new Date(s.created_date).toLocaleDateString(ar ? 'ar-u-nu-latn' : 'en')}</span>
                       {s.points_awarded > 0 && <span className="text-cosmic font-bold">+{s.points_awarded} {ar ? 'نقطة' : 'pts'}</span>}
                       {s.discount_code && <span className="font-mono inline-flex items-center gap-1"><Ticket className="w-3 h-3" /> {s.discount_code}</span>}
-                      {s.expires_at && <span>{ar ? 'ينتهي' : 'Expires'}: {new Date(s.expires_at).toLocaleDateString(ar ? 'ar' : 'en')}</span>}
+                      {s.expires_at && <span>{ar ? 'ينتهي' : 'Expires'}: {new Date(s.expires_at).toLocaleDateString(ar ? 'ar-u-nu-latn' : 'en')}</span>}
                       {s.redeemed_order_id && st === 'used' && <Link to="/orders" className="text-cosmic font-bold">{ar ? 'الطلب' : 'Order'} #{String(s.redeemed_order_id).slice(-6).toUpperCase()}</Link>}
                     </div>
                     {s.product_id && s.product_image && (

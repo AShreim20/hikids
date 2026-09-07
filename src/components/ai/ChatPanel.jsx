@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Send, Loader2, Sparkles, ArrowUpRight, ShoppingCart } from 'lucide-react';
+import { Send, Loader2, Sparkles, ArrowUpRight, ShoppingCart, X } from 'lucide-react';
 import { db } from '@/api/entities';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
+import { useFloatingOffset } from '@/hooks/useFloatingOffset';
 
 const ORIGIN = typeof window !== 'undefined' ? window.location.origin : '';
 
@@ -136,15 +137,37 @@ Current product catalog (ID | name | category | ages | price | stock | url):\n${
   };
 
   const suggestions = [t('ai.sugg1'), t('ai.sugg2'), t('ai.sugg3')];
+  // Anchored at the same slot the collapsed button occupies (it's hidden
+  // while the panel is open, so this is exactly "opening in its place") —
+  // clears the mobile bottom nav / desktop margin / device safe area / the
+  // current page's sticky purchase bar height, all in one shared formula
+  // instead of a hard-coded offset. --chat-bottom feeds the CSS max-height
+  // calc below (see .chat-panel-height in index.css) so the panel's own
+  // height always fits above whatever it's anchored above, even on a short
+  // laptop screen.
+  const { bottom, bottomPx } = useFloatingOffset(0);
 
   return (
-    <div className="fixed z-50 inset-x-2 bottom-[9.5rem] md:inset-x-auto md:start-6 md:bottom-24 md:w-[24rem] h-[min(78vh,34rem)] md:h-[60vh] md:max-h-[32rem] rounded-3xl bg-card border border-border shadow-2xl flex flex-col overflow-hidden float-in">
-      <div className="flex items-center gap-3 px-4 py-3 bg-cosmic text-white">
-        <Sparkles className="w-5 h-5" />
-        <div>
-          <p className="font-heading font-bold leading-none">{t('ai.title')}</p>
-          <p className="text-xs text-white/70 mt-0.5">{t('ai.subtitle')}</p>
+    <div
+      className="fixed z-[60] inset-x-2 md:inset-x-auto md:start-6 md:w-[24rem] rounded-3xl bg-card border border-border shadow-2xl flex flex-col overflow-hidden float-in chat-panel-height"
+      style={{ bottom, '--chat-bottom': `${bottomPx}px` }}
+      role="dialog"
+      aria-label={t('ai.title')}
+    >
+      <div className="flex items-center gap-3 px-4 py-3 bg-cosmic text-white shrink-0">
+        <Sparkles className="w-5 h-5 shrink-0" />
+        <div className="flex-1 min-w-0">
+          <p className="font-heading font-bold leading-none truncate">{t('ai.title')}</p>
+          <p className="text-xs text-white/70 mt-0.5 truncate">{t('ai.subtitle')}</p>
         </div>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={ar ? 'إغلاق' : 'Close'}
+          className="shrink-0 squish grid place-items-center w-8 h-8 rounded-full hover:bg-white/15 transition-colors"
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
       <div ref={scrollRef} className="flex-1 overflow-auto p-4 space-y-3 bg-mist/40">
         {messages.map((m, i) => {

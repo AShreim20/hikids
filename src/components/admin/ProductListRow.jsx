@@ -1,10 +1,10 @@
 import React from 'react';
-import { Pencil, Trash2, Link2 } from 'lucide-react';
+import { Pencil, Trash2, Link2, AlertTriangle } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import { priceInfo } from '@/lib/pricing';
-import { productName } from '@/lib/bilingual';
+import { productName, categoryName } from '@/lib/bilingual';
 import { useToast } from '@/components/ui/use-toast';
 
 const productSku = (p) => {
@@ -14,8 +14,12 @@ const productSku = (p) => {
 
 export default function ProductListRow({ product: p, onEdit, onDelete, selected, onToggleSelect }) {
   const { t, lang, formatPrice } = useLanguage();
-  const { discountPctFor } = useCategories();
+  const { discountPctFor, categories } = useCategories();
   const { toast } = useToast();
+  const additionalCount = Array.isArray(p.category_ids) ? p.category_ids.length : 0;
+  const additionalNames = additionalCount
+    ? p.category_ids.map((id) => categories.find((c) => c.id === id)).filter(Boolean).map((c) => categoryName(c, lang)).join(', ')
+    : '';
   const copyLink = async () => {
     const url = `${window.location.origin}/product/${p.id}`;
     try { await navigator.clipboard.writeText(url); toast({ title: t('admin.linkCopied') }); }
@@ -43,11 +47,35 @@ export default function ProductListRow({ product: p, onEdit, onDelete, selected,
       </div>
 
       <div className="min-w-0 flex-1">
-        <p className="font-heading font-bold truncate">{productName(p, lang)}</p>
+        <p className="font-heading font-bold flex items-center gap-2 min-w-0">
+          {/* The truncating text needs to be its own flex item with min-w-0
+              — a bare text node next to the badge can't shrink/ellipsize on
+              its own and was pushing the whole row (and the page) wider than
+              the viewport on narrow screens with a long product name. */}
+          <span className="truncate min-w-0">{productName(p, lang)}</span>
+          <span className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-heading font-bold ${p.status === 'draft' ? 'bg-accent/15 text-accent' : 'bg-cosmic/10 text-cosmic'}`}>
+            {p.status === 'draft' ? t('admin.statusDraft') : t('admin.statusPublished')}
+          </span>
+        </p>
         <p className="text-xs text-muted-foreground truncate">
-          {p.category || '—'}{p.age_range ? ` · ${t('pd.ages')} ${p.age_range}` : ''}
+          {p.category || '—'}
+          {additionalCount > 0 && (
+            <span
+              className="ms-1 px-1.5 py-0.5 rounded-full bg-mist text-foreground/70 text-[10px] font-heading font-bold align-middle cursor-default"
+              title={additionalNames}
+            >
+              +{additionalCount}
+            </span>
+          )}
+          {p.age_range ? ` · ${t('pd.ages')} ${p.age_range}` : ''}
         </p>
         <p className="text-xs text-muted-foreground/80 truncate">SKU: {productSku(p)}</p>
+        {!p.gender && (
+          <p className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-medium text-accent">
+            <AlertTriangle className="w-3 h-3 shrink-0" />
+            {lang === 'ar' ? 'بحاجة لتصنيف الجنس' : 'Needs gender classification'}
+          </p>
+        )}
         {tags.length > 0 && (
           <div className="mt-1 flex flex-wrap gap-1">
             {tags.map((tag) => (

@@ -7,6 +7,7 @@ import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
+import { isPublishedReview } from '@/lib/reviews';
 
 const STATUS = {
   pending: { en: 'Pending review', ar: 'قيد المراجعة', cls: 'bg-mist text-muted-foreground', icon: Clock },
@@ -14,11 +15,10 @@ const STATUS = {
   rejected: { en: 'Rejected', ar: 'مرفوض', cls: 'bg-destructive/10 text-destructive', icon: X },
 };
 
-// A photo review is only public once an admin approves it. Text reviews (no
-// photo) have no approval step and stay visible as before.
-const isPublished = (r) => !r.photo_url || r.status === 'approved';
-
-export default function Reviews({ productId }) {
+// `onStats` (optional) reports { count, average } — published reviews only —
+// every time they change, so the Product Detail header can show the same
+// real rating next to the product title without a second review fetch.
+export default function Reviews({ productId, onStats }) {
   const { toast } = useToast();
   const { t, lang } = useLanguage();
   const ar = lang === 'ar';
@@ -46,13 +46,20 @@ export default function Reviews({ productId }) {
     if (productId) load();
   }, [productId]);
 
-  const published = reviews.filter(isPublished);
+  const published = reviews.filter(isPublishedReview);
   const myPhotoReviews = user
     ? reviews.filter((r) => r.photo_url && r.user_email === user.email)
     : [];
   const avg = published.length
     ? published.reduce((s, r) => s + (r.rating || 0), 0) / published.length
     : 0;
+
+  useEffect(() => {
+    onStats?.({ count: published.length, average: avg });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [published.length, avg]);
+
+  const [lightbox, setLightbox] = useState(null);
 
   const pickPhoto = (e) => {
     const file = e.target.files?.[0];
@@ -126,8 +133,8 @@ export default function Reviews({ productId }) {
   };
 
   return (
-    <section className="max-w-7xl mx-auto px-5 sm:px-8 py-12">
-      <div className="flex items-end justify-between flex-wrap gap-4 mb-8">
+    <section className="max-w-7xl mx-auto px-5 sm:px-8 py-8 md:py-10">
+      <div className="flex items-end justify-between flex-wrap gap-4 mb-6 md:mb-8">
         <div>
           <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">
             {t('reviews.label')}
@@ -193,9 +200,14 @@ export default function Reviews({ productId }) {
                 </div>
                 {r.comment && <p className="mt-4 text-muted-foreground leading-relaxed">{r.comment}</p>}
                 {r.photo_url && (
-                  <div className="mt-4 rounded-2xl overflow-hidden bg-mist w-full max-w-xs">
-                    <Image src={r.photo_url} alt="" fittingType="fill" className="w-full h-48" />
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setLightbox(r.photo_url)}
+                    className="mt-4 block rounded-2xl overflow-hidden bg-mist w-full max-w-xs cursor-zoom-in"
+                    aria-label={ar ? 'تكبير الصورة' : 'Enlarge photo'}
+                  >
+                    <Image src={r.photo_url} alt="" fittingType="fill" className="w-full h-48 object-cover" />
+                  </button>
                 )}
               </div>
             ))
@@ -213,9 +225,9 @@ export default function Reviews({ productId }) {
                   const st = STATUS[r.status] || STATUS.pending;
                   const StIcon = st.icon;
                   return (
-                    <div key={r.id} className="flex items-center gap-3 rounded-2xl bg-card border border-border/60 p-2 pr-4">
+                    <div key={r.id} className="flex items-center gap-3 rounded-2xl bg-card border border-border/60 p-2 pe-4">
                       <div className="w-14 h-14 rounded-xl overflow-hidden bg-mist shrink-0">
-                        <Image src={r.photo_url} alt="" fittingType="fill" className="w-full h-full" />
+                        <Image src={r.photo_url} alt="" fittingType="fill" className="w-full h-full object-cover" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-heading font-bold truncate">{r.comment || (ar ? 'مراجعة بالصورة' : 'Photo review')}</p>
@@ -333,6 +345,29 @@ export default function Reviews({ productId }) {
           </form>
         </div>
       </div>
+
+      {/* Same lightweight lightbox pattern ProductGallery already uses — no
+          new dependency, just letting a review photo open larger on click. */}
+      {lightbox && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/90 backdrop-blur-sm grid place-items-center p-4 sm:p-10 cursor-zoom-out"
+          onClick={() => setLightbox(null)}
+        >
+          <button
+            className="absolute top-5 end-5 grid place-items-center w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
+            aria-label="Close"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img
+            src={lightbox}
+            alt=""
+            className="max-w-full max-h-full object-contain rounded-2xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </section>
   );
 }

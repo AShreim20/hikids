@@ -18,7 +18,7 @@ export default function OrderActivityLog({ order }) {
         <div className="text-sm">
           <p className="font-medium">{ar ? 'تم إنشاء الطلب' : 'Order created'}</p>
           <p className="text-xs text-muted-foreground">
-            {new Date(order.created_date).toLocaleString(ar ? 'ar' : 'en')}
+            {new Date(order.created_date).toLocaleString(ar ? 'ar-u-nu-latn' : 'en')}
             {order.customer_name ? ` · ${order.customer_name}` : ''}
           </p>
         </div>
@@ -37,7 +37,7 @@ export default function OrderActivityLog({ order }) {
             </p>
             {a.note && <p className="text-xs text-muted-foreground mt-0.5">{a.note}</p>}
             <p className="text-xs text-muted-foreground">
-              {new Date(a.at).toLocaleString(ar ? 'ar' : 'en')}{a.by ? ` · ${a.by}` : ''}
+              {new Date(a.at).toLocaleString(ar ? 'ar-u-nu-latn' : 'en')}{a.by ? ` · ${a.by}` : ''}
             </p>
           </div>
         ))}

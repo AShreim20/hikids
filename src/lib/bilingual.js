@@ -1,3 +1,5 @@
+import { cleanFeatureList } from '@/lib/features';
+
 // Bilingual name resolution. Arabic is mandatory; English is optional.
 // Display rule:
 //   - Arabic system  -> Arabic name (fall back to English only if Arabic empty)
@@ -18,6 +20,16 @@ export const productName = (p, lang) => pickName(p?.name, p?.name_en, lang);
 // mandatory, English is optional and falls back to Arabic when empty.
 export const productDescription = (p, lang) =>
   pickName(p?.description, p?.description_en, lang);
+
+// Features follow the exact same rule as description, applied to the
+// (cleaned) list instead of a single string: English falls back to Arabic
+// only when the English list is empty — never a mix of both languages.
+export const productFeatures = (p, lang) => {
+  const ar = cleanFeatureList(p?.features_ar);
+  const en = cleanFeatureList(p?.features_en);
+  if (lang === 'en') return en.length ? en : ar;
+  return ar.length ? ar : en;
+};
 
 // Category: Arabic name is mandatory, English is optional. Products link to
 // categories by their Arabic `name`, so this only affects display.

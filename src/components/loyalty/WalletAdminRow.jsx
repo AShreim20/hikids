@@ -124,7 +124,7 @@ export default function WalletAdminRow({ account: incoming, perms, onChanged }) 
         </span>
         {account.last_activity_at && (
           <span className="rounded-full bg-mist px-3 py-1 text-muted-foreground">
-            {t('wallet.lastActivity')}: {new Date(account.last_activity_at).toLocaleDateString(lang === 'ar' ? 'ar' : 'en-GB')}
+            {t('wallet.lastActivity')}: {new Date(account.last_activity_at).toLocaleDateString(lang === 'ar' ? 'ar-u-nu-latn' : 'en-GB')}
           </span>
         )}
       </div>

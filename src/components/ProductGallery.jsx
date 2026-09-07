@@ -24,7 +24,7 @@ export default function ProductGallery({ product, images }) {
 
   if (items.length === 0) {
     return (
-      <div className="relative aspect-square rounded-[2.5rem] overflow-hidden bg-mist float-in" />
+      <div className="relative aspect-[4/3] sm:aspect-square rounded-[2.5rem] overflow-hidden bg-mist float-in" />
     );
   }
 
@@ -41,8 +41,12 @@ export default function ProductGallery({ product, images }) {
 
   return (
     <div>
+      {/* aspect-[4/3] on mobile only — a full 1:1 square at phone width was
+          eating too much of the first screen before price/purchase info
+          became reachable. sm:aspect-square restores the original
+          square-friendly presentation as soon as there's room for it. */}
       <div
-        className="relative aspect-square rounded-[2.5rem] overflow-hidden bg-mist shadow-[0_30px_70px_-30px_rgba(26,26,30,0.3)] float-in group"
+        className="relative aspect-[4/3] sm:aspect-square rounded-[2.5rem] overflow-hidden bg-mist shadow-[0_30px_70px_-30px_rgba(26,26,30,0.3)] float-in group"
         onMouseEnter={() => isImage && setZoom(true)}
         onMouseLeave={() => setZoom(false)}
         onMouseMove={handleMove}

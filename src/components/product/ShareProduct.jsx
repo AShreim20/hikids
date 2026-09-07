@@ -1,14 +1,23 @@
 import React, { useState } from 'react';
-import { Share2, Link2, Check } from 'lucide-react';
+import { Share2, Link2, Check, Heart } from 'lucide-react';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
 import WhatsAppIcon from '@/components/icons/WhatsAppIcon';
 
-// Customer-facing product sharing. Uses the device's native share sheet when
-// available, with copy-link and WhatsApp fallbacks. The shared URL opens the
-// real product page. No reward is granted for merely clicking Share — reward
-// eligibility (if any) is governed by the Challenges system's own verification.
-export default function ShareProduct({ product }) {
+// Customer-facing secondary action group: Favorite, Share, Copy Link,
+// WhatsApp — one visual family, same height/radius/padding/typography, so
+// none of the four reads as more (or less) important than the others.
+// Favorite's add/remove logic still lives in WishlistContext (via
+// ProductDetail's toggle/isSaved) and is only passed in here as props — this
+// component owns presentation, not the business logic.
+//
+// Deliberately flexbox, not CSS grid, for the 2-up mobile layout: a grid's
+// auto-placed column order does not reliably mirror under dir="rtl" (verified
+// live — item 1 landed top-left, item 2 top-right, in Arabic), while a flex
+// row's item order does reverse correctly for RTL. Each button gets an
+// explicit ~50% basis so two sit per row on mobile; from `sm:` up they
+// revert to auto width and wrap freely if a narrow window can't fit all four.
+export default function ShareProduct({ product, favorited, onToggleFavorite }) {
   const { lang } = useLanguage();
   const ar = lang === 'ar';
   const { toast } = useToast();
@@ -45,18 +54,27 @@ export default function ShareProduct({ product }) {
 
   const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`;
 
+  const actionClass = 'squish inline-flex items-center justify-center gap-2 h-11 px-4 rounded-full font-heading font-bold text-sm transition-colors';
+  // ~50% width minus half the gap, so exactly two fit per row on mobile;
+  // free-width and wrappable from sm: up.
+  const cell = 'w-[calc(50%-0.25rem)] sm:w-auto';
+
   return (
     <div className="flex flex-wrap gap-2">
       <button
-        onClick={share}
-        className="squish inline-flex items-center gap-2 h-11 px-4 rounded-full bg-mist text-foreground font-heading font-bold text-sm hover:bg-cosmic hover:text-white transition-colors"
+        type="button"
+        onClick={onToggleFavorite}
+        aria-pressed={!!favorited}
+        className={`${actionClass} ${cell} ${
+          favorited ? 'bg-accent text-white hover:opacity-90' : 'bg-mist text-foreground hover:bg-cosmic hover:text-white'
+        }`}
       >
+        <Heart className={`w-4 h-4 ${favorited ? 'fill-current' : ''}`} /> {ar ? 'المفضلة' : 'Favorite'}
+      </button>
+      <button onClick={share} className={`${actionClass} ${cell} bg-mist text-foreground hover:bg-cosmic hover:text-white`}>
         <Share2 className="w-4 h-4" /> {ar ? 'مشاركة' : 'Share'}
       </button>
-      <button
-        onClick={copy}
-        className="squish inline-flex items-center gap-2 h-11 px-4 rounded-full bg-mist text-foreground font-heading font-bold text-sm hover:bg-cosmic hover:text-white transition-colors"
-      >
+      <button onClick={copy} className={`${actionClass} ${cell} bg-mist text-foreground hover:bg-cosmic hover:text-white`}>
         {copied ? <Check className="w-4 h-4" /> : <Link2 className="w-4 h-4" />}
         {copied ? (ar ? 'تم النسخ' : 'Copied') : ar ? 'نسخ الرابط' : 'Copy link'}
       </button>
@@ -64,7 +82,7 @@ export default function ShareProduct({ product }) {
         href={whatsapp}
         target="_blank"
         rel="noopener noreferrer"
-        className="squish inline-flex items-center gap-2 h-11 px-4 rounded-full bg-emerald-600 text-white font-heading font-bold text-sm hover:bg-emerald-700 transition-colors"
+        className={`${actionClass} ${cell} bg-emerald-600 text-white hover:bg-emerald-700`}
       >
         <WhatsAppIcon className="w-4 h-4" /> WhatsApp
       </a>

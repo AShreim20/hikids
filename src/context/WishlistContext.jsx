@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { supabase } from '@/api/supabaseClient';
 
 const WishlistContext = createContext(null);
 const STORAGE_KEY = 'hikids_wishlist_v1';
@@ -17,6 +18,16 @@ export function WishlistProvider({ children }) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
     } catch { /* ignore */ }
   }, [items]);
+
+  // Same reasoning as CartContext: this is device-local storage, not
+  // per-user server state, so it must not leak into the next account signed
+  // in on the same browser. Only a real SIGNED_OUT clears it.
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'SIGNED_OUT') setItems([]);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
 
   const toggle = (product) =>
     setItems((prev) =>

@@ -19,6 +19,7 @@ import { getLoyaltyBalance, redeemLoyaltyPoints, releaseLoyaltyPoints, awardLoya
 import { finalizeWheelRewards } from '@/lib/wheelFunctions';
 import { getSetting } from '@/lib/storeSettings';
 import { lineItemName } from '@/lib/bilingual';
+import { resolveCheckoutItems, cartLineTotal } from '@/lib/cartSelection';
 
 const CARD_TYPES = [
   { key: 'visa', label: 'Visa', badge: 'bg-[#1A1F71]', dot: 'bg-[#1A1F71]' },
@@ -36,14 +37,17 @@ export default function Checkout() {
   const ar = lang === 'ar';
 
   const lineIdOf = (i) => i.lineId || i.id;
-  // Only the lines the customer selected in the cart go into this order.
-  // A null selection (e.g. a direct visit with no cart selection made) falls
-  // back to the whole cart so the page still works outside the selection flow.
+  // Only the lines the customer selected in the cart go into this order —
+  // resolveCheckoutItems() is the exact same helper Cart.jsx's Summary uses,
+  // so what the customer saw as their total there is what gets charged here.
+  // A null/empty selection (e.g. a direct visit with no cart selection made)
+  // falls back to the whole cart so the page still works outside the
+  // selection flow.
   const items = useMemo(
-    () => cartItems.filter((i) => (!checkoutSelection || checkoutSelection.has(lineIdOf(i))) && !i.unavailable),
+    () => resolveCheckoutItems(cartItems, checkoutSelection),
     [cartItems, checkoutSelection]
   );
-  const total = items.reduce((s, i) => s + i.qty * i.price, 0);
+  const total = cartLineTotal(items);
 
   const [form, setForm] = useState({ name: '', email: '', address: '', phone: '' });
   const [phoneCountry, setPhoneCountry] = useState('ps');

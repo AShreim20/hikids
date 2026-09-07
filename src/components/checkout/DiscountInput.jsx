@@ -52,6 +52,7 @@ export default function DiscountInput({ subtotal, applied, onApplied, onRemoved 
           onChange={(e) => setCode(e.target.value.toUpperCase())}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); apply(); } }}
           placeholder={t('checkout.promo')}
+          dir="ltr"
           className="w-full h-12 ps-10 pe-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic"
         />
       </div>

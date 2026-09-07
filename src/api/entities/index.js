@@ -51,4 +51,15 @@ export const db = {
   ChallengeProgress: createEntity('challenge_progress'),
   ChallengeSubmission: createEntity('challenge_submissions'),
   RewardHistory: createEntity('reward_history'),
+  // Phase 8: operating expenses. permission-gated (expenses.view/expenses.manage)
+  // rather than plain admin-only, so an owner can delegate bookkeeping to
+  // staff. See src/lib/reports.js for how these feed the P&L.
+  Expense: createEntity('expenses'),
+  ExpenseCategory: createEntity('expense_categories'),
+  // Phase 9 (Homepage Stage 5): Newsletter signups. Public INSERT only (guest
+  // subscribe, no login needed) — no SELECT/UPDATE/DELETE for anon or
+  // authenticated at all, so always call .create(payload, {returning:false})
+  // like a guest order. Duplicate email/phone is rejected at the DB level by
+  // a unique index, not by reading the list first.
+  NewsletterSubscriber: createEntity('newsletter_subscribers'),
 };

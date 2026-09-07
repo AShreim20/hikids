@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Lock, Plus, Pencil, Trash2, X } from 'lucide-react';
+import { Loader2, Lock, Plus, Pencil, Trash2, X, Search } from 'lucide-react';
 import { db } from '@/api/entities';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
@@ -18,6 +18,7 @@ export default function DeliveryManagement() {
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ name: '', price: '', estimated_days: 1, active: true });
   const [saving, setSaving] = useState(false);
+  const [q, setQ] = useState('');
 
   const load = async () => {
     setLoading(true);
@@ -54,6 +55,8 @@ export default function DeliveryManagement() {
     );
   }
 
+  const filtered = cities.filter((c) => c.name.toLowerCase().includes(q.trim().toLowerCase()));
+
   const openNew = () => {
     setForm({ name: '', price: '', estimated_days: 1, active: true });
     setEditing('new');
@@ -81,7 +84,9 @@ export default function DeliveryManagement() {
         action: isNew ? 'delivery.city_created' : 'delivery.city_updated',
         target_type: 'delivery_city',
         target_id: isNew ? id?.id || '' : editing,
-        details: `${form.name} = ${formatPrice(payload.price)}`,
+        // Raw number, not formatPrice — that adds invisible bidi-isolate
+        // characters meant for display only, and this string is persisted.
+        details: `${form.name} = ₪${payload.price.toFixed(2)}`,
       });
       toast({ title: t('address.saved') });
       close();
@@ -123,15 +128,29 @@ export default function DeliveryManagement() {
           </button>
         </div>
 
+        {!loading && cities.length > 0 && (
+          <div className="relative mt-8 max-w-sm">
+            <Search className="absolute top-1/2 -translate-y-1/2 start-3 w-4 h-4 text-muted-foreground" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t('delivery.search')}
+              className="w-full h-11 ps-9 pe-3 rounded-2xl bg-mist border border-border text-sm"
+            />
+          </div>
+        )}
+
         {loading ? (
           <div className="mt-10 grid place-items-center py-16">
             <Loader2 className="w-8 h-8 animate-spin text-cosmic" />
           </div>
         ) : cities.length === 0 ? (
           <p className="mt-10 text-center text-muted-foreground py-16">{t('delivery.empty')}</p>
+        ) : filtered.length === 0 ? (
+          <p className="mt-10 text-center text-muted-foreground py-16">{t('delivery.noResults')}</p>
         ) : (
-          <div className="mt-10 grid sm:grid-cols-2 gap-4">
-            {cities.map((c) => (
+          <div className="mt-6 grid sm:grid-cols-2 gap-4">
+            {filtered.map((c) => (
               <div key={c.id} className="rounded-3xl bg-card border border-border/60 p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div>

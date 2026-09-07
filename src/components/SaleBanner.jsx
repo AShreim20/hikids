@@ -1,25 +1,29 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import { Tag, ArrowRight } from 'lucide-react';
 import { db } from '@/api/entities';
 import { Image } from '@/components/ui/image';
 import { useLanguage } from '@/context/LanguageContext';
+import { queryKeys } from '@/lib/queryKeys';
 
 const SLIDE_MS = 3500;
 
 export default function SaleBanner() {
-  const [items, setItems] = useState([]);
   const [index, setIndex] = useState(0);
   const { t, formatPrice, lang } = useLanguage();
 
-  useEffect(() => {
-    db.Product.list('-updated_date', 50)
-      .then((products) => {
-        const onSale = products.filter((p) => p.sale_price != null && p.sale_price < p.price);
-        setItems(onSale);
-      })
-      .catch(() => setItems([]));
-  }, []);
+  // Shares its query key with Recommendations — both want "the recent
+  // catalog"; React Query fetches it once and both read the same cache
+  // entry instead of firing two identical requests on every Home load.
+  const { data: recentProducts } = useQuery({
+    queryKey: queryKeys.recentProducts(50),
+    queryFn: () => db.Product.list('-updated_date', 50),
+  });
+  const items = useMemo(
+    () => (recentProducts || []).filter((p) => p.sale_price != null && p.sale_price < p.price),
+    [recentProducts]
+  );
 
   const next = useCallback(() => setIndex((i) => (i + 1) % Math.max(items.length, 1)), [items.length]);
 

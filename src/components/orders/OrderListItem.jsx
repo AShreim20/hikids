@@ -19,7 +19,9 @@ export default function OrderListItem({ order }) {
             #{orderRef(order)}
           </Link>
           <p className="mt-0.5 text-sm text-muted-foreground">
-            {order.customer_name} · {order.phone}
+            {/* bdi: the phone sits next to an Arabic name, so without isolation
+                its leading "+" is reordered and it renders as "599123456 970+". */}
+            {order.customer_name} · <bdi>{order.phone}</bdi>
           </p>
         </div>
         <span className={`px-3 py-1.5 rounded-full text-xs font-heading font-bold ${statusColor(order.status)}`}>
@@ -30,7 +32,7 @@ export default function OrderListItem({ order }) {
       <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
         <div>
           <p className="text-xs text-muted-foreground">{ar ? 'التاريخ' : 'Date'}</p>
-          <p className="font-medium">{date.toLocaleDateString(ar ? 'ar' : 'en')} · {date.toLocaleTimeString(ar ? 'ar' : 'en', { hour: '2-digit', minute: '2-digit' })}</p>
+          <p className="font-medium">{date.toLocaleDateString(ar ? 'ar-u-nu-latn' : 'en')} · {date.toLocaleTimeString(ar ? 'ar-u-nu-latn' : 'en', { hour: '2-digit', minute: '2-digit' })}</p>
         </div>
         <div>
           <p className="text-xs text-muted-foreground">{ar ? 'المدينة' : 'City'}</p>

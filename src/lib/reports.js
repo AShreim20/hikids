@@ -2,8 +2,10 @@ import { normalizeStatus, RETURN_STATUSES } from '@/lib/orderStatus';
 
 export const PERIODS = [
   { id: 'today', labelKey: 'reports.today' },
+  { id: 'yesterday', labelKey: 'reports.yesterday' },
   { id: 'week', labelKey: 'reports.week' },
   { id: 'month', labelKey: 'reports.month' },
+  { id: 'lastMonth', labelKey: 'reports.lastMonth' },
   { id: 'year', labelKey: 'reports.year' },
   { id: 'custom', labelKey: 'reports.custom' },
 ];
@@ -12,11 +14,20 @@ export function periodRange(id, custom = {}) {
   const now = new Date();
   const end = new Date(now); end.setHours(23, 59, 59, 999);
   let start = new Date(now); start.setHours(0, 0, 0, 0);
-  if (id === 'week') {
+  if (id === 'yesterday') {
+    start.setDate(start.getDate() - 1);
+    end.setDate(end.getDate() - 1);
+    end.setHours(23, 59, 59, 999);
+  } else if (id === 'week') {
     const d = (now.getDay() + 6) % 7; // Monday-start
     start.setDate(now.getDate() - d);
   } else if (id === 'month') {
     start = new Date(now.getFullYear(), now.getMonth(), 1);
+  } else if (id === 'lastMonth') {
+    start = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const end2 = new Date(now.getFullYear(), now.getMonth(), 0);
+    end2.setHours(23, 59, 59, 999);
+    return { start, end: end2 };
   } else if (id === 'year') {
     start = new Date(now.getFullYear(), 0, 1);
   } else if (id === 'custom') {
@@ -36,12 +47,38 @@ export function inRange(date, range) {
 }
 
 const num = (n) => Number(n) || 0;
-const itemRevenue = (it) => num(it.price) * num(it.quantity);
+// Order line items are stored as {id, name, price, qty, ...} (see
+// src/pages/Checkout.jsx / secure_order in 0008_orders_phase5.sql) — NOT
+// {product_id, quantity}. A bundle line is the one exception: it carries its
+// own `id`/`qty` for the bundle itself, plus a `bundle_items[]` array whose
+// entries use `product_id`/`quantity` (see src/pages/BundleDetail.jsx).
+const itemRevenue = (it) => num(it.price) * num(it.qty);
+
+// Cost of goods sold for one order line, in the product's *current* unit
+// cost (matches translations.js's documented "COGS uses current product unit
+// cost" behavior). Bundle lines have no unit_cost of their own — they're
+// costed by expanding into their component products.
+function lineCogs(it, productMap) {
+  if (it.is_bundle) {
+    return (it.bundle_items || []).reduce(
+      (s, c) => s + num(productMap[c.product_id]?.unit_cost) * num(c.quantity) * num(it.qty),
+      0
+    );
+  }
+  return num(productMap[it.id]?.unit_cost) * num(it.qty);
+}
 
 // Map product id -> product (for unit cost + category lookups).
 export function buildProductMap(products) {
   const m = {};
   for (const p of products || []) m[p.id] = p;
+  return m;
+}
+
+// Map expense_category id -> category (bilingual name lookup for reports).
+export function buildCategoryMap(categories) {
+  const m = {};
+  for (const c of categories || []) m[c.id] = c;
   return m;
 }
 
@@ -63,12 +100,14 @@ export function salesReport(orders, productMap, range) {
     byDate[day] = (byDate[day] || 0) + num(o.total);
     for (const it of o.items || []) {
       const rev = itemRevenue(it);
-      cogs += num(productMap[it.product_id]?.unit_cost) * num(it.quantity);
-      const key = it.name || it.product_id || '—';
+      cogs += lineCogs(it, productMap);
+      const key = it.name || it.id || '—';
       byProduct[key] = byProduct[key] || { name: key, qty: 0, revenue: 0 };
-      byProduct[key].qty += num(it.quantity);
+      byProduct[key].qty += num(it.qty);
       byProduct[key].revenue += rev;
-      const cat = productMap[it.product_id]?.category;
+      // Bundles have no single category of their own (each component product
+      // does) — only attribute revenue to a category for plain product lines.
+      const cat = !it.is_bundle ? productMap[it.id]?.category : null;
       if (cat) byCategory[cat] = (byCategory[cat] || 0) + rev;
     }
   }
@@ -147,17 +186,71 @@ export function purchasesReport(purchaseOrders, range) {
   };
 }
 
-export function profitLoss(orders, productMap, range) {
+// Operating expenses only — rent, salaries, marketing, etc. Deliberately
+// separate from purchasesReport: supplier purchases are inventory and already
+// reach the P&L through COGS, so they must never appear here too.
+export function expensesReport(expenses, categories, range) {
+  const categoryMap = buildCategoryMap(categories);
+  const inR = (expenses || []).filter((e) => inRange(e.expense_date || e.created_date, range));
+  const total = inR.reduce((s, e) => s + num(e.amount), 0);
+  const byCategory = {};
+  const byDate = {};
+  const byMethod = {};
+  for (const e of inR) {
+    const cat = categoryMap[e.category_id];
+    const key = e.category_id || 'uncategorized';
+    byCategory[key] = byCategory[key] || {
+      category_id: e.category_id || null,
+      name: cat?.name || null,
+      name_en: cat?.name_en || null,
+      total: 0,
+      count: 0,
+    };
+    byCategory[key].total += num(e.amount);
+    byCategory[key].count += 1;
+    const day = (e.expense_date || e.created_date || '').slice(0, 10);
+    byDate[day] = (byDate[day] || 0) + num(e.amount);
+    const m = e.payment_method || 'unknown';
+    byMethod[m] = (byMethod[m] || 0) + num(e.amount);
+  }
+  return {
+    total,
+    count: inR.length,
+    byCategory: Object.values(byCategory).sort((a, b) => b.total - a.total),
+    byDate: Object.entries(byDate).map(([date, total]) => ({ date, total })).sort((a, b) => a.date.localeCompare(b.date)),
+    byMethod: Object.entries(byMethod).map(([method, total]) => ({ method, total })).sort((a, b) => b.total - a.total),
+  };
+}
+
+// `expenseRows`/`expenseCategories` default to [] so every existing call site
+// (before Reports.jsx is updated to pass them) keeps working with expenses=0,
+// exactly like the previous hardcoded literal — no call site breaks mid-rollout.
+export function profitLoss(orders, productMap, range, expenseRows = [], expenseCategories = []) {
   const inR = (orders || []).filter((o) => inRange(o.created_date, range) && normalizeStatus(o.status) !== 'cancelled');
-  let revenue = 0, cogs = 0;
+  let grossSales = 0, discounts = 0, revenue = 0, cogs = 0;
   for (const o of inR) {
-    revenue += num(o.total);
+    grossSales += num(o.subtotal);
+    discounts += num(o.discount_amount) + num(o.loyalty_discount);
+    revenue += num(o.total); // "Net Sales" — post-discount, matches salesReport's `net`.
     for (const it of o.items || []) {
-      cogs += num(productMap[it.product_id]?.unit_cost) * num(it.quantity);
+      cogs += lineCogs(it, productMap);
     }
   }
+  // Gross Profit is fully computed above, from sales and COGS only — expenses
+  // are introduced afterward and can only ever affect Net Profit.
   const grossProfit = revenue - cogs;
-  const expenses = 0; // No separate expense entity — supplier payments are inventory (COGS), not opex.
-  const netProfit = grossProfit - expenses;
-  return { revenue, cogs, grossProfit, expenses, netProfit, orderCount: inR.length };
+  const exp = expensesReport(expenseRows, expenseCategories, range);
+  const netProfit = grossProfit - exp.total;
+  return {
+    grossSales,
+    discounts,
+    revenue,
+    cogs,
+    grossProfit,
+    expenses: exp.total,
+    expensesByCategory: exp.byCategory,
+    expenseCount: exp.count,
+    netProfit,
+    orderCount: inR.length,
+  };
 }

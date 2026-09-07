@@ -55,7 +55,7 @@ export default function ProductSearch({ products, onAdd }) {
                   <div className="min-w-0 flex-1">
                     <p className="font-heading font-bold text-sm truncate">{p.name}</p>
                     <p className="text-xs text-muted-foreground truncate">
-                      {productSku(p) ? `#${productSku(p)} · ` : ''}{formatPrice(p.sale_price ?? p.price)} · {ar ? 'المخزون' : 'Stock'} {p.stock ?? 0}
+                      {productSku(p) ? <><bdi>{`#${productSku(p)}`}</bdi>{' · '}</> : ''}{formatPrice(p.sale_price ?? p.price)} · {ar ? 'المخزون' : 'Stock'} {p.stock ?? 0}
                     </p>
                   </div>
                 </button>

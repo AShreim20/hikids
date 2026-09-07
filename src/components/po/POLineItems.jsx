@@ -25,7 +25,9 @@ export default function POLineItems({ items, onChange, readOnly }) {
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <p className="font-heading font-bold text-sm truncate">{it.name}</p>
-                <p className="text-xs text-muted-foreground">{it.sku ? `#${it.sku}` : '\u00A0'}</p>
+                {/* bdi: the leading "#" is bidi-neutral, so without isolation
+                    "#SKU-00125" renders as "SKU-00125#" in the RTL page. */}
+                <p className="text-xs text-muted-foreground">{it.sku ? <bdi>{`#${it.sku}`}</bdi> : '\u00A0'}</p>
               </div>
               {!readOnly && (
                 <button type="button" onClick={() => remove(i)} className="squish grid place-items-center w-9 h-9 rounded-full bg-destructive/10 text-destructive shrink-0">
@@ -61,7 +63,7 @@ export default function POLineItems({ items, onChange, readOnly }) {
           <tbody>
             {items.map((it, i) => (
               <tr key={i} className="border-t border-border/60">
-                <td className="py-2 pe-3 text-muted-foreground whitespace-nowrap">{it.sku ? `#${it.sku}` : '—'}</td>
+                <td className="py-2 pe-3 text-muted-foreground whitespace-nowrap">{it.sku ? <bdi>{`#${it.sku}`}</bdi> : '—'}</td>
                 <td className="py-2 pe-3 font-medium">{it.name}</td>
                 <td className="py-2 pe-3">
                   <Cell readOnly={readOnly} value={it.quantity} onChange={(x) => update(i, { quantity: x, total: lineTotal({ ...it, quantity: x }) })} />
