@@ -2,6 +2,7 @@ import React from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { GripVertical, X, Plus, ChevronUp, ChevronDown } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
+import { parseFeaturesPaste } from '@/lib/features';
 
 // Dynamic, reorderable editor for a product's Arabic/English Features list
 // (short highlight phrases, not full sentences — kept separate from the
@@ -32,6 +33,38 @@ export default function FeatureListEditor({ items, onChange, dir, placeholder, a
     const next = Array.from(list);
     const [moved] = next.splice(res.source.index, 1);
     next.splice(res.destination.index, 0, moved);
+    onChange(next);
+  };
+
+  // Pasting a copied bullet/numbered/plain list into any one row expands it
+  // into that many separate rows instead of dumping the raw multi-line text
+  // into a single input. A single-line paste (even a lone bulleted line) is
+  // left completely alone — parseFeaturesPaste returns null for it — so the
+  // browser's normal paste-into-input behavior is unaffected.
+  const onPasteAt = (i) => (e) => {
+    const text = e.clipboardData?.getData('text');
+    const parsed = parseFeaturesPaste(text);
+    if (!parsed) return; // not a multi-line paste — let the native paste happen
+    e.preventDefault();
+
+    const currentEmpty = (list[i] || '').trim() === '';
+    // An empty row (e.g. one just added via "Add Feature") is replaced
+    // outright by the pasted items; a row already holding text is left as
+    // it is, with the pasted items inserted right after it.
+    const base = currentEmpty ? list.filter((_, idx) => idx !== i) : list;
+    const insertAt = currentEmpty ? i : i + 1;
+
+    const seen = new Set(base.map((v) => v.trim()));
+    const toInsert = [];
+    for (const feature of parsed) {
+      if (seen.has(feature)) continue; // duplicate of an existing feature — skip
+      seen.add(feature);
+      toInsert.push(feature);
+    }
+    if (!toInsert.length) return; // everything pasted was already in the list
+
+    const next = [...base];
+    next.splice(insertAt, 0, ...toInsert);
     onChange(next);
   };
 
@@ -83,6 +116,7 @@ export default function FeatureListEditor({ items, onChange, dir, placeholder, a
                         value={val}
                         dir={dir}
                         onChange={(e) => setAt(i, e.target.value)}
+                        onPaste={onPasteAt(i)}
                         placeholder={placeholder}
                         className="flex-1 min-w-0 h-10 px-3 rounded-xl bg-card border border-border text-sm focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic"
                       />
