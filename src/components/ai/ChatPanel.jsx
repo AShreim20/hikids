@@ -181,13 +181,14 @@ Current product catalog (ID | name | category | ages | price | stock):\n${catalo
     >
       <div className="flex items-center gap-3 px-4 py-3 bg-cosmic text-white shrink-0">
         {/* Official HiKids logo (the same asset Navbar uses), not a redrawn
-            icon — a small white circle behind it keeps it readable against
-            the purple header regardless of the logo art's own colors, while
-            the <img> itself keeps its natural proportions (only its height
-            is constrained). */}
-        <span className="shrink-0 grid place-items-center w-9 h-9 rounded-full bg-white/95 overflow-hidden shadow-sm">
-          <Logo className="h-6 w-auto" />
-        </span>
+            icon, shown directly on the purple header — no circular badge or
+            background. Width is fixed (~56px, within the requested 52-65px
+            range) and height is auto, so the logo's own aspect ratio is
+            preserved with no cropping; object-contain is redundant with
+            that (an unconstrained auto height never crops) but kept
+            explicit per spec. `shrink-0` keeps it from being squeezed by
+            the title/subtitle on narrow screens. */}
+        <Logo className="shrink-0 w-14 h-auto object-contain" />
         <div className="flex-1 min-w-0">
           <p className="font-heading font-bold leading-none truncate">{t('ai.title')}</p>
           <p className="text-xs text-white/70 mt-0.5 truncate">{t('ai.subtitle')}</p>
