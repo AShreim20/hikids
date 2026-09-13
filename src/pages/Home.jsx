@@ -6,6 +6,7 @@ import HeroCarousel from '@/components/HeroCarousel';
 import Newsletter from '@/components/Newsletter';
 import WorldOfPlay from '@/components/home/WorldOfPlay';
 import TrustBenefits from '@/components/home/TrustBenefits';
+import HomepageDealsSection from '@/components/home/HomepageDealsSection';
 
 export default function Home() {
   return (
@@ -23,6 +24,10 @@ export default function Home() {
 
       {/* Recommendations */}
       <Recommendations />
+
+      {/* Deals & Offers — hides itself entirely when there are no active
+          discounts right now. */}
+      <HomepageDealsSection />
 
       <Newsletter />
       <Footer />

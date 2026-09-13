@@ -105,6 +105,21 @@ export function GenderSection({ gender, setGender }) {
   );
 }
 
+// A single on/off toggle rather than a multi-select chip group (there's only
+// ever one real choice here) — same Chip visual so it doesn't invent a new
+// filter style, just used with one option instead of several.
+export function OnSaleSection({ onSale, setOnSale }) {
+  const { t } = useLanguage();
+  return (
+    <div>
+      <p className="text-sm font-heading font-bold mb-3">{t('plp.onSale')}</p>
+      <div className="flex flex-wrap gap-2">
+        <Chip active={onSale} onClick={() => setOnSale(!onSale)}>{t('plp.onSale')}</Chip>
+      </div>
+    </div>
+  );
+}
+
 export function AgeSection({ ages, setAges }) {
   const { t } = useLanguage();
   const toggle = (val) => setAges(ages.includes(val) ? ages.filter((x) => x !== val) : [...ages, val]);
@@ -127,9 +142,11 @@ export function AgeSection({ ages, setAges }) {
 export default function ProductFilters({
   cats, setCats, ages, setAges, priceBounds, price, setPrice,
   extraCategories = [], usedCategoryNames = [], gender, setGender,
+  onSale, setOnSale,
 }) {
   return (
     <div className="space-y-7">
+      <OnSaleSection onSale={onSale} setOnSale={setOnSale} />
       <CategorySection cats={cats} setCats={setCats} extraCategories={extraCategories} usedCategoryNames={usedCategoryNames} />
       <PriceSection priceBounds={priceBounds} price={price} setPrice={setPrice} />
       <GenderSection gender={gender} setGender={setGender} />

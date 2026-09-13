@@ -40,6 +40,10 @@ export function WishlistProvider({ children }) {
               name: product.name,
               name_en: product.name_en,
               price: product.price,
+              // Needed so priceInfo() can detect a product-level discount on
+              // the Wishlist page (see Wishlist.jsx) — without it, a
+              // sale_price discount silently never shows there.
+              sale_price: product.sale_price,
               image_url: product.image_url,
               category: product.category,
             },

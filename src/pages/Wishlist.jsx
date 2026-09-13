@@ -7,12 +7,17 @@ import Footer from '@/components/Footer';
 import { useWishlist } from '@/context/WishlistContext';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useCategories } from '@/context/CategoryContext';
 import { productName } from '@/lib/bilingual';
+import { priceInfo } from '@/lib/pricing';
+import SaleBadge from '@/components/SaleBadge';
+import DiscountPriceDisplay from '@/components/DiscountPriceDisplay';
 
 export default function Wishlist() {
   const { items, remove } = useWishlist();
   const { addItem } = useCart();
-  const { t, formatPrice, lang } = useLanguage();
+  const { t, lang } = useLanguage();
+  const { discountPctFor } = useCategories();
 
   return (
     <div className="min-h-screen bg-background">
@@ -40,7 +45,9 @@ export default function Wishlist() {
           </div>
         ) : (
           <div className="mt-12 grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {items.map((p) => (
+            {items.map((p) => {
+              const { original, final, hasDiscount, discountPct } = priceInfo(p, discountPctFor(p.category));
+              return (
               <div
                 key={p.id}
                 className="group rounded-[2rem] bg-card border border-border/60 overflow-hidden flex flex-col transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_-28px_rgba(26,26,30,0.35)]"
@@ -52,6 +59,10 @@ export default function Wishlist() {
                     fittingType="fill"
                     className="w-full h-full transition-transform duration-700 group-hover:scale-105"
                   />
+                  {/* This card's own controls (Remove/Add) live below the
+                      image, not overlaid on a corner, so the badge is free
+                      to sit at the top-start with nothing to collide with. */}
+                  {hasDiscount && <SaleBadge percentage={discountPct} className="absolute top-4 start-4 z-10" />}
                 </Link>
                 <div className="p-5 flex flex-col flex-1">
                   <p className="text-xs text-muted-foreground">{p.category}</p>
@@ -61,9 +72,13 @@ export default function Wishlist() {
                   >
                     {productName(p, lang)}
                   </Link>
-                  <p className="mt-2 font-heading font-extrabold text-xl text-cosmic">
-                    {formatPrice(p.price || 0)}
-                  </p>
+                  <DiscountPriceDisplay
+                    original={original}
+                    final={final}
+                    hasDiscount={hasDiscount}
+                    discountPct={discountPct}
+                    className="mt-2"
+                  />
                   <div className="mt-auto pt-4 flex items-center gap-2">
                     <button
                       onClick={() => addItem(p, 1)}
@@ -81,7 +96,8 @@ export default function Wishlist() {
                   </div>
                 </div>
               </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

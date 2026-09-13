@@ -12,6 +12,8 @@ import { priceInfo } from '@/lib/pricing';
 import { productName } from '@/lib/bilingual';
 import { ageLabels } from '@/lib/ages';
 import { hasVariants, getVariants, isSellable } from '@/lib/variants';
+import SaleBadge from '@/components/SaleBadge';
+import DiscountPriceDisplay from '@/components/DiscountPriceDisplay';
 
 const CAT_LABEL = {
   'Build & Create': 'cat.build',
@@ -35,12 +37,12 @@ export default function ProductCard({ product, large = false, avgRating = 0, rev
   const { addItem } = useCart();
   const { flyToCart } = useCartFly();
   const { toggle, isSaved } = useWishlist();
-  const { t, formatPrice, lang } = useLanguage();
+  const { t, lang } = useLanguage();
   const ar = lang === 'ar';
   const { toast } = useToast();
   const { discountPctFor, byName, categoryName } = useCategories();
   const [added, setAdded] = useState(false);
-  const { original, final, hasDiscount } = priceInfo(product, discountPctFor(product.category));
+  const { original, final, hasDiscount, discountPct } = priceInfo(product, discountPctFor(product.category));
   const saved = isSaved(product.id);
   const variantMode = hasVariants(product);
   const outOfStock = variantMode
@@ -89,10 +91,19 @@ export default function ProductCard({ product, large = false, avgRating = 0, rev
           fittingType="fill"
           className="w-full h-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.07]"
         />
-        {outOfStock && (
-          <span className="absolute top-4 right-4 px-3 py-1.5 rounded-full bg-destructive text-white text-[11px] font-heading font-bold shadow-lg">
-            {t('pd.outOfStock')}
-          </span>
+        {/* Top-right stack: the sale badge and the out-of-stock badge share
+            this corner (opposite the wishlist heart) — stacked vertically,
+            never overlapping, so a discounted-but-sold-out product shows
+            both without collision. */}
+        {(hasDiscount || outOfStock) && (
+          <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
+            {hasDiscount && <SaleBadge percentage={discountPct} />}
+            {outOfStock && (
+              <span className="px-3 py-1.5 rounded-full bg-destructive text-white text-[11px] font-heading font-bold shadow-lg">
+                {t('pd.outOfStock')}
+              </span>
+            )}
+          </div>
         )}
         <button
           onClick={handleWish}
@@ -150,10 +161,13 @@ export default function ProductCard({ product, large = false, avgRating = 0, rev
           </div>
         )}
         <p className="mt-1 text-sm text-muted-foreground">{t('pd.ages')} {ageLabels(product, t)}</p>
-        <p className="mt-2 font-heading font-extrabold text-xl">
-          {formatPrice(final)}
-          {hasDiscount && <span className="ml-2 text-sm text-muted-foreground line-through">{formatPrice(original)}</span>}
-        </p>
+        <DiscountPriceDisplay
+          original={original}
+          final={final}
+          hasDiscount={hasDiscount}
+          discountPct={discountPct}
+          className="mt-2"
+        />
         {outOfStock && (
           <p className="mt-1 text-sm font-heading font-bold text-destructive">{t('pd.outOfStock')}</p>
         )}

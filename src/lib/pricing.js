@@ -23,3 +23,21 @@ export function priceInfo(product, catPct = 0) {
 
   return { original, final, discountPct, hasDiscount: final < original, source };
 }
+
+// Centralized "is this product on sale right now" check — the ONE place
+// this decision is made, reused everywhere a discount badge, filter, or
+// sale price display is needed (product cards, PLP, product detail,
+// wishlist, similar/related products, homepage deals). Never duplicate
+// this boolean elsewhere; a product's discount schema (price/sale_price,
+// plus a category's discount_active/discount_percent) has no start/end
+// date fields today, so there is no date-range check to perform — if such
+// fields are ever added, this is the only function that needs to change.
+export function isProductOnSale(product, catPct = 0) {
+  return priceInfo(product, catPct).hasDiscount;
+}
+
+// Whole-number discount percentage, derived the same way priceInfo already
+// computes it — never store/hardcode a percentage separately from price.
+export function getDiscountPercentage(product, catPct = 0) {
+  return priceInfo(product, catPct).discountPct;
+}

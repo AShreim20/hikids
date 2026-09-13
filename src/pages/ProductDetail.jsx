@@ -310,6 +310,15 @@ export default function ProductDetail({ preview = false }) {
             {compareOriginal != null && (
               <span className="text-base text-muted-foreground/70 line-through">{formatPrice(compareOriginal)}</span>
             )}
+            {/* "Save X%" — derived from the same price/compareOriginal this
+                page already resolved (covers both the variant compare_price
+                path and the priceInfo()/category-discount path), never a
+                second discount calculation. */}
+            {compareOriginal != null && compareOriginal > 0 && (
+              <span className="inline-flex items-center px-2.5 py-1 rounded-full bg-accent/10 text-accent text-sm font-heading font-bold">
+                {t('pd.save').replace('{p}', Math.round((1 - price / compareOriginal) * 100))}
+              </span>
+            )}
           </div>
 
           {/* Mobile buy actions — placed right under the price so they're

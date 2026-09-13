@@ -56,12 +56,35 @@ function normalizeGenderTag(raw) {
 }
 
 // Effective price: product sale_price wins; otherwise category discount.
+// Mirrors src/lib/pricing.js's priceInfo() — kept in sync manually since
+// this Edge Function runs in Deno and can't import that Vite-bundled
+// client module. Any change to the discount rule belongs in both places.
 function effectivePrice(product, catPct) {
   const base = Number(product?.price) || 0;
   const sale = product?.sale_price != null ? Number(product.sale_price) : null;
   if (sale != null && sale < base) return sale;
   if (catPct > 0) return Math.round(base * (1 - catPct / 100) * 100) / 100;
   return base;
+}
+
+// "Is this product on sale" / discount % — same rule as effectivePrice
+// above and src/lib/pricing.js's isProductOnSale()/getDiscountPercentage().
+// No discount start/end date columns exist on products or categories today,
+// so there is no date-range check here — see that file's own comment.
+function isOnSale(product, catPct) {
+  const base = Number(product?.price) || 0;
+  if (base <= 0) return false;
+  const sale = product?.sale_price != null ? Number(product.sale_price) : null;
+  if (sale != null && sale < base) return true;
+  return catPct > 0;
+}
+
+function discountPercent(product, catPct) {
+  const base = Number(product?.price) || 0;
+  if (base <= 0) return 0;
+  const sale = product?.sale_price != null ? Number(product.sale_price) : null;
+  if (sale != null && sale < base) return Math.round((1 - sale / base) * 100);
+  return catPct > 0 ? catPct : 0;
 }
 
 // PostgREST's `in.()`/array-literal filter syntax needs double-quoting for
@@ -126,6 +149,7 @@ Deno.serve(async (req) => {
     const normalizedGender = normalizeGenderTag(body.gender);
     const gender = normalizedGender === 'male' || normalizedGender === 'female' ? normalizedGender : null;
     const search = String(body.search || '').trim();
+    const onSale = !!body.onSale;
     const priceActive = !!body.priceActive;
     const priceMin = Number(body.priceMin);
     const priceMax = Number(body.priceMax);
@@ -155,10 +179,12 @@ Deno.serve(async (req) => {
     const catIds = cats.map((n) => catByName[n]?.id).filter(Boolean);
 
     // gender is now a plain DB-level filter (see applyCommonFilters) — only
-    // price/age filtering or price sorting still need the matched set
-    // pulled into memory (age_range is a legacy free-text string, and
-    // effective price depends on the category's live discount).
-    const inMemoryNeeded = priceActive || ages.length > 0 || sort === 'priceLow' || sort === 'priceHigh';
+    // price/age/onSale filtering or price/discount sorting still need the
+    // matched set pulled into memory (age_range is a legacy free-text
+    // string, and effective price/discount depend on the category's live
+    // discount, which isn't expressible as a single-column DB filter).
+    const inMemoryNeeded =
+      priceActive || onSale || ages.length > 0 || sort === 'priceLow' || sort === 'priceHigh' || sort === 'discount';
 
     let items = [];
     let total = null;
@@ -183,6 +209,7 @@ Deno.serve(async (req) => {
 
       const selectedAges = AGE_OPTIONS.filter((g) => ages.includes(g.id));
       const filtered = matched.filter((p) => {
+        if (onSale && !isOnSale(p, catPctFor(p.category))) return false;
         if (priceActive) {
           const ep = effectivePrice(p, catPctFor(p.category));
           if (ep < priceMin || ep > priceMax) return false;
@@ -202,6 +229,7 @@ Deno.serve(async (req) => {
       filtered.sort((a, b) => {
         if (sort === 'priceLow') return effectivePrice(a, catPctFor(a.category)) - effectivePrice(b, catPctFor(b.category));
         if (sort === 'priceHigh') return effectivePrice(b, catPctFor(b.category)) - effectivePrice(a, catPctFor(a.category));
+        if (sort === 'discount') return discountPercent(b, catPctFor(b.category)) - discountPercent(a, catPctFor(a.category));
         if (sort === 'newest') return new Date(b.created_date) - new Date(a.created_date);
         return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
       });
