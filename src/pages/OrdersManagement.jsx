@@ -12,14 +12,18 @@ import { PreviewInvoiceButton } from '@/components/orders/OrderInvoice';
 import { usePermissions } from '@/lib/permissions';
 import { useLanguage } from '@/context/LanguageContext';
 import {
-  MAIN_FLOW, RETURN_STATUSES, normalizeStatus, statusLabel,
+  MAIN_FLOW, RETURN_STATUSES, normalizeStatus, statusLabel, orderRef,
 } from '@/lib/orderStatus';
+import { buildProductMap, lineCogs } from '@/lib/reports';
+import { lineItemName } from '@/lib/bilingual';
+import { fetchAllRows, toExcelDate, todayStamp } from '@/lib/excelExportHelpers';
+import ExportExcelButton from '@/components/admin/ExportExcelButton';
 
 const TABS = ['all', ...MAIN_FLOW, 'cancelled', 'returns'];
 
 export default function OrdersManagement() {
   const { can } = usePermissions();
-  const { lang } = useLanguage();
+  const { t, lang } = useLanguage();
   const ar = lang === 'ar';
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -84,6 +88,110 @@ export default function OrdersManagement() {
     return [...list].sort(by[filters.sort] || by.newest);
   }, [orders, tab, filters]);
 
+  // ── Excel export ──────────────────────────────────────────────────────
+  // Two sheets (task §6, preferred over one summarized row): Orders, and
+  // Order Items for line-level detail. Cost/Profit reuse reports.js's own
+  // lineCogs() — the exact same per-line COGS math salesReport()/
+  // profitLoss() already use — so this can never disagree with the Reports
+  // page. Order Items has no "Discount" column: a line's `price` is already
+  // the final effective per-unit price (order-level coupon/loyalty
+  // discounts are their own columns on the Orders sheet), so there is no
+  // separate real per-line discount value to report — better to omit the
+  // column than fabricate one.
+  const paymentLabel = (m) => (m === 'card' ? t('checkout.card') : m === 'cod' ? t('checkout.cod') : m === 'loyalty' ? t('checkout.payWithPoints') : (m || ''));
+
+  const orderColumns = [
+    { header: ar ? 'رقم الطلب' : 'Order Number', key: 'ref', width: 14 },
+    { header: ar ? 'تاريخ الطلب' : 'Order Date', key: 'date', width: 14, type: 'date' },
+    { header: ar ? 'اسم العميل' : 'Customer Name', key: 'customer', width: 22, wrap: true },
+    { header: ar ? 'الهاتف' : 'Phone', key: 'phone', width: 16 },
+    { header: ar ? 'البريد الإلكتروني' : 'Email', key: 'email', width: 22 },
+    { header: ar ? 'المدينة' : 'City', key: 'city', width: 14 },
+    { header: ar ? 'عنوان التوصيل' : 'Delivery Address', key: 'address', width: 28, wrap: true },
+    { header: ar ? 'حالة الطلب' : 'Order Status', key: 'status', width: 16 },
+    { header: ar ? 'طريقة الدفع' : 'Payment Method', key: 'payment', width: 16 },
+    { header: ar ? 'المجموع الفرعي' : 'Subtotal', key: 'subtotal', width: 14, type: 'currency' },
+    { header: ar ? 'خصم الكوبون' : 'Coupon Discount', key: 'coupon_discount', width: 14, type: 'currency' },
+    { header: ar ? 'نقاط الولاء المستخدمة' : 'Loyalty Points Used', key: 'loyalty_points', width: 16, type: 'int' },
+    { header: ar ? 'خصم الولاء' : 'Loyalty Discount', key: 'loyalty_discount', width: 14, type: 'currency' },
+    { header: ar ? 'رسوم التوصيل' : 'Delivery Fee', key: 'delivery_fee', width: 14, type: 'currency' },
+    { header: ar ? 'الإجمالي' : 'Total', key: 'total', width: 14, type: 'currency' },
+    { header: ar ? 'التكلفة' : 'Cost', key: 'cost', width: 14, type: 'currency' },
+    { header: ar ? 'الربح' : 'Profit', key: 'profit', width: 14, type: 'currency' },
+  ];
+  const itemColumns = [
+    { header: ar ? 'رقم الطلب' : 'Order Number', key: 'ref', width: 14 },
+    { header: ar ? 'اسم المنتج' : 'Product Name', key: 'name', width: 26, wrap: true },
+    { header: 'SKU', key: 'sku', width: 16 },
+    { header: ar ? 'الباركود' : 'Barcode', key: 'barcode', width: 16 },
+    { header: ar ? 'الكمية' : 'Quantity', key: 'qty', width: 10, type: 'int' },
+    { header: ar ? 'سعر الوحدة' : 'Unit Price', key: 'unit_price', width: 14, type: 'currency' },
+    { header: ar ? 'الإجمالي' : 'Line Total', key: 'line_total', width: 14, type: 'currency' },
+    { header: ar ? 'تكلفة الوحدة' : 'Unit Cost', key: 'unit_cost', width: 14, type: 'currency' },
+    { header: ar ? 'الربح' : 'Profit', key: 'profit', width: 14, type: 'currency' },
+  ];
+
+  const buildOrderRow = (o, productMap) => {
+    const cost = (o.items || []).reduce((s, it) => s + lineCogs(it, productMap), 0);
+    const total = Number(o.total) || 0;
+    return {
+      ref: orderRef(o),
+      date: toExcelDate(o.created_date),
+      customer: o.customer_name || '',
+      phone: o.phone || '',
+      email: o.customer_email || '',
+      city: o.city || '',
+      address: o.address || '',
+      status: statusLabel(normalizeStatus(o.status), lang),
+      payment: paymentLabel(o.payment_method),
+      subtotal: Number(o.subtotal) || 0,
+      coupon_discount: Number(o.discount_amount) || 0,
+      loyalty_points: Number(o.loyalty_points) || 0,
+      loyalty_discount: Number(o.loyalty_discount) || 0,
+      delivery_fee: Number(o.delivery_cost) || 0,
+      total,
+      cost,
+      profit: total - cost,
+    };
+  };
+  const buildItemRows = (o, productMap) =>
+    (o.items || []).map((it) => {
+      const qty = Number(it.qty) || 0;
+      const price = Number(it.price) || 0;
+      const cost = lineCogs(it, productMap);
+      return {
+        ref: orderRef(o),
+        name: lineItemName(it, lang),
+        sku: it.sku || '',
+        barcode: it.is_bundle ? '' : (productMap[it.id]?.barcode || ''),
+        qty,
+        unit_price: price,
+        line_total: qty * price,
+        unit_cost: qty > 0 ? cost / qty : 0,
+        profit: qty * price - cost,
+      };
+    });
+
+  const getOrderSheets = async (scope) => {
+    const [allOrders, products] = await Promise.all([
+      scope === 'all' ? fetchAllRows(db.Order, '-created_date') : Promise.resolve(orders),
+      fetchAllRows(db.Product, '-updated_date'),
+    ]);
+    const productMap = buildProductMap(products);
+    const rows = scope === 'all' ? allOrders : visible;
+    return {
+      sheets: [
+        { name: ar ? 'الطلبات' : 'Orders', columns: orderColumns, rows: rows.map((o) => buildOrderRow(o, productMap)) },
+        {
+          name: ar ? 'عناصر الطلب' : 'Order Items',
+          columns: itemColumns,
+          rows: rows.flatMap((o) => buildItemRows(o, productMap)),
+        },
+      ],
+      fileName: `orders_${todayStamp()}.xlsx`,
+    };
+  };
+
   if (!allowed) {
     return (
       <div className="min-h-screen bg-background">
@@ -141,8 +249,11 @@ export default function OrdersManagement() {
           ))}
         </div>
 
-        <div className="mt-4">
-          <OrderFilters value={filters} onChange={setFilters} cities={cities} />
+        <div className="mt-4 flex flex-col sm:flex-row sm:items-start gap-3">
+          <div className="flex-1 min-w-0">
+            <OrderFilters value={filters} onChange={setFilters} cities={cities} />
+          </div>
+          <ExportExcelButton getSheets={getOrderSheets} scopes={['filtered', 'all']} className="shrink-0" />
         </div>
 
         {loading ? (

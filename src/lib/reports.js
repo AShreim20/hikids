@@ -58,7 +58,7 @@ const itemRevenue = (it) => num(it.price) * num(it.qty);
 // cost (matches translations.js's documented "COGS uses current product unit
 // cost" behavior). Bundle lines have no unit_cost of their own — they're
 // costed by expanding into their component products.
-function lineCogs(it, productMap) {
+export function lineCogs(it, productMap) {
   if (it.is_bundle) {
     return (it.bundle_items || []).reduce(
       (s, c) => s + num(productMap[c.product_id]?.unit_cost) * num(c.quantity) * num(it.qty),

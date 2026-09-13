@@ -8,6 +8,8 @@ import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { rewardLabel } from '@/lib/rewards';
 import { spinRewardName, spinProductName } from '@/lib/bilingual';
+import { fetchAllRows, toExcelDate, todayStamp } from '@/lib/excelExportHelpers';
+import ExportExcelButton from '@/components/admin/ExportExcelButton';
 
 const expired = (s) => s.expires_at && new Date(s.expires_at) < new Date();
 const statusOf = (s) => {
@@ -60,6 +62,37 @@ export default function WheelWinners() {
 
   const setSpinStatus = async (s, st) => { await db.WheelSpin.update(s.id, { status: st }); load(); };
 
+  // ── Excel export ──────────────────────────────────────────────────────
+  const winnerColumns = [
+    { header: ar ? 'اسم العميل' : 'Customer Name', key: 'name', width: 20 },
+    { header: ar ? 'الهاتف' : 'Phone', key: 'phone', width: 16 },
+    { header: ar ? 'البريد الإلكتروني' : 'Email', key: 'email', width: 24 },
+    { header: ar ? 'المكافأة' : 'Reward', key: 'reward', width: 22 },
+    { header: ar ? 'النوع' : 'Type', key: 'type', width: 16 },
+    { header: ar ? 'الكود / المنتج' : 'Code / Product', key: 'code', width: 20 },
+    { header: ar ? 'التاريخ' : 'Date', key: 'date', width: 14, type: 'date' },
+    { header: ar ? 'الحالة' : 'Status', key: 'status', width: 14 },
+    { header: ar ? 'رقم الطلب' : 'Order', key: 'order', width: 14 },
+  ];
+  const buildWinnerRow = (s) => ({
+    name: s.customer_name || '',
+    phone: s.customer_phone || '',
+    email: s.user_email || '',
+    reward: spinRewardName(s, lang),
+    type: s.reward_type || '',
+    code: s.discount_code || (s.product_name ? spinProductName(s, lang) : ''),
+    date: toExcelDate(s.created_date),
+    status: statusLabel(statusOf(s), ar),
+    order: s.redeemed_order_id ? `#${String(s.redeemed_order_id).slice(-6).toUpperCase()}` : '',
+  });
+  const getWinnerSheets = async (scope) => {
+    const rows = scope === 'all' ? await fetchAllRows(db.WheelSpin, '-created_date') : filtered;
+    return {
+      sheets: [{ name: ar ? 'الفائزون' : 'Wheel Winners', columns: winnerColumns, rows: rows.map(buildWinnerRow) }],
+      fileName: `wheel-winners_${todayStamp()}.xlsx`,
+    };
+  };
+
   if (user?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-background"><Navbar />
@@ -80,9 +113,12 @@ export default function WheelWinners() {
       <Navbar />
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 md:pl-16">
         <Link to="/" className="text-sm text-muted-foreground">← {ar ? 'العودة' : 'Back'}</Link>
-        <div className="mt-4 flex items-center gap-3">
-          <div className="grid place-items-center w-12 h-12 rounded-2xl bg-accent/10 text-accent"><Trophy className="w-6 h-6" /></div>
-          <div><h1 className="font-heading font-extrabold text-3xl md:text-4xl">{ar ? 'الفائزون' : 'Wheel Winners'}</h1><p className="text-muted-foreground text-sm">{ar ? 'كل من ربح من العجلة' : 'Everyone who won from the wheel'}</p></div>
+        <div className="mt-4 flex items-center justify-between flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <div className="grid place-items-center w-12 h-12 rounded-2xl bg-accent/10 text-accent"><Trophy className="w-6 h-6" /></div>
+            <div><h1 className="font-heading font-extrabold text-3xl md:text-4xl">{ar ? 'الفائزون' : 'Wheel Winners'}</h1><p className="text-muted-foreground text-sm">{ar ? 'كل من ربح من العجلة' : 'Everyone who won from the wheel'}</p></div>
+          </div>
+          <ExportExcelButton getSheets={getWinnerSheets} scopes={['filtered', 'all']} />
         </div>
 
         {/* Filters */}

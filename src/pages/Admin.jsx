@@ -9,14 +9,21 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useCategories } from '@/context/CategoryContext';
 import ProductListRow from '@/components/admin/ProductListRow';
+import ExportExcelButton from '@/components/admin/ExportExcelButton';
 import { PeriodSelector, StatCard } from '@/components/reports/ReportShared';
 import { periodRange, profitLoss, buildProductMap } from '@/lib/reports';
+import { fetchAllRows, toExcelDate, todayStamp } from '@/lib/excelExportHelpers';
+import { productFeatures, categoryName } from '@/lib/bilingual';
+import { ageLabels } from '@/lib/ages';
+import { hasVariants, getVariants } from '@/lib/variants';
 
 export default function Admin() {
   const { user } = useAuth();
   const { t, lang, formatPrice } = useLanguage();
   const { toast } = useToast();
+  const { categories } = useCategories();
   const navigate = useNavigate();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -74,6 +81,14 @@ export default function Admin() {
 
   const productMap = useMemo(() => buildProductMap(products), [products]);
   const finRange = useMemo(() => periodRange(period, custom), [period, custom]);
+  // Used by the Excel export to resolve a product's Additional Categories
+  // (stored as ids) to display names — declared here, before the early
+  // return below, since it's a hook (must run unconditionally every render).
+  const categoryNameById = useMemo(() => {
+    const m = {};
+    for (const c of categories) m[c.id] = categoryName(c, lang);
+    return m;
+  }, [categories, lang]);
   const pnl = useMemo(
     () => profitLoss(orders, productMap, finRange, expenses, expenseCategories),
     [orders, productMap, finRange, expenses, expenseCategories]
@@ -145,6 +160,116 @@ export default function Admin() {
       return n;
     });
   const clearSel = () => setSelected(new Set());
+
+  // ── Excel export ──────────────────────────────────────────────────────
+  // Two sheets from one export: full Product detail (task §5) plus an
+  // Inventory/Stock view (task §11) derived from the same rows — both are
+  // "the product list", just projected differently, so one export covers
+  // both required pages instead of duplicating the fetch/format logic.
+  const ar = lang === 'ar';
+  const genderLabel = (g) => (g === 'male' ? t('gender.boy') : g === 'female' ? t('gender.girl') : g === 'both' ? t('gender.both') : '');
+  const totalStock = (p) => (hasVariants(p) ? getVariants(p).reduce((s, v) => s + (Number(v.stock) || 0), 0) : Number(p.stock) || 0);
+  const stockStatusLabel = (stock) => (stock > 0 ? (ar ? 'متوفر' : 'Available') : (ar ? 'غير متوفر' : 'Out of stock'));
+
+  const buildProductRow = (p) => {
+    const skus = Array.isArray(p.variants) ? p.variants.map((v) => v.sku).filter(Boolean) : [];
+    const extraCats = Array.isArray(p.category_ids) ? p.category_ids.map((id) => categoryNameById[id]).filter(Boolean) : [];
+    const stock = totalStock(p);
+    return {
+      id: p.id,
+      name: p.name || '',
+      name_en: p.name_en || '',
+      sku: skus.join(' | '),
+      barcode: p.barcode || '',
+      category: p.category || '',
+      extra_categories: extraCats.join(' | '),
+      gender: genderLabel(p.gender),
+      age: ageLabels(p, t),
+      price: Number(p.price) || 0,
+      sale_price: p.sale_price != null ? Number(p.sale_price) : null,
+      unit_cost: p.unit_cost != null ? Number(p.unit_cost) : null,
+      stock,
+      stock_status: stockStatusLabel(stock),
+      status_label: p.status === 'draft' ? t('admin.statusDraft') : t('admin.statusPublished'),
+      features: productFeatures(p, lang).join(' | '),
+      material: p.material || '',
+      tags: Array.isArray(p.tags) ? p.tags.join(' | ') : '',
+      created_date: toExcelDate(p.created_date),
+      updated_date: toExcelDate(p.updated_date),
+    };
+  };
+  const buildInventoryRow = (p) => {
+    const skus = Array.isArray(p.variants) ? p.variants.map((v) => v.sku).filter(Boolean) : [];
+    const stock = totalStock(p);
+    const unitCost = Number(p.unit_cost) || 0;
+    return {
+      name: p.name || '',
+      sku: skus.join(' | '),
+      barcode: p.barcode || '',
+      category: p.category || '',
+      stock,
+      unit_cost: p.unit_cost != null ? unitCost : null,
+      price: Number(p.price) || 0,
+      inventory_value: stock * unitCost,
+      stock_status: stockStatusLabel(stock),
+    };
+  };
+  const productColumns = [
+    { header: ar ? 'معرف المنتج' : 'Product ID', key: 'id', width: 24 },
+    { header: ar ? 'الاسم (عربي)' : 'Arabic Name', key: 'name', width: 26, wrap: true },
+    { header: ar ? 'الاسم (إنجليزي)' : 'English Name', key: 'name_en', width: 26, wrap: true },
+    { header: 'SKU', key: 'sku', width: 18, wrap: true },
+    { header: ar ? 'الباركود' : 'Barcode', key: 'barcode', width: 16 },
+    { header: ar ? 'الفئة الرئيسية' : 'Category', key: 'category', width: 18 },
+    { header: ar ? 'فئات إضافية' : 'Additional Categories', key: 'extra_categories', width: 24, wrap: true },
+    { header: ar ? 'الجنس' : 'Gender', key: 'gender', width: 10 },
+    { header: ar ? 'الفئة العمرية' : 'Age', key: 'age', width: 16 },
+    { header: ar ? 'سعر البيع' : 'Selling Price', key: 'price', width: 14, type: 'currency' },
+    { header: ar ? 'سعر الخصم' : 'Discount Price', key: 'sale_price', width: 14, type: 'currency' },
+    { header: ar ? 'تكلفة الوحدة' : 'Unit Cost', key: 'unit_cost', width: 14, type: 'currency' },
+    { header: ar ? 'الكمية' : 'Stock Quantity', key: 'stock', width: 14, type: 'int' },
+    { header: ar ? 'حالة المخزون' : 'Stock Status', key: 'stock_status', width: 16 },
+    { header: ar ? 'الحالة' : 'Published Status', key: 'status_label', width: 16 },
+    { header: ar ? 'المزايا' : 'Features', key: 'features', width: 32, wrap: true },
+    { header: ar ? 'الخامة' : 'Material', key: 'material', width: 16 },
+    { header: ar ? 'الوسوم' : 'Tags', key: 'tags', width: 22, wrap: true },
+    { header: ar ? 'تاريخ الإنشاء' : 'Created Date', key: 'created_date', width: 14, type: 'date' },
+    { header: ar ? 'تاريخ التحديث' : 'Updated Date', key: 'updated_date', width: 14, type: 'date' },
+  ];
+  const inventoryColumns = [
+    { header: ar ? 'اسم المنتج' : 'Product Name', key: 'name', width: 26, wrap: true },
+    { header: 'SKU', key: 'sku', width: 18, wrap: true },
+    { header: ar ? 'الباركود' : 'Barcode', key: 'barcode', width: 16 },
+    { header: ar ? 'الفئة' : 'Category', key: 'category', width: 18 },
+    { header: ar ? 'المخزون الحالي' : 'Current Stock', key: 'stock', width: 14, type: 'int' },
+    { header: ar ? 'تكلفة الوحدة' : 'Unit Cost', key: 'unit_cost', width: 14, type: 'currency' },
+    { header: ar ? 'سعر البيع' : 'Selling Price', key: 'price', width: 14, type: 'currency' },
+    { header: ar ? 'قيمة المخزون' : 'Inventory Value', key: 'inventory_value', width: 16, type: 'currency' },
+    { header: ar ? 'حالة المخزون' : 'Stock Status', key: 'stock_status', width: 16 },
+  ];
+
+  const getProductSheets = async (scope) => {
+    let rows;
+    if (scope === 'selected') {
+      rows = products.filter((p) => selected.has(p.id));
+      if (!rows.length) {
+        toast({ title: ar ? 'لم يتم تحديد أي صف' : 'No rows selected', variant: 'destructive' });
+        return null;
+      }
+    } else {
+      // Re-fetch beyond the 500-row on-screen cap so the export is complete
+      // even for a catalog larger than what's loaded for display.
+      const all = await fetchAllRows(db.Product, '-updated_date');
+      rows = scope === 'all' ? all : all.filter(matches).filter(matchesStatus);
+    }
+    return {
+      sheets: [
+        { name: ar ? 'المنتجات' : 'Products', columns: productColumns, rows: rows.map(buildProductRow) },
+        { name: ar ? 'المخزون' : 'Inventory', columns: inventoryColumns, rows: rows.map(buildInventoryRow) },
+      ],
+      fileName: `products_${todayStamp()}.xlsx`,
+    };
+  };
 
   const remove = async (p) => {
     if (!window.confirm(t('admin.confirmDelete'))) return;
@@ -320,20 +445,26 @@ export default function Admin() {
             </div>
           </div>
 
-          <div className="mt-3 flex items-center gap-1 p-1 rounded-full bg-mist w-fit max-w-full overflow-x-auto">
-            {[
-              ['all', `${t('admin.filterAll')} (${products.length})`],
-              ['published', `${t('admin.filterPublished')} (${publishedCount})`],
-              ['draft', `${t('admin.filterDraft')} (${draftCount})`],
-            ].map(([m, label]) => (
-              <button
-                key={m}
-                onClick={() => setStatusFilter(m)}
-                className={`shrink-0 h-9 px-3 rounded-full text-xs font-heading font-bold transition-colors ${statusFilter === m ? 'bg-cosmic text-white' : 'text-foreground/70'}`}
-              >
-                {label}
-              </button>
-            ))}
+          <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-1 p-1 rounded-full bg-mist w-fit max-w-full overflow-x-auto">
+              {[
+                ['all', `${t('admin.filterAll')} (${products.length})`],
+                ['published', `${t('admin.filterPublished')} (${publishedCount})`],
+                ['draft', `${t('admin.filterDraft')} (${draftCount})`],
+              ].map(([m, label]) => (
+                <button
+                  key={m}
+                  onClick={() => setStatusFilter(m)}
+                  className={`shrink-0 h-9 px-3 rounded-full text-xs font-heading font-bold transition-colors ${statusFilter === m ? 'bg-cosmic text-white' : 'text-foreground/70'}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <ExportExcelButton
+              getSheets={getProductSheets}
+              scopes={selected.size > 0 ? ['filtered', 'all', 'selected'] : ['filtered', 'all']}
+            />
           </div>
 
           {/* Select all + visible count — lives with the list, not the search. */}

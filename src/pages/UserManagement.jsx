@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/components/ui/use-toast';
+import { fetchAllRows, toExcelDate, todayStamp } from '@/lib/excelExportHelpers';
+import ExportExcelButton from '@/components/admin/ExportExcelButton';
 import {
   AlertDialog,
   AlertDialogContent,
@@ -54,7 +56,8 @@ function RoleBadge({ role, t }) {
 
 export default function UserManagement() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const ar = lang === 'ar';
   const { toast } = useToast();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -104,6 +107,33 @@ export default function UserManagement() {
     }),
     [users]
   );
+
+  // ── Excel export ──────────────────────────────────────────────────────
+  const roleLabel = (u) => {
+    const r = roleOf(u, ownerId);
+    return r === OWNER ? t('users.owner') : r === ADMIN ? t('users.admin') : t('users.user');
+  };
+  const userColumns = [
+    { header: ar ? 'الاسم الكامل' : 'Full Name', key: 'name', width: 22, wrap: true },
+    { header: ar ? 'البريد الإلكتروني' : 'Email', key: 'email', width: 26 },
+    { header: ar ? 'الهاتف' : 'Phone', key: 'phone', width: 16 },
+    { header: ar ? 'الدور' : 'Role', key: 'role', width: 12 },
+    { header: ar ? 'تاريخ الانضمام' : 'Joined', key: 'joined', width: 14, type: 'date' },
+  ];
+  const buildUserRow = (u) => ({
+    name: u.full_name || '',
+    email: u.email || '',
+    phone: u.phone || '',
+    role: roleLabel(u),
+    joined: toExcelDate(u.created_at),
+  });
+  const getUserSheets = async (scope) => {
+    const rows = scope === 'all' ? await fetchAllRows(db.Profile, '-created_at') : filtered;
+    return {
+      sheets: [{ name: ar ? 'المستخدمون' : 'Users', columns: userColumns, rows: rows.map(buildUserRow) }],
+      fileName: `users_${todayStamp()}.xlsx`,
+    };
+  };
 
   if (!isOwnerAdmin) {
     return (
@@ -199,14 +229,17 @@ export default function UserManagement() {
           </div>
         </div>
 
-        <div className="relative mt-8 max-w-md">
-          <Search className="absolute top-1/2 -translate-y-1/2 start-3 w-4 h-4 text-muted-foreground" />
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder={t('users.search')}
-            className="w-full h-11 ps-9 pe-3 rounded-2xl bg-mist border border-border text-sm"
-          />
+        <div className="mt-8 flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute top-1/2 -translate-y-1/2 start-3 w-4 h-4 text-muted-foreground" />
+            <input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder={t('users.search')}
+              className="w-full h-11 ps-9 pe-3 rounded-2xl bg-mist border border-border text-sm"
+            />
+          </div>
+          <ExportExcelButton getSheets={getUserSheets} scopes={['filtered', 'all']} className="shrink-0" />
         </div>
 
         {loading ? (

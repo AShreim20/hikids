@@ -10,6 +10,8 @@ import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import SheetSelect from '@/components/ui/SheetSelect';
 import { PO_PAYMENT_STATUSES, PO_STATUSES } from '@/lib/po';
+import { fetchAllRows, toExcelDate, todayStamp } from '@/lib/excelExportHelpers';
+import ExportExcelButton from '@/components/admin/ExportExcelButton';
 
 export default function PurchaseOrders() {
   const { user } = useAuth();
@@ -58,6 +60,42 @@ export default function PurchaseOrders() {
       return true;
     });
   }, [pos, q, fSupplier, fPay, fStatus, from, to]);
+
+  // ── Excel export ──────────────────────────────────────────────────────
+  const poColumns = [
+    { header: ar ? 'رقم أمر الشراء' : 'Purchase Number', key: 'po_number', width: 16 },
+    { header: ar ? 'التاريخ' : 'Date', key: 'date', width: 14, type: 'date' },
+    { header: ar ? 'المورّد' : 'Supplier', key: 'supplier', width: 20 },
+    { header: ar ? 'المنتج' : 'Product', key: 'product', width: 26, wrap: true },
+    { header: 'SKU', key: 'sku', width: 16 },
+    { header: ar ? 'الكمية' : 'Quantity', key: 'quantity', width: 12, type: 'int' },
+    { header: ar ? 'تكلفة الوحدة' : 'Unit Cost', key: 'unit_cost', width: 14, type: 'currency' },
+    { header: ar ? 'إجمالي التكلفة' : 'Total Cost', key: 'total_cost', width: 14, type: 'currency' },
+    { header: ar ? 'ملاحظات' : 'Notes', key: 'notes', width: 26, wrap: true },
+    { header: ar ? 'أُنشئ بواسطة' : 'Created By', key: 'created_by', width: 20 },
+  ];
+  const buildPurchaseRows = (list) =>
+    list.flatMap((p) =>
+      (p.items && p.items.length ? p.items : [{}]).map((it) => ({
+        po_number: p.po_number || '',
+        date: toExcelDate(p.purchase_date || p.created_date),
+        supplier: p.supplier_name || '',
+        product: it.name || '',
+        sku: it.sku || '',
+        quantity: Number(it.quantity) || 0,
+        unit_cost: it.unit_cost != null ? Number(it.unit_cost) : null,
+        total_cost: it.total != null ? Number(it.total) : (Number(it.quantity) || 0) * (Number(it.unit_cost) || 0),
+        notes: p.notes || '',
+        created_by: p.created_by_email || '',
+      }))
+    );
+  const getPurchaseSheets = async (scope) => {
+    const rows = scope === 'all' ? await fetchAllRows(db.PurchaseOrder, '-created_date') : filtered;
+    return {
+      sheets: [{ name: ar ? 'أوامر الشراء' : 'Purchase Orders', columns: poColumns, rows: buildPurchaseRows(rows) }],
+      fileName: `purchases_${todayStamp()}.xlsx`,
+    };
+  };
 
   if (user?.role !== 'admin') {
     return (
@@ -134,8 +172,12 @@ export default function PurchaseOrders() {
           </button>
         </div>
 
+        <div className="mt-6 flex justify-end">
+          <ExportExcelButton getSheets={getPurchaseSheets} scopes={['filtered', 'all']} />
+        </div>
+
         {/* Filters */}
-        <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-6 gap-3">
+        <div className="mt-4 grid sm:grid-cols-2 lg:grid-cols-6 gap-3">
           <div className="relative lg:col-span-2">
             <Search className="absolute top-1/2 -translate-y-1/2 start-3 w-4 h-4 text-muted-foreground" />
             <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={ar ? 'رقم الأمر / المورّد' : 'PO no. / supplier'} className="w-full h-11 ps-9 pe-3 rounded-2xl bg-mist border border-border text-sm" />

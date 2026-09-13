@@ -13,6 +13,15 @@ import SheetSelect from '@/components/ui/SheetSelect';
 import { PeriodSelector } from '@/components/reports/ReportShared';
 import { periodRange, inRange } from '@/lib/reports';
 import { PAYMENT_METHODS } from '@/lib/po';
+import { fetchAllRows, toExcelDate, rangeStamp } from '@/lib/excelExportHelpers';
+import ExportExcelButton from '@/components/admin/ExportExcelButton';
+
+const PAYMENT_METHOD_LABEL = {
+  cash: { ar: 'نقدًا', en: 'Cash' },
+  card: { ar: 'بطاقة', en: 'Card' },
+  bank_transfer: { ar: 'تحويل بنكي', en: 'Bank Transfer' },
+  cheque: { ar: 'شيك', en: 'Cheque' },
+};
 
 const SORT_OPTIONS = [
   { value: '-expense_date', label: 'date_desc' },
@@ -122,6 +131,33 @@ export default function ExpensesManagement() {
 
   const total = useMemo(() => filtered.reduce((s, e) => s + (Number(e.amount) || 0), 0), [filtered]);
 
+  // ── Excel export ──────────────────────────────────────────────────────
+  const expenseColumns = [
+    { header: ar ? 'التاريخ' : 'Date', key: 'date', width: 14, type: 'date' },
+    { header: ar ? 'نوع المصروف' : 'Expense Type', key: 'category', width: 20 },
+    { header: ar ? 'الوصف' : 'Description', key: 'description', width: 26, wrap: true },
+    { header: ar ? 'المبلغ' : 'Amount', key: 'amount', width: 14, type: 'currency' },
+    { header: ar ? 'طريقة الدفع' : 'Payment Method', key: 'payment_method', width: 16 },
+    { header: ar ? 'ملاحظات' : 'Notes', key: 'notes', width: 26, wrap: true },
+    { header: ar ? 'أُنشئ بواسطة' : 'Created By', key: 'created_by', width: 18 },
+  ];
+  const buildExpenseRow = (e) => ({
+    date: toExcelDate(e.expense_date || e.created_date),
+    category: categoryLabel(categoryMap[e.category_id]),
+    description: e.description || '',
+    amount: Number(e.amount) || 0,
+    payment_method: e.payment_method ? (PAYMENT_METHOD_LABEL[e.payment_method]?.[lang] || e.payment_method) : '',
+    notes: e.notes || '',
+    created_by: creatorLabel(e.created_by_id),
+  });
+  const getExpenseSheets = async (scope) => {
+    const rows = scope === 'all' ? await fetchAllRows(db.Expense, '-expense_date') : filtered;
+    return {
+      sheets: [{ name: ar ? 'المصروفات' : 'Expenses', columns: expenseColumns, rows: rows.map(buildExpenseRow) }],
+      fileName: `expenses_${rangeStamp(range.start, range.end)}.xlsx`,
+    };
+  };
+
   if (!canView) {
     return (
       <div className="min-h-screen bg-background">
@@ -207,6 +243,7 @@ export default function ExpensesManagement() {
             includeEmpty
             className="h-11 px-4 rounded-2xl bg-mist border border-border text-sm min-w-[180px]"
           />
+          <ExportExcelButton getSheets={getExpenseSheets} scopes={['filtered', 'all']} className="ms-auto" />
           <SheetSelect
             value={sort}
             onChange={setSort}

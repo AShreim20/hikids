@@ -13,6 +13,8 @@ import PaymentsPanel from '@/components/reports/PaymentsPanel';
 import PurchasesPanel from '@/components/reports/PurchasesPanel';
 import ExpensesPanel from '@/components/reports/ExpensesPanel';
 import { periodRange, salesReport, paymentsReport, purchasesReport, profitLoss, expensesReport, buildProductMap } from '@/lib/reports';
+import { rangeStamp } from '@/lib/excelExportHelpers';
+import ExportExcelButton from '@/components/admin/ExportExcelButton';
 
 const TABS = [
   { id: 'pnl', labelKey: 'reports.pnl', icon: TrendingUp },
@@ -71,6 +73,162 @@ export default function Reports() {
     return purchasesReport(pos, range);
   }, [tab, orders, productMap, txs, pos, expenses, expenseCategories, range]);
 
+  // ── Excel export ──────────────────────────────────────────────────────
+  // Exports exactly `data` — the same object each report panel already
+  // renders from — split into one small sheet per section, so the numbers
+  // in the file can never drift from what's on screen (task §7/§8's "use
+  // the exact same values/formulas" requirement, satisfied by construction
+  // rather than by re-deriving anything).
+  const kv = (label, value, opts = {}) => ({ label, value, ...opts });
+  const kvColumns = [
+    { header: ar ? 'البند' : 'Item', key: 'label', width: 28 },
+    { header: ar ? 'القيمة' : 'Value', key: 'value', width: 16, type: 'currency' },
+  ];
+  const kvSheet = (name, rows) => ({
+    name,
+    columns: kvColumns,
+    rows,
+    autoFilter: false,
+    boldRowIf: (r) => !!r.bold,
+  });
+  const dateColumns = [
+    { header: ar ? 'التاريخ' : 'Date', key: 'date', width: 14 },
+    { header: ar ? 'الإجمالي' : 'Total', key: 'total', width: 16, type: 'currency' },
+  ];
+
+  const getReportSheets = () => {
+    const stamp = rangeStamp(range.start, range.end);
+    if (tab === 'pnl') {
+      const rows = [
+        kv(t('reports.grossSales'), data.grossSales),
+        kv(t('reports.discounts'), data.discounts),
+        kv(t('reports.revenue'), data.revenue, { bold: true }),
+        kv(t('reports.cogs'), data.cogs),
+        kv(t('reports.grossProfit'), data.grossProfit, { bold: true }),
+        ...(data.expensesByCategory || []).map((c) =>
+          kv(`— ${c.name ? (ar ? c.name : (c.name_en || c.name)) : t('expenses.uncategorized')}`, c.total)
+        ),
+        kv(t('reports.expenses'), data.expenses, { bold: true }),
+        kv(t('reports.netProfit'), data.netProfit, { bold: true }),
+      ];
+      return { sheets: [kvSheet(ar ? 'الأرباح والخسائر' : 'Profit & Loss', rows)], fileName: `profit-loss_${stamp}.xlsx` };
+    }
+    if (tab === 'sales') {
+      const summary = [
+        kv(t('reports.netSales'), data.net, { bold: true }),
+        kv(t('reports.grossSales'), data.gross),
+        kv(t('reports.discounts'), data.discounts),
+        kv(t('reports.returns'), data.returnsTotal),
+      ];
+      return {
+        sheets: [
+          kvSheet(ar ? 'الملخص' : 'Summary', summary),
+          { name: ar ? 'حسب التاريخ' : 'By Date', columns: dateColumns, rows: data.byDate },
+          {
+            name: ar ? 'حسب المنتج' : 'By Product',
+            columns: [
+              { header: ar ? 'المنتج' : 'Product', key: 'name', width: 28, wrap: true },
+              { header: ar ? 'الكمية المباعة' : 'Units Sold', key: 'qty', width: 14, type: 'int' },
+              { header: ar ? 'الإيراد' : 'Revenue', key: 'revenue', width: 16, type: 'currency' },
+            ],
+            rows: data.byProduct,
+          },
+          {
+            name: ar ? 'حسب الفئة' : 'By Category',
+            columns: [
+              { header: ar ? 'الفئة' : 'Category', key: 'category', width: 22 },
+              { header: ar ? 'الإيراد' : 'Revenue', key: 'revenue', width: 16, type: 'currency' },
+            ],
+            rows: data.byCategory,
+          },
+        ],
+        fileName: `sales_${stamp}.xlsx`,
+      };
+    }
+    if (tab === 'payments') {
+      const summary = [
+        kv(t('reports.totalPayments'), data.totalIn, { bold: true }),
+        kv(t('reports.completed'), data.completed),
+        kv(t('reports.pending'), data.pending),
+        kv(t('reports.failed'), data.failed),
+        kv(t('reports.supplierPaymentsOut'), data.supplierOut),
+      ];
+      return {
+        sheets: [
+          kvSheet(ar ? 'الملخص' : 'Summary', summary),
+          { name: ar ? 'حسب التاريخ' : 'By Date', columns: dateColumns, rows: data.byDate },
+          {
+            name: ar ? 'حسب طريقة الدفع' : 'By Method',
+            columns: [
+              { header: ar ? 'الطريقة' : 'Method', key: 'method', width: 18 },
+              { header: ar ? 'عدد العمليات' : 'Count', key: 'count', width: 12, type: 'int' },
+              { header: ar ? 'الإجمالي' : 'Total', key: 'total', width: 16, type: 'currency' },
+            ],
+            rows: data.byMethod,
+          },
+        ],
+        fileName: `payments_${stamp}.xlsx`,
+      };
+    }
+    if (tab === 'expenses') {
+      const summary = [kv(t('reports.totalExpenses'), data.total, { bold: true })];
+      return {
+        sheets: [
+          kvSheet(ar ? 'الملخص' : 'Summary', summary),
+          { name: ar ? 'حسب التاريخ' : 'By Date', columns: dateColumns, rows: data.byDate },
+          {
+            name: ar ? 'حسب الفئة' : 'By Category',
+            columns: [
+              { header: ar ? 'الفئة' : 'Category', key: 'name', width: 22 },
+              { header: ar ? 'العدد' : 'Count', key: 'count', width: 12, type: 'int' },
+              { header: ar ? 'الإجمالي' : 'Total', key: 'total', width: 16, type: 'currency' },
+            ],
+            rows: data.byCategory.map((c) => ({
+              name: c.name ? (ar ? c.name : (c.name_en || c.name)) : t('expenses.uncategorized'),
+              count: c.count,
+              total: c.total,
+            })),
+          },
+          {
+            name: ar ? 'حسب طريقة الدفع' : 'By Method',
+            columns: [
+              { header: ar ? 'الطريقة' : 'Method', key: 'method', width: 18 },
+              { header: ar ? 'الإجمالي' : 'Total', key: 'total', width: 16, type: 'currency' },
+            ],
+            rows: data.byMethod,
+          },
+        ],
+        fileName: `expenses_${stamp}.xlsx`,
+      };
+    }
+    // purchases
+    const summary = [kv(t('reports.totalPurchases'), data.total, { bold: true })];
+    return {
+      sheets: [
+        kvSheet(ar ? 'الملخص' : 'Summary', summary),
+        { name: ar ? 'حسب التاريخ' : 'By Date', columns: dateColumns, rows: data.byDate },
+        {
+          name: ar ? 'حسب المورد' : 'By Supplier',
+          columns: [
+            { header: ar ? 'المورد' : 'Supplier', key: 'supplier', width: 22 },
+            { header: ar ? 'الإجمالي' : 'Total', key: 'total', width: 16, type: 'currency' },
+          ],
+          rows: data.bySupplier,
+        },
+        {
+          name: ar ? 'حسب المنتج' : 'By Product',
+          columns: [
+            { header: ar ? 'المنتج' : 'Product', key: 'name', width: 28, wrap: true },
+            { header: ar ? 'الكمية' : 'Qty', key: 'qty', width: 12, type: 'int' },
+            { header: ar ? 'التكلفة' : 'Cost', key: 'cost', width: 16, type: 'currency' },
+          ],
+          rows: data.byProduct,
+        },
+      ],
+      fileName: `purchases_${stamp}.xlsx`,
+    };
+  };
+
   if (user?.role !== 'admin') {
     return (
       <div className="min-h-screen bg-background">
@@ -108,8 +266,11 @@ export default function Reports() {
           ))}
         </div>
 
-        <div className="mt-6">
-          <PeriodSelector period={period} setPeriod={setPeriod} custom={custom} setCustom={setCustom} />
+        <div className="mt-6 flex flex-col sm:flex-row sm:items-start gap-3">
+          <div className="flex-1 min-w-0 overflow-x-auto">
+            <PeriodSelector period={period} setPeriod={setPeriod} custom={custom} setCustom={setCustom} />
+          </div>
+          {!loading && <ExportExcelButton getSheets={getReportSheets} className="shrink-0" />}
         </div>
 
         {loading ? (

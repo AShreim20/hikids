@@ -9,9 +9,12 @@ import WalletDashboard from '@/components/loyalty/WalletDashboard';
 import WalletAdminRow from '@/components/loyalty/WalletAdminRow';
 import { useLanguage } from '@/context/LanguageContext';
 import { usePermissions } from '@/lib/permissions';
+import { fetchAllRows, toExcelDate, todayStamp } from '@/lib/excelExportHelpers';
+import ExportExcelButton from '@/components/admin/ExportExcelButton';
 
 export default function LoyaltyManagement() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const ar = lang === 'ar';
   const { can } = usePermissions();
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -71,6 +74,39 @@ export default function LoyaltyManagement() {
       .some((f) => String(f || '').toLowerCase().includes(q))
   );
 
+  // ── Excel export ──────────────────────────────────────────────────────
+  const loyaltyColumns = [
+    { header: ar ? 'اسم العميل' : 'Customer Name', key: 'name', width: 22, wrap: true },
+    { header: ar ? 'البريد الإلكتروني' : 'Email', key: 'email', width: 26 },
+    { header: ar ? 'الهاتف' : 'Phone', key: 'phone', width: 16 },
+    { header: ar ? 'رمز المحفظة' : 'Wallet Code', key: 'wallet_code', width: 16 },
+    { header: ar ? 'الرصيد' : 'Balance', key: 'balance', width: 12, type: 'int' },
+    { header: ar ? 'نقاط معلّقة' : 'Pending Points', key: 'pending', width: 14, type: 'int' },
+    { header: ar ? 'إجمالي المكتسب' : 'Lifetime Earned', key: 'earned', width: 16, type: 'int' },
+    { header: ar ? 'إجمالي المستبدل' : 'Lifetime Spent', key: 'spent', width: 16, type: 'int' },
+    { header: ar ? 'الحالة' : 'Status', key: 'status', width: 12 },
+    { header: ar ? 'آخر نشاط' : 'Last Activity', key: 'last_activity', width: 14, type: 'date' },
+  ];
+  const buildLoyaltyRow = (a) => ({
+    name: a.user_name || '',
+    email: a.user_email || '',
+    phone: a.user_phone || '',
+    wallet_code: a.wallet_code || '',
+    balance: Number(a.balance) || 0,
+    pending: Number(a.pending_points) || 0,
+    earned: Number(a.lifetime_earned) || 0,
+    spent: Number(a.lifetime_spent) || 0,
+    status: (a.status || (a.frozen ? 'frozen' : 'active')) === 'frozen' ? (ar ? 'مجمّد' : 'Frozen') : (ar ? 'نشط' : 'Active'),
+    last_activity: toExcelDate(a.last_activity_at),
+  });
+  const getLoyaltySheets = async (scope) => {
+    const rows = scope === 'all' ? await fetchAllRows(db.LoyaltyAccount, '-balance') : filtered;
+    return {
+      sheets: [{ name: ar ? 'محافظ الولاء' : 'Loyalty Wallets', columns: loyaltyColumns, rows: rows.map(buildLoyaltyRow) }],
+      fileName: `loyalty_${todayStamp()}.xlsx`,
+    };
+  };
+
   return (
     <div className="min-h-screen bg-background pb-32">
       <Navbar />
@@ -89,14 +125,17 @@ export default function LoyaltyManagement() {
           <LoyaltySettingsForm canEdit={perms.canSettings} />
         </div>
 
-        <div className="mt-8 relative max-w-md">
-          <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder={t('wallet.searchPlaceholder')}
-            className="w-full h-12 ps-10 pe-4 rounded-full bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic"
-          />
+        <div className="mt-8 flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t('wallet.searchPlaceholder')}
+              className="w-full h-12 ps-10 pe-4 rounded-full bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic"
+            />
+          </div>
+          <ExportExcelButton getSheets={getLoyaltySheets} scopes={['filtered', 'all']} className="shrink-0" />
         </div>
 
         {loading ? (
