@@ -90,7 +90,7 @@ export default function Reviews({ productId, onStats }) {
       }
       setSubmitting(true);
       try {
-        const up = await uploadFile(photo);
+        const up = await uploadFile(photo, { bucket: 'customer-uploads', folder: 'reviews', ownerId: user.id });
         const res = await invokeFunction('submitPhotoReview', {
           product_id: productId,
           rating,

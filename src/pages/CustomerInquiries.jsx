@@ -4,15 +4,16 @@ import { Loader2, Lock, Phone, Mail, Search, MessageCircleQuestion } from 'lucid
 import { db } from '@/api/entities';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
-import { useAuth } from '@/lib/AuthContext';
+import { usePermissions } from '@/lib/permissions';
 import { useLanguage } from '@/context/LanguageContext';
 
 // Admin view of the FAQ page's question form submissions (see
 // src/components/faq/InquiryForm.jsx + supabase/migrations/
-// 0019_customer_inquiries.sql). RLS already restricts SELECT/UPDATE to
-// admins — the `user?.role !== 'admin'` gate below is just the same
-// friendly denied-screen pattern every other admin-only page here uses,
-// not the actual security boundary.
+// 0019_customer_inquiries.sql). Gated on the same `customers.manage`
+// permission OrderDetail.jsx already uses for this exact category of data
+// (customer name/phone/email) — see 0023_customer_inquiries_permission.sql
+// for the matching RLS change; the `can('customers.manage')` check below is
+// the friendly denied-screen, not the actual security boundary.
 const STATUSES = ['new', 'reviewed', 'replied'];
 const statusLabel = (st, ar) => ({
   new: ar ? 'جديد' : 'New',
@@ -26,7 +27,8 @@ const statusCls = (st) => ({
 }[st] || 'bg-mist text-muted-foreground');
 
 export default function CustomerInquiries() {
-  const { user } = useAuth();
+  const { can } = usePermissions();
+  const allowed = can('customers.manage');
   const { lang } = useLanguage();
   const ar = lang === 'ar';
   const [loading, setLoading] = useState(true);
@@ -42,7 +44,7 @@ export default function CustomerInquiries() {
       .catch(() => setInquiries([]))
       .finally(() => setLoading(false));
   };
-  useEffect(() => { if (user?.role === 'admin') load(); else setLoading(false); }, [user]);
+  useEffect(() => { if (allowed) load(); else setLoading(false); }, [allowed]);
 
   // Newest unanswered first: "new" ahead of "reviewed" ahead of "replied",
   // each group already newest-first from the query above.
@@ -66,7 +68,7 @@ export default function CustomerInquiries() {
   const newCount = inquiries.filter((i) => i.status === 'new').length;
   const setInquiryStatus = async (i, st) => { await db.CustomerInquiry.update(i.id, { status: st }); load(); };
 
-  if (user?.role !== 'admin') {
+  if (!allowed) {
     return (
       <div className="min-h-screen bg-background"><Navbar />
         <div className="max-w-2xl mx-auto px-5 py-32 text-center">

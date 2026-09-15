@@ -65,7 +65,7 @@ export default function Challenges() {
     if (!file) return;
     setUploading(c.id);
     try {
-      const up = await uploadFile(file);
+      const up = await uploadFile(file, { bucket: 'customer-uploads', folder: 'challenges', ownerId: user.id });
       const res = await challengesSubmitPhoto(c.id, up.file_url);
       toast({ title: res.success ? (ar ? 'تم الإرسال' : 'Submitted') : res.message, variant: res.success ? 'default' : 'destructive' });
       load();

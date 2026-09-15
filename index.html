@@ -4,7 +4,11 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/webp" href="https://media.base44.com/images/public/6a75c91fa5dfe02359c5f127/7971fd204_HiKidsLogo.webp" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <link rel="manifest" href="/manifest.json" />
+    <!-- No manifest.json: the site has no locally-hosted, correctly-sized
+         icon asset to reference honestly (the logo/favicon are both
+         cross-origin CDN URLs, not same-origin 192x192/512x512 PNGs a real
+         PWA manifest needs) — removed the reference rather than invent one.
+         Revisit once real local icon assets exist. -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
