@@ -196,7 +196,7 @@ export default function OrderDetail() {
                   <div className="mt-3 text-sm space-y-1">
                     <p className="font-medium">{order.customer_name}</p>
                     <p className="text-muted-foreground">{order.phone}</p>
-                    <p className="text-muted-foreground">{order.customer_email}</p>
+                    <p className="text-muted-foreground">{order.customer_email || (ar ? 'غير متوفر' : 'Not provided')}</p>
                     <p className="text-muted-foreground">
                       {ar ? 'طلبات سابقة' : 'Previous orders'}: {history.length}
                     </p>

@@ -21,6 +21,8 @@ import { getSetting } from '@/lib/storeSettings';
 import { lineItemName } from '@/lib/bilingual';
 import { resolveCheckoutItems, cartLineTotal } from '@/lib/cartSelection';
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
 const CARD_TYPES = [
   { key: 'visa', label: 'Visa', badge: 'bg-[#1A1F71]', dot: 'bg-[#1A1F71]' },
   { key: 'mastercard', label: 'Mastercard', badge: 'bg-[#EB001B]', dot: 'bg-[#EB001B]' },
@@ -148,8 +150,15 @@ export default function Checkout() {
       toast({ title: ar ? 'اختر المدينة' : 'Please select a city', variant: 'destructive' });
       return false;
     }
-    if (!form.name || !form.email || !form.address) {
+    if (!form.name || !form.address) {
       toast({ title: ar ? 'أكمل الحقول المطلوبة' : 'Please complete required fields', variant: 'destructive' });
+      return false;
+    }
+    // Email is optional — only validated (as a real address) when the
+    // customer actually typed something. An empty field is always valid.
+    const trimmedEmail = form.email.trim();
+    if (trimmedEmail && !EMAIL_RE.test(trimmedEmail)) {
+      toast({ title: t('checkout.invalidEmail'), variant: 'destructive' });
       return false;
     }
     const phoneDigits = (form.phone || '').replace(/\D/g, '');
@@ -251,7 +260,11 @@ export default function Checkout() {
         total: Math.max(0, total + deliveryCost - discountAmount - loyaltyAmount),
         city: selectedCity.name,
         customer_name: form.name,
-        customer_email: form.email,
+        // Optional — null (never a placeholder like "guest@hikids.com") when
+        // the customer didn't provide one. sanitize() in createEntity.js
+        // already turns '' into null on write, but this is explicit so the
+        // intent reads clearly here.
+        customer_email: form.email.trim() || null,
         address: `${form.address}, ${selectedCity.name}`,
         phone: fullPhone,
         payment_method: payment,
@@ -332,7 +345,11 @@ export default function Checkout() {
       // Order confirmation email is deferred — Base44's onOrderPlaced sent it
       // via a platform email integration with no Supabase equivalent yet;
       // needs a transactional email provider decision (not made yet). Admins
-      // still get a real-time new-order alert via NewOrderNotifier.
+      // still get a real-time new-order alert via NewOrderNotifier. Email is
+      // optional at checkout, so whenever that provider is wired up, sending
+      // must be guarded on `orderId`'s customer_email actually being present
+      // (see the null handling above) — never invented/defaulted, and never
+      // allowed to fail or delay order creation itself.
       finalizeWheelRewards(orderId).catch(() => {});
       if (user) awardLoyaltyPoints(orderId).catch(() => {});
       toast({ title: lang === 'ar' ? 'تم تأكيد الطلب' : 'Order placed' });
@@ -421,7 +438,7 @@ export default function Checkout() {
               )}
               <div className="mt-5 grid sm:grid-cols-2 gap-4">
                 <Field label={t('checkout.name')} required value={form.name} onChange={set('name')} />
-                <Field label={t('checkout.email')} type="email" required value={form.email} onChange={set('email')} />
+                <Field label={t('checkout.email')} type="email" value={form.email} onChange={set('email')} />
                 <CountryCodeSelect value={phoneCountry} onChange={setPhoneCountry} />
                 <Field label={t('checkout.phone')} required value={form.phone} onChange={set('phone')} placeholder="59XXXXXXX" />
                 <CitySelect cities={cities} value={cityId} onChange={setCityId} />

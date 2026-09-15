@@ -77,7 +77,9 @@ export default function OrderConfirmDialog({
               <p><span className="text-muted-foreground">{ar ? 'الاسم' : 'Name'}: </span>{form.name}</p>
               <p><span className="text-muted-foreground">{ar ? 'الهاتف' : 'Phone'}: </span> <span dir="ltr">{form.phone}</span></p>
               <p><span className="text-muted-foreground">{ar ? 'العنوان' : 'Address'}: </span>{form.address}{cityName ? `, ${cityName}` : ''}</p>
-              <p><span className="text-muted-foreground">{ar ? 'البريد' : 'Email'}: </span><bdi>{form.email}</bdi></p>
+              {form.email && (
+                <p><span className="text-muted-foreground">{ar ? 'البريد' : 'Email'}: </span><bdi>{form.email}</bdi></p>
+              )}
             </div>
             <p className="mt-3">
               <span className="text-muted-foreground">{ar ? 'طريقة الدفع' : 'Payment Method'}: </span>
