@@ -99,7 +99,7 @@ export default function Newsletter() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={t('nl.emailPlaceholder')}
-                  className="h-12 w-full rounded-full bg-white/95 px-5 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-white/70"
+                  className="h-12 w-full rounded-full bg-white/95 px-5 text-sm text-cosmic caret-cosmic placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-white/70 [&:-webkit-autofill]:[-webkit-text-fill-color:hsl(var(--cosmic))] [&:-webkit-autofill]:caret-cosmic"
                 />
               </div>
 
@@ -150,7 +150,7 @@ export default function Newsletter() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder={t('nl.phonePlaceholder')}
-                  className="flex-1 min-w-0 h-full bg-transparent px-3 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                  className="flex-1 min-w-0 h-full bg-transparent px-3 text-sm text-cosmic caret-cosmic placeholder:text-muted-foreground focus:outline-none [&:-webkit-autofill]:[-webkit-text-fill-color:hsl(var(--cosmic))] [&:-webkit-autofill]:caret-cosmic"
                 />
               </div>
 
