@@ -93,13 +93,30 @@ export function CartProvider({ children }) {
   // A bundle is one purchasable package from the customer's perspective.
   // Internally the cart keeps the component products (with their quantities)
   // so the order can deduct component inventory on completion.
-  const addBundle = (bundle, qty = 1, price, components) => {
+  //
+  // `available` is the caller's already-computed bundleAvailability() (how
+  // many complete bundles current component stock can assemble) — stored on
+  // the line as `stock`, the same field addItem() uses, so the cart's own
+  // existing +/- stepper (updateQty, unchanged) caps a bundle line exactly
+  // like a product line instead of letting it grow unbounded. Without this,
+  // a customer could increment a bundle's cart quantity past what its
+  // components could ever fulfill (still safely rejected at checkout by
+  // commit_order_stock's row-locked stock check, but confusingly late).
+  const addBundle = (bundle, qty = 1, price, components, available = null) => {
     const lineId = `bundle::${bundle.id}`;
+    const max = Number.isFinite(available) ? Math.max(0, available) : Infinity;
     setItems((prev) => {
       const existing = prev.find((i) => i.lineId === lineId);
       if (existing) {
-        return prev.map((i) => (i.lineId === lineId ? { ...i, qty: i.qty + qty } : i));
+        const finalQty = Number.isFinite(max) ? Math.min(existing.qty + qty, max) : existing.qty + qty;
+        return prev.map((i) =>
+          i.lineId === lineId
+            ? { ...i, qty: finalQty, ...(Number.isFinite(max) ? { stock: max } : {}) }
+            : i
+        );
       }
+      const finalQty = Number.isFinite(max) ? Math.min(qty, max) : qty;
+      if (finalQty < 1) return prev;
       return [
         ...prev,
         {
@@ -110,7 +127,8 @@ export function CartProvider({ children }) {
           name: bundle.name,
           price,
           image_url: bundle.image_url,
-          qty,
+          qty: finalQty,
+          ...(Number.isFinite(max) ? { stock: max } : {}),
           bundle_items: components,
         },
       ];

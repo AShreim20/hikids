@@ -52,6 +52,7 @@ const Register = lazy(() => import('./pages/Register'));
 const ForgotPassword = lazy(() => import('./pages/ForgotPassword'));
 const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const Bundles = lazy(() => import('./pages/Bundles'));
+const BundlesList = lazy(() => import('./pages/BundlesList'));
 const BundleEditor = lazy(() => import('./pages/BundleEditor'));
 const BundleDetail = lazy(() => import('./pages/BundleDetail'));
 const ChallengesAdmin = lazy(() => import('./pages/ChallengesAdmin'));
@@ -84,6 +85,7 @@ function AnimatedRoutes() {
       {/* Add your page Route elements here */}
       <Route path="/" element={<Home />} />
       <Route path="/shop" element={<Shop />} />
+      <Route path="/bundles" element={<BundlesList />} />
       <Route path="/bundles/:id" element={<BundleDetail />} />
       <Route path="/product/:id" element={<ProductDetail />} />
       <Route path="/cart" element={<Cart />} />

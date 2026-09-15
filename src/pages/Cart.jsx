@@ -9,6 +9,7 @@ import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { lineItemName } from '@/lib/bilingual';
 import ShareCartButton from '@/components/cart/ShareCartButton';
+import TrustStrip from '@/components/TrustStrip';
 import { resolveCheckoutItems, cartLineTotal } from '@/lib/cartSelection';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
@@ -328,6 +329,7 @@ export default function Cart() {
             >
               {t('common.checkout')} <ArrowRight className="w-5 h-5" />
             </button>
+            <TrustStrip variant="compact" className="mt-4 justify-center" />
           </div>
         </div>
       </div>

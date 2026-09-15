@@ -2,6 +2,7 @@ export const translations = {
   en: {
     'nav.home': 'Home',
     'nav.explore': 'Explore',
+    'nav.bundles': 'Bundles & Packages',
     'nav.worlds': 'Worlds of Play',
     'nav.promise': 'Our Promise',
     'nav.about': 'About',
@@ -758,6 +759,21 @@ export const translations = {
     'pd.inStock': 'in stock',
     'pd.saveWishlist': 'Save to wishlist',
 
+    // Trust strip (ProductDetail + Cart) — wording matches the live FAQ
+    // content exactly (see /faq): delivery timing and the "contact us"
+    // return promise are the real, currently-supported policies. No fixed
+    // return window, no free-shipping or card-payment claim — those aren't
+    // actually live right now.
+    'trust.delivery': 'Delivery within 1-3 business days',
+    'trust.returns': 'Contact us for any return or exchange',
+    'trust.linkHint': 'See details in our FAQ',
+
+    'bundle.sectionTitle': 'Bundle Deals',
+    'bundle.viewAll': 'View all',
+    'bundle.pageSubtitle': 'Save by getting several toys together in one package.',
+    'bundle.emptyTitle': 'No bundles right now',
+    'bundle.emptyDesc': 'Check back soon for bundle deals.',
+
     'cart.title': 'Your cart',
     'cart.items': 'item(s)',
     'cart.empty': 'Your cart is empty',
@@ -841,6 +857,7 @@ export const translations = {
   ar: {
     'nav.home': 'الرئيسية',
     'nav.explore': 'تصفّح',
+    'nav.bundles': 'الحزم والباقات',
     'nav.worlds': 'عوالم اللعب',
     'nav.promise': 'وعدنا',
     'nav.about': 'من نحن',
@@ -1596,6 +1613,16 @@ export const translations = {
     'pd.features': 'المميزات',
     'pd.inStock': 'في المخزون',
     'pd.saveWishlist': 'أضف للمفضلة',
+
+    'trust.delivery': 'التوصيل خلال 1-3 أيام عمل',
+    'trust.returns': 'تواصل معنا لأي استبدال أو إرجاع',
+    'trust.linkHint': 'التفاصيل في الأسئلة الشائعة',
+
+    'bundle.sectionTitle': 'عروض الحزم',
+    'bundle.viewAll': 'عرض الكل',
+    'bundle.pageSubtitle': 'وفّر أكثر باقتناء عدة ألعاب معًا ضمن حزمة واحدة.',
+    'bundle.emptyTitle': 'لا توجد حزم حاليًا',
+    'bundle.emptyDesc': 'تابعنا قريبًا لعروض الحزم.',
 
     'cart.title': 'سلتك',
     'cart.items': 'عنصر',

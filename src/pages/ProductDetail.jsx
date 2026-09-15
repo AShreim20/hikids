@@ -21,6 +21,7 @@ import { productName, productDescription, productFeatures } from '@/lib/bilingua
 import { ageLabelList } from '@/lib/ages';
 import { loadPreviewSnapshot } from '@/lib/sessionDraft';
 import VariantSelector from '@/components/product/VariantSelector';
+import TrustStrip from '@/components/TrustStrip';
 import {
   hasVariants, findVariant, defaultSelection, selectionImages,
   variantPrice, isSellable, getOptions,
@@ -431,6 +432,12 @@ export default function ProductDetail({ preview = false }) {
               </span>
             )}
           </div>
+
+          {/* Compact reassurance strip — placed after the buy controls
+              (never before) so it can't delay Add to Cart/Buy Now on
+              mobile, but still sits close enough to read as part of the
+              purchase decision. */}
+          <TrustStrip className="mt-6" />
         </div>
       </div>
 

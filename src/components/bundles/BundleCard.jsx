@@ -39,7 +39,7 @@ export default function BundleCard({ bundle, products }) {
       sku: it.sku || null,
       quantity: it.quantity,
       unit_price: it.unit_price,
-    })));
+    })), avail);
     toast({ title: ar ? 'أُضيفت الحزمة إلى السلة' : 'Bundle added to cart' });
   };
 

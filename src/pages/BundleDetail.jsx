@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Minus, Plus, ShoppingBag, Package, AlertTriangle, Check } from 'lucide-react';
 import { db } from '@/api/entities';
+import { supabase } from '@/api/supabaseClient';
 import { Image } from '@/components/ui/image';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
@@ -28,15 +29,30 @@ export default function BundleDetail() {
   const [added, setAdded] = useState(false);
   const ar = t('common.addToCart') !== 'Add to cart';
 
+  // Only fetches the specific component products this one bundle references
+  // (not the whole catalog) — the bundle's own `items[]` already carries the
+  // id list, so there's no need for a bounded-but-still-broad list fetch.
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
-    Promise.all([
-      db.Bundle.get(id),
-      db.Product.list('-updated_date', 500),
-    ])
-      .then(([b, p]) => { setBundle(b); setProducts(p || []); })
-      .catch(() => setBundle(null))
-      .finally(() => setLoading(false));
+    (async () => {
+      try {
+        const b = await db.Bundle.get(id);
+        const ids = [...new Set((b?.items || []).map((it) => it.product_id).filter(Boolean))];
+        let p = [];
+        if (ids.length) {
+          const { data, error } = await supabase.from('products').select('*').in('id', ids);
+          if (error) throw error;
+          p = data || [];
+        }
+        if (!cancelled) { setBundle(b); setProducts(p); }
+      } catch {
+        if (!cancelled) setBundle(null);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
   }, [id]);
 
   if (loading) {
@@ -80,7 +96,7 @@ export default function BundleDetail() {
       sku: it.sku || null,
       quantity: it.quantity,
       unit_price: it.unit_price,
-    })));
+    })), avail);
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
     toast({ title: ar ? 'أُضيفت الحزمة إلى السلة' : 'Bundle added to cart' });

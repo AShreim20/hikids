@@ -90,14 +90,18 @@ export default function Navbar() {
     // + hash on a different route doesn't reliably scroll to the fragment.
     { label: t('nav.home'), to: '/#categories', external: true },
     { label: t('nav.explore'), to: '/shop', external: false },
+    { label: t('nav.bundles'), to: '/bundles', external: false },
   ];
 
-  // Mobile second-line nav links (Explore, World of Play, Orders, Challenges,
-  // Wheel, Rewards, Insights). Links that don't fit collapse into "More".
+  // Mobile second-line nav links (Explore, World of Play, Bundles, Orders,
+  // Challenges, Wheel, Rewards, Insights). Links that don't fit collapse
+  // into "More". Bundles is public (not gated on `user`) — it's a storefront
+  // browsing entry point like Explore, not an account feature.
   const mobileLinks = useMemo(() => {
     const arr = [
       { key: 'worlds', label: t('nav.home'), to: '/#categories', external: true },
       { key: 'explore', label: t('nav.explore'), to: '/shop', external: false },
+      { key: 'bundles', label: t('nav.bundles'), to: '/bundles', external: false },
     ];
     if (user) {
       arr.push({ key: 'orders', label: t('orders.title'), to: '/orders', external: false });

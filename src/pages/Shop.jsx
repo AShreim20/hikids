@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { SlidersHorizontal, Search, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { db } from '@/api/entities';
@@ -18,7 +18,8 @@ import {
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import { categoryName } from '@/lib/bilingual';
-import { isBundleActive } from '@/lib/bundles';
+import { isBundleActive, bundleProductIds } from '@/lib/bundles';
+import { supabase } from '@/api/supabaseClient';
 import { parseGenderParam, GENDER_MALE, GENDER_FEMALE } from '@/lib/gender';
 
 const SORTS = [
@@ -87,20 +88,25 @@ export default function Shop() {
   priceBoundsRef.current = priceBounds;
 
   // Load active bundles + a projected stock map of their component products
-  // (so bundle availability stays correct without loading the full catalog).
+  // (so bundle availability stays correct without loading the full catalog —
+  // fetches only the specific product ids the active bundles reference,
+  // never all 10,000 products).
   useEffect(() => {
     db.Bundle.list('-updated_date', 100)
       .then((list) => {
         const active = (list || []).filter(isBundleActive);
         setBundles(active);
-        if (active.length) {
-          db.Product.list(null, 10000, 0, ['id', 'stock'])
-            .then((all) => {
+        const ids = bundleProductIds(active);
+        if (ids.length) {
+          supabase.from('products').select('id,stock').in('id', ids)
+            .then(({ data, error }) => {
+              if (error) { setBundleStockMap({}); return; }
               const m = {};
-              for (const p of all || []) m[p.id] = p;
+              for (const p of data || []) m[p.id] = p;
               setBundleStockMap(m);
-            })
-            .catch(() => setBundleStockMap({}));
+            });
+        } else {
+          setBundleStockMap({});
         }
       })
       .catch(() => setBundles([]));
@@ -354,7 +360,14 @@ export default function Shop() {
 
         {bundles.length > 0 && !hasActive && bundleStockMap && (
           <section className="mt-10 mb-2">
-            <h2 className="font-heading font-extrabold text-2xl md:text-3xl mb-5">{t('bundle.sectionTitle')}</h2>
+            <div className="flex items-end justify-between gap-3 mb-5">
+              <h2 className="font-heading font-extrabold text-2xl md:text-3xl">{t('bundle.sectionTitle')}</h2>
+              {bundles.length > 4 && (
+                <Link to="/bundles" className="text-sm text-cosmic font-heading font-bold hover:underline whitespace-nowrap">
+                  {t('bundle.viewAll')}
+                </Link>
+              )}
+            </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
               {bundles.slice(0, 4).map((b) => (
                 <BundleCard key={b.id} bundle={b} products={bundleStockMap} />

@@ -61,6 +61,19 @@ const inDateWindow = (bundle, now = new Date()) => {
 export const isBundleActive = (bundle, now = new Date()) =>
   !!bundle?.active && inDateWindow(bundle, now);
 
+// The distinct product ids referenced across a set of bundles' items — used
+// to fetch live stock for exactly the products bundle availability needs,
+// instead of loading the whole product catalog just because a bundle exists.
+export const bundleProductIds = (bundleList) => {
+  const ids = new Set();
+  for (const b of bundleList || []) {
+    for (const it of b?.items || []) {
+      if (it?.product_id) ids.add(it.product_id);
+    }
+  }
+  return [...ids];
+};
+
 // Snapshot of the bundle's components for an order line — keeps the link to
 // the underlying products so inventory can be deducted on completion and the
 // receipt can list what was inside the package.
