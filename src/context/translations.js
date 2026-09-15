@@ -722,6 +722,11 @@ export const translations = {
     'ai.sugg1': 'Toys for a 4-year-old?',
     'ai.sugg2': "What's your shipping policy?",
     'ai.sugg3': 'Recommend a gift under ₪100',
+    'ai.inStock': 'Available',
+    'ai.outOfStock': 'Out of stock',
+    'ai.viewProduct': 'View Product',
+    'ai.showMore': 'Show more',
+    'ai.showLess': 'Show less',
 
     'pd.back': 'Back to collection',
     'pd.notFound': 'Toy not found',
@@ -1537,6 +1542,11 @@ export const translations = {
     'ai.sugg1': 'ألعاب لطفل عمره 4 سنوات؟',
     'ai.sugg2': 'ما هي سياسة الشحن؟',
     'ai.sugg3': 'اقترح هدية أقل من ₪100',
+    'ai.inStock': 'متوفر',
+    'ai.outOfStock': 'غير متوفر',
+    'ai.viewProduct': 'عرض المنتج',
+    'ai.showMore': 'عرض المزيد',
+    'ai.showLess': 'عرض أقل',
 
     'pd.back': 'العودة للمجموعة',
     'pd.notFound': 'اللعبة غير موجودة',

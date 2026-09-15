@@ -32,8 +32,13 @@ const RESPOND_TOOL: Anthropic.Tool = {
           type: 'object',
           properties: {
             id: { type: 'string' },
-            name: { type: 'string' },
-            url: { type: 'string' },
+            // A short (roughly one sentence) explanation of why this
+            // specific product fits the customer's request — the only part
+            // of a product recommendation the assistant actually writes.
+            // The app looks up the live product record by id and renders
+            // its own name/price/discount/stock/link from the database, so
+            // this must never restate any of those.
+            reason: { type: 'string' },
           },
           required: ['id'],
         },

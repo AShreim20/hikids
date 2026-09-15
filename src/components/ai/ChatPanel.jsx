@@ -1,18 +1,33 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Send, Loader2, Sparkles, ArrowUpRight, ShoppingCart, X } from 'lucide-react';
+import { Send, Loader2, ArrowUpRight, ShoppingCart, X } from 'lucide-react';
 import { db } from '@/api/entities';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useLanguage } from '@/context/LanguageContext';
+import { useCategories } from '@/context/CategoryContext';
 import { useCart } from '@/context/CartContext';
 import { useFloatingOffset } from '@/hooks/useFloatingOffset';
+import { priceInfo } from '@/lib/pricing';
+import { productName } from '@/lib/bilingual';
+import { detectTextDir } from '@/lib/textDirection';
+import Logo from '@/components/Logo';
+import ChatMarkdown from './ChatMarkdown';
+import ChatProductCard from './ChatProductCard';
 
-const ORIGIN = typeof window !== 'undefined' ? window.location.origin : '';
+// Products are shown as individual cards (see ChatProductCard) rather than
+// a growing wall of results — an initial page of the assistant's best
+// matches, with the rest revealed on demand.
+const INITIAL_PRODUCT_LIMIT = 4;
 
 export default function ChatPanel({ onClose }) {
   const { t, lang } = useLanguage();
   const ar = lang === 'ar';
   const { addItem } = useCart();
+  const { discountPctFor } = useCategories();
+  // Which messages have had their product cards expanded past the initial
+  // limit — local UI state only, deliberately not persisted with the
+  // conversation (a reload starts collapsed again, same as any "show more").
+  const [expandedMap, setExpandedMap] = useState({});
   // Assistant messages are stored as structured objects: { text, products, showCart }.
   // The greeting starts as a plain string and is rendered gracefully below.
   const STORAGE_KEY = 'hikids_chat_v1';
@@ -50,17 +65,18 @@ export default function ChatPanel({ onClose }) {
       .catch(() => {});
   }, []);
 
-  // Rich, link-bearing catalog context fed to the assistant so it can quote
-  // real prices, discounts, stock, age suitability, and product ids — and
-  // recommend only products that actually exist in the store. The raw URLs are
-  // never shown to the customer; the UI renders short clickable links instead.
+  // Catalog context fed to the assistant so it can reason about real
+  // prices, discounts, stock and age suitability, and recommend only
+  // products that actually exist in the store — using the exact same
+  // pricing helper (priceInfo + discountPctFor) the storefront's own
+  // ProductCard uses, so a category-level discount is reflected here too
+  // (a plain sale_price check would silently miss it). The app never shows
+  // this text to the customer, and never trusts anything the assistant
+  // says about price/discount/stock for display — see ChatProductCard.
   const catalogText = products.map((p) => {
-    const url = `${ORIGIN}/product/${p.id}`;
-    const onSale = p.sale_price != null && Number(p.sale_price) < Number(p.price || 0);
-    const price = onSale ? Number(p.sale_price) : Number(p.price || 0);
-    const discount = onSale ? Math.round((1 - p.sale_price / p.price) * 100) : 0;
+    const { final, original, hasDiscount, discountPct } = priceInfo(p, discountPctFor(p.category));
     const stock = Number(p.stock ?? 0);
-    return `ID:${p.id} | ${p.name} | ${p.category || ''} | ages ${p.age_range || 'all'} | price ₪${price}${onSale ? ` (was ₪${p.price}, -${discount}%)` : ''} | stock ${stock}${stock <= 0 ? ' OUT OF STOCK' : ''} | url ${p.url || url}`;
+    return `ID:${p.id} | ${productName(p, lang)} | ${p.category || ''} | ages ${p.age_range || 'all'} | price ₪${final}${hasDiscount ? ` (was ₪${original}, -${discountPct}%)` : ''} | stock ${stock}${stock <= 0 ? ' OUT OF STOCK' : ''}`;
   }).join('\n');
 
   useEffect(() => {
@@ -85,19 +101,22 @@ export default function ChatPanel({ onClose }) {
     setBusy(true);
     lastActivityRef.current = Date.now(); // user interaction resets the 1h idle timer
     try {
-      const sys = `You are the HiKids toy store personal shopping assistant. Help customers choose toys and answer questions about ages, categories, pricing, discounts, shipping, loyalty points, returns, and payment (card or cash on delivery). Be friendly, warm and concise. Reply in ${ar ? 'Arabic' : 'English'}.
+      const sys = `You are the HiKids toy store personal shopping assistant. Help customers choose toys and answer questions about ages, categories, pricing, discounts, shipping, loyalty points, returns, and payment (card or cash on delivery). Be warm, friendly and concise — sound like a helpful person, not a database dump.
 
-When you mention, recommend, or discuss any product, include an entry in the "products" array with that product's id, name, and url. Do NOT write raw URLs in the reply text — the app renders clean clickable "View Product" links for the customer from the products array. Just refer to products by name in the reply.
+LANGUAGE: Reply entirely in ${ar ? 'Arabic' : 'English'} — the customer's current site language. Never mix the two languages in the same reply${ar ? '. Do not include English product names unless the customer explicitly asks for them' : ', using the English product name when one exists'}.
 
-Include the current price, and if a product is discounted include the original price and the discount percentage. Mention stock status (in stock / out of stock), age suitability, and category when relevant.
+FORMATTING: Keep the conversational part short — one or two sentences introducing what you found, and optionally one short closing sentence at the end (for example, offering to narrow the search further by category). You may use **bold**, short paragraphs, or lists for general questions (shipping, policies, loyalty, etc.), but when recommending products:
+- Do NOT list product names, prices, discounts, or stock status in the reply text — the app renders each recommended product as its own card directly below your message, straight from the database.
+- Do NOT write a numbered or bulleted list of products in the reply.
+- Refer to them only generically ("a few options below", "some picks that fit").
 
-You can recommend suitable REAL products from the catalog for a given need (for example "a gift for a 6-year-old"). Only recommend products that exist in the catalog provided — never invent products, prices, discounts, or availability. For each recommendation give the product name, price, discount if any, and a short reason it is suitable (the link is added automatically).
+PRODUCTS: For every product you recommend or specifically discuss, add one entry to the "products" array with that product's id and a short one-sentence "reason" it fits — never its price, discount, or stock; the card already shows the real, current data for that. Only use ids that exist in the catalog below — never invent a product, price, discount, or availability. Prefer your best 3-6 matches rather than every possible option.
 
-You can add a product to the customer's cart when they explicitly request it (for example "add this to my cart", "أضفه للسلة", "add it"). Put the product id and quantity in the add_to_cart array and the app will add it and show a View Cart link. Still write a natural reply telling them what you added.
+CART: You can add a product to the customer's cart when they explicitly ask (for example "add this to my cart", "أضفه للسلة", "add it"). Put the product id and quantity in the add_to_cart array and the app will add it and show a View Cart link. Still write a short natural reply confirming what you added.
 
 If asked about a specific order's status, tell them to use the Order Tracking page.
 
-Current product catalog (ID | name | category | ages | price | stock | url):\n${catalogText || 'Loading catalog...'}`;
+Current product catalog (ID | name | category | ages | price | stock):\n${catalogText || 'Loading catalog...'}`;
       const convo = next.map((m) => {
         const c = typeof m.content === 'string' ? m.content : m.content.text;
         return `${m.role === 'user' ? 'Customer' : 'Assistant'}: ${c}`;
@@ -110,14 +129,20 @@ Current product catalog (ID | name | category | ages | price | stock | url):\n${
       // rendered from the products array instead.
       let reply = (data.reply || '').replace(/https?:\/\/\S+/g, '').replace(/\s{2,}/g, ' ').trim();
       const actions = Array.isArray(data.add_to_cart) ? data.add_to_cart : [];
-      const mentioned = Array.isArray(data.products) ? data.products : [];
+      // { id, reason } entries only — every other displayed field (name,
+      // price, discount, stock, link) is resolved from the live `products`
+      // catalog by id when rendering, never from what the assistant wrote.
+      // A hard cap here is just a safety net against the model ignoring the
+      // "3-6 matches" guidance; the actual initial on-screen count is
+      // smaller still (INITIAL_PRODUCT_LIMIT, applied at render time).
+      const mentioned = (Array.isArray(data.products) ? data.products : []).slice(0, 8);
       const added = [];
       for (const a of actions) {
         const p = products.find((x) => x.id === a.product_id);
         if (!p) continue;
         const qty = Math.max(1, parseInt(a.qty, 10) || 1);
         addItem(p, qty);
-        added.push(`${p.name} × ${qty}`);
+        added.push(`${productName(p, lang)} × ${qty}`);
       }
       if (added.length) {
         const note = ar
@@ -155,7 +180,15 @@ Current product catalog (ID | name | category | ages | price | stock | url):\n${
       aria-label={t('ai.title')}
     >
       <div className="flex items-center gap-3 px-4 py-3 bg-cosmic text-white shrink-0">
-        <Sparkles className="w-5 h-5 shrink-0" />
+        {/* Official HiKids logo (the same asset Navbar uses), not a redrawn
+            icon, shown directly on the purple header — no circular badge or
+            background. Width is fixed (~56px, within the requested 52-65px
+            range) and height is auto, so the logo's own aspect ratio is
+            preserved with no cropping; object-contain is redundant with
+            that (an unconstrained auto height never crops) but kept
+            explicit per spec. `shrink-0` keeps it from being squeezed by
+            the title/subtitle on narrow screens. */}
+        <Logo className="shrink-0 w-14 h-auto object-contain" />
         <div className="flex-1 min-w-0">
           <p className="font-heading font-bold leading-none truncate">{t('ai.title')}</p>
           <p className="text-xs text-white/70 mt-0.5 truncate">{t('ai.subtitle')}</p>
@@ -173,28 +206,46 @@ Current product catalog (ID | name | category | ages | price | stock | url):\n${
         {messages.map((m, i) => {
           const isStr = typeof m.content === 'string';
           const text = isStr ? m.content : (m.content.text || '');
-          const links = isStr ? [] : (m.content.products || []);
+          const mentioned = isStr ? [] : (m.content.products || []);
           const showCart = !isStr && m.content.showCart;
+          const dir = detectTextDir(text);
+          // Resolve each { id, reason } the assistant sent against the live
+          // catalog — an id that doesn't (or no longer) match a real
+          // product is simply dropped rather than shown with blank/guessed
+          // data (see ChatProductCard for why every other field always
+          // comes from this record, never from the assistant).
+          const resolved = mentioned
+            .map((r) => ({ product: products.find((p) => p.id === r.id), reason: r.reason }))
+            .filter((r) => r.product);
+          const expanded = !!expandedMap[i];
+          const visible = expanded ? resolved : resolved.slice(0, INITIAL_PRODUCT_LIMIT);
+          const hasMore = resolved.length > visible.length;
           return (
             <div key={i} className={`flex flex-col ${m.role === 'user' ? 'items-end' : 'items-start'}`}>
-              <div className={`max-w-[85%] px-4 py-2.5 rounded-2xl text-sm whitespace-pre-wrap break-words ${m.role === 'user' ? 'bg-cosmic text-white rounded-br-md' : 'bg-card border border-border rounded-bl-md'}`}>
-                {text}
+              <div
+                dir={dir}
+                className={`max-w-[85%] px-4 py-3 rounded-2xl text-sm break-words ${m.role === 'user' ? 'bg-cosmic text-white rounded-br-md' : 'bg-card border border-border rounded-bl-md'}`}
+              >
+                {isStr ? (
+                  <span className="whitespace-pre-wrap leading-relaxed">{text}</span>
+                ) : (
+                  <ChatMarkdown text={text} />
+                )}
               </div>
-              {links.length > 0 && (
-                <div className="mt-2 flex flex-wrap gap-2 max-w-[90%]">
-                  {links.map((p) => {
-                    const path = `/product/${p.id}`;
-                    return (
-                      <Link
-                        key={p.id}
-                        to={path}
-                        onClick={() => typeof onClose === 'function' && onClose()}
-                        className="inline-flex items-center gap-1.5 px-3 h-9 rounded-full bg-cosmic/10 text-cosmic border border-cosmic/20 font-heading font-bold text-xs hover:bg-cosmic hover:text-white transition-colors"
-                      >
-                        {p.name} <ArrowUpRight className="w-3.5 h-3.5" />
-                      </Link>
-                    );
-                  })}
+              {visible.length > 0 && (
+                <div className="mt-2 w-full max-w-[92%] space-y-2">
+                  {visible.map(({ product, reason }) => (
+                    <ChatProductCard key={product.id} product={product} reason={reason} onNavigate={onClose} />
+                  ))}
+                  {hasMore && (
+                    <button
+                      type="button"
+                      onClick={() => setExpandedMap((s) => ({ ...s, [i]: true }))}
+                      className="w-full text-center text-xs font-heading font-bold text-cosmic hover:underline py-1"
+                    >
+                      {t('ai.showMore')}
+                    </button>
+                  )}
                 </div>
               )}
               {showCart && (
