@@ -37,56 +37,35 @@ function parseWixMediaUrl(src) {
   }
 }
 
-// Supabase Storage's Image Transformation endpoint — verified live on this
-// project (fetches against the render endpoint returned genuinely resized,
-// re-compressed bytes at several widths/qualities, distinct from the
-// original object). Detected by PATH SHAPE, not a hardcoded project host, so
-// it works for any Supabase project URL and for every public bucket
-// (product/admin uploads AND customer review/challenge photos alike — this
-// is a read-only, fully-fallback-safe display optimization, not a change to
-// what's stored or who can write it).
-//
-// Deliberately WIDTH-ONLY: no `height`/`resize=cover` is ever requested, so
-// the server always returns the whole source image just scaled down, never
-// server-side cropped. Every call site already does its own cropping via
-// CSS `object-fit`/`object-position` (see HeroSlideMedia's focal-position
-// handling, the one real user of off-center cropping) — a server-side crop
-// would silently ignore that positioning (Supabase's transform API has no
-// focal-point equivalent to Wix's `fp_`) and re-crop to dead-center instead.
-// Staying width-only keeps 100% of today's crop/position behavior identical
-// while still cutting the transferred bytes by the same order of magnitude.
-const SUPABASE_OBJECT_PATH_RE = /^\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/
-
-function parseSupabaseStorageUrl(src) {
-  try {
-    const url = new URL(src)
-    const m = url.pathname.match(SUPABASE_OBJECT_PATH_RE)
-    if (!m) return null
-    const [, bucket, path] = m
-    // GIFs (animation) and SVGs (vectors) must never go through a raster
-    // resize — skip detection entirely so they fall through to the plain
-    // <img> path, unchanged.
-    if (/\.(gif|svg)$/i.test(path)) return null
-    return { kind: "supabase", origin: url.origin, bucket, path, originalSrc: src }
-  } catch {
-    return null
-  }
-}
-
+// Supabase Storage's dynamic image transformation (`/render/image/public/…`)
+// was tried here and ROLLED BACK — see the "Third pre-launch fix batch"
+// investigation. Requesting only `width` (no `height`) does NOT preserve the
+// source's aspect ratio the way an ordinary "scale to width" resize would:
+// live-verified against a real 2048x2048 source, `?width=577` came back
+// 577x2048 (height pinned to the ORIGINAL height, not scaled) rather than
+// 577x577. Piped through this component's existing `object-fit: cover`,
+// that distorted-aspect image gets cropped completely differently than the
+// true original — the visible crop/zoom regression reported after commit
+// 32773a1. `resize=contain` with an explicit width AND height does preserve
+// aspect ratio correctly, but was not shipped here either: it wasn't
+// verified across enough real (non-square) source shapes in the time
+// available to be confident it reproduces every existing image's framing
+// exactly, and a wrong crop on a live product photo is worse than a larger
+// download. Supabase-hosted images render through the plain <img> fallback
+// below, unchanged from before this component ever tried to optimize them.
 function parseTransformableUrl(src) {
-  return parseWixMediaUrl(src) || parseSupabaseStorageUrl(src)
+  return parseWixMediaUrl(src)
 }
 
 const clampDim = (n) => Math.min(Math.max(Math.round(n), 1), MAX_DIMENSION)
 const clamp01 = (n) => Math.min(1, Math.max(0, n))
-const clampQuality = (q) => Math.min(100, Math.max(20, Math.round(q)))
 
 /**
  * Builds a Wix Media transform URL:
  * `<base>/v1/{fill|fit}/w_,h_[,fp_x_y|al_c],q_,usm_…/<name>.webp`
  * GIFs keep their extension (WebP output could drop animation).
  */
-function buildWixTransformUrl({ baseUrl, filename }, { width, height, crop, focalPoint, quality }) {
+function buildTransformUrl({ baseUrl, filename }, { width, height, crop, focalPoint, quality }) {
   const params = [`w_${clampDim(width)}`, `h_${clampDim(height || width)}`]
   if (crop) {
     params.push(
@@ -100,25 +79,6 @@ function buildWixTransformUrl({ baseUrl, filename }, { width, height, crop, foca
     ? filename
     : filename.replace(/\.[a-z0-9]+$/i, "") + ".webp"
   return `${baseUrl}/v1/${crop ? "fill" : "fit"}/${params.join(",")}/${outputName}`
-}
-
-// Supabase's render endpoint clamps width to the source's own resolution
-// (verified: requesting width=9999 against a ~2400px-wide source returns
-// byte-identical output to width=2400) so there's no risk of it upscaling a
-// small source — `clampDim` here is only the same defensive ceiling used
-// for Wix, not something Supabase actually needs to stay safe.
-function buildSupabaseTransformUrl({ origin, bucket, path }, { width, quality }) {
-  const params = new URLSearchParams({
-    width: String(clampDim(width)),
-    quality: String(clampQuality(quality)),
-  })
-  return `${origin}/storage/v1/render/image/public/${bucket}/${path}?${params}`
-}
-
-function buildTransformUrl(parsed, options) {
-  return parsed.kind === "supabase"
-    ? buildSupabaseTransformUrl(parsed, options)
-    : buildWixTransformUrl(parsed, options)
 }
 
 function buildSrcSet(parsed, options) {
@@ -261,17 +221,14 @@ const ResponsiveImage = React.forwardRef(
 ResponsiveImage.displayName = "ResponsiveImage"
 
 /**
- * Image with built-in optimization for two hosts:
- *  - Wix Media (media.base44.com / static.wixstatic.com): resized to the
- *    rendered container per device pixel ratio, re-encoded to WebP,
- *    `fittingType="fill"` crops server-side (optionally at a focal point).
- *  - Supabase Storage (any project, public buckets): resized to the
- *    rendered container per device pixel ratio via Supabase's Image
- *    Transformation endpoint — width-only, never server-cropped (see
- *    buildSupabaseTransformUrl's comment for why), so existing object-fit/
- *    object-position/focal-position CSS keeps doing 100% of the cropping.
- * Other URLs render as a plain <img>. Failed loads first retry the original
- * (untransformed) URL, then fall back to a generic broken-image graphic.
+ * Image with built-in Wix Media Platform support: URLs on media.base44.com /
+ * static.wixstatic.com are served resized to the rendered container (per
+ * device pixel ratio) and re-encoded to WebP; `fittingType="fill"` crops
+ * server-side, optionally anchored at a focal point. Supabase Storage URLs
+ * (and everything else) render as a plain <img> — see parseTransformableUrl's
+ * comment for why Supabase dynamic transformation was tried and rolled back.
+ * Failed loads first retry the original (untransformed) URL, then fall back
+ * to a generic broken-image graphic.
  */
 const Image = React.forwardRef(
   (
