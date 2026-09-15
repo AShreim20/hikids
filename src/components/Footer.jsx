@@ -20,19 +20,21 @@ function footerSections(t) {
       ],
     },
     {
+      // Shipping/returns removed — both already live inside the FAQ
+      // experience itself (see FAQ.jsx), so the two links were a straight
+      // duplicate of "الأسئلة الشائعة" pointing at the exact same /faq route.
       title: t('footer.help'),
       links: [
         { label: t('footer.faq'), to: '/faq' },
-        { label: t('footer.shipping'), to: '/faq' },
-        { label: t('footer.returns'), to: '/faq' },
         { label: t('footer.contact'), to: '/contact' },
       ],
     },
     {
+      // "لماذا نحن" removed — it pointed at the same /about route as "من
+      // نحن" (About Us), a duplicate entry rather than a distinct page.
       title: t('footer.aboutStore'),
       links: [
         { label: t('footer.about'), to: '/about' },
-        { label: t('footer.whyUs'), to: '/about' },
         { label: t('footer.privacy'), to: '/privacy' },
         { label: t('footer.terms'), to: '/terms' },
       ],

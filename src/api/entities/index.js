@@ -62,4 +62,8 @@ export const db = {
   // like a guest order. Duplicate email/phone is rejected at the DB level by
   // a unique index, not by reading the list first.
   NewsletterSubscriber: createEntity('newsletter_subscribers'),
+  // FAQ page question form: same public-insert-only shape as
+  // NewsletterSubscriber above (always .create(payload, {returning:false})).
+  // Only an admin can list/read/update — see CustomerInquiries.jsx.
+  CustomerInquiry: createEntity('customer_inquiries'),
 };

@@ -1,5 +1,4 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { HelpCircle } from 'lucide-react';
 import {
   Accordion,
@@ -9,6 +8,7 @@ import {
 } from '@/components/ui/accordion';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
+import InquiryForm from '@/components/faq/InquiryForm';
 import { useLanguage } from '@/context/LanguageContext';
 import { useSiteContent } from '@/context/SiteContentContext';
 
@@ -52,23 +52,16 @@ export default function FAQ() {
           ))}
         </Accordion>
 
-        <div className="mt-12 rounded-3xl bg-mist/60 p-8 text-center">
+        <div className="mt-12 rounded-3xl bg-mist/60 p-6 sm:p-8 text-center">
           <p className="font-heading font-bold text-xl">
-            {lang === 'ar' ? 'لديك سؤال آخر؟' : 'Still have a question?'}
+            {lang === 'ar' ? 'لديك سؤال آخر؟' : 'Have another question?'}
           </p>
           <p className="mt-2 text-muted-foreground">
             {lang === 'ar'
-              ? 'تصفّح مجموعتنا أو تتبّع طلبك.'
-              : 'Browse our collection or track your order.'}
+              ? 'ما لقيت جوابك؟ ابعتلنا سؤالك وسنساعدك.'
+              : "Couldn't find your answer? Send us your question and we'll help."}
           </p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link
-              to="/"
-              className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold"
-            >
-              {t('nav.explore')}
-            </Link>
-          </div>
+          <InquiryForm />
         </div>
       </section>
 

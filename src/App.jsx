@@ -61,6 +61,7 @@ const RewardsHistory = lazy(() => import('./pages/RewardsHistory'));
 const ShareLanding = lazy(() => import('./pages/ShareLanding'));
 const MyWheelRewards = lazy(() => import('./pages/MyWheelRewards'));
 const WheelWinners = lazy(() => import('./pages/WheelWinners'));
+const CustomerInquiries = lazy(() => import('./pages/CustomerInquiries'));
 const SharedCart = lazy(() => import('./pages/SharedCart'));
 const PhotoReviews = lazy(() => import('./pages/PhotoReviews'));
 const SiteContentAdmin = lazy(() => import('./pages/admin/SiteContentAdmin'));
@@ -111,6 +112,7 @@ function AnimatedRoutes() {
       <Route path="/share" element={<ShareLanding />} />
       <Route path="/wheel-rewards" element={<MyWheelRewards />} />
       <Route path="/admin/wheel-winners" element={<WheelWinners />} />
+      <Route path="/admin/inquiries" element={<CustomerInquiries />} />
       <Route path="/admin/photo-reviews" element={<PhotoReviews />} />
       <Route path="/admin/site-content" element={<SiteContentAdmin />} />
       <Route path="/admin/site-settings" element={<SiteSettingsAdmin />} />
