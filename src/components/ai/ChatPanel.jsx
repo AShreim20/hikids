@@ -100,6 +100,20 @@ export default function ChatPanel({ onClose }) {
     setInput('');
     setBusy(true);
     lastActivityRef.current = Date.now(); // user interaction resets the 1h idle timer
+    // Every product id already shown anywhere in this conversation so far —
+    // handed to the assistant as the "avoid repeating" list for a "غيرهم/
+    // كمان" follow-up (see RECOMMENDATION COUNT below). Derived straight
+    // from the existing message history (already persisted with the chat),
+    // so no extra state needs to be tracked or reset by hand — the prompt
+    // itself tells the model to ignore this list once the customer starts a
+    // genuinely new search.
+    const shownProductIds = [...new Set(
+      messages.flatMap((m) =>
+        typeof m.content === 'object' && Array.isArray(m.content.products)
+          ? m.content.products.map((p) => p.id)
+          : []
+      )
+    )];
     try {
       const sys = `You are the HiKids toy store personal shopping assistant. Help customers choose toys and answer questions about ages, categories, pricing, discounts, shipping, loyalty points, returns, and payment (card or cash on delivery). Be warm, friendly and concise — sound like a helpful person, not a database dump.
 
@@ -110,7 +124,13 @@ FORMATTING: Keep the conversational part short — one or two sentences introduc
 - Do NOT write a numbered or bulleted list of products in the reply.
 - Refer to them only generically ("a few options below", "some picks that fit").
 
-PRODUCTS: For every product you recommend or specifically discuss, add one entry to the "products" array with that product's id and a short one-sentence "reason" it fits — never its price, discount, or stock; the card already shows the real, current data for that. Only use ids that exist in the catalog below — never invent a product, price, discount, or availability. Prefer your best 3-6 matches rather than every possible option.
+PRODUCTS: For every product you recommend or specifically discuss, add one entry to the "products" array with that product's id and a short one-sentence "reason" it fits — never its price, discount, or stock; the card already shows the real, current data for that. Only use ids that exist in the catalog below — never invent a product, price, discount, or availability. Exactly how many to include is set by RECOMMENDATION COUNT below.
+
+RECOMMENDATION COUNT: By default, recommend exactly 3 products — never more, even when many products match. If the customer explicitly asks for a specific number (for example "اعطيني خيارين" = 2, "اعطيني 5 خيارات" = 5, "خيار واحد" = 1, "three options"), recommend exactly that many instead, but never more than 6 in a single response even if they ask for more or for the whole catalog ("كل المنتجات"). If they ask for everything or an unreasonably large number, pick your best 3-6 matches and mention in the reply, in words only (no link), that they can browse the full Shop page for more.
+
+MORE OPTIONS: If the customer asks to see other options for the SAME request (e.g. "غيرهم", "كمان", "خيارات ثانية", "ورجيني غيرهم", "في غيرهم؟", "عروض ثانية", "show me more", "other options"), keep the same filters as that request (age, gender, category, budget, etc.) and recommend DIFFERENT products than every id listed under "Already shown" below — never repeat one of them unless there are truly no other matching products left, in which case say so naturally instead of repeating or inventing products. If instead the customer's newest message describes a new or different search (different age, gender, category, or budget than before), treat it as a brand-new recommendation and ignore the "Already shown" list — pick freely from the full catalog again.
+
+Already shown this conversation (avoid repeating for a "more options" request): ${shownProductIds.length ? shownProductIds.join(', ') : 'none yet'}
 
 CART: You can add a product to the customer's cart when they explicitly ask (for example "add this to my cart", "أضفه للسلة", "add it"). Put the product id and quantity in the add_to_cart array and the app will add it and show a View Cart link. Still write a short natural reply confirming what you added.
 
@@ -132,10 +152,12 @@ Current product catalog (ID | name | category | ages | price | stock):\n${catalo
       // { id, reason } entries only — every other displayed field (name,
       // price, discount, stock, link) is resolved from the live `products`
       // catalog by id when rendering, never from what the assistant wrote.
-      // A hard cap here is just a safety net against the model ignoring the
-      // "3-6 matches" guidance; the actual initial on-screen count is
-      // smaller still (INITIAL_PRODUCT_LIMIT, applied at render time).
-      const mentioned = (Array.isArray(data.products) ? data.products : []).slice(0, 8);
+      // This slice is the actual hard ceiling from RECOMMENDATION COUNT
+      // above (never more than 6 per response) — a safety net in case the
+      // model ignores that instruction, not the primary way the count is
+      // controlled. The initial on-screen count is smaller still
+      // (INITIAL_PRODUCT_LIMIT, applied at render time).
+      const mentioned = (Array.isArray(data.products) ? data.products : []).slice(0, 6);
       const added = [];
       for (const a of actions) {
         const p = products.find((x) => x.id === a.product_id);
