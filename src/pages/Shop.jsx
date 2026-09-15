@@ -26,6 +26,7 @@ const SORTS = [
   { id: 'priceLow', label: 'plp.sortPriceLow' },
   { id: 'priceHigh', label: 'plp.sortPriceHigh' },
   { id: 'newest', label: 'plp.sortNewest' },
+  { id: 'discount', label: 'plp.sortDiscount' },
 ];
 
 const PER_PAGE_OPTIONS = [25, 50, 75, 100];
@@ -65,6 +66,11 @@ export default function Shop() {
     return ids.filter((id) => AGE_OPTIONS.some((g) => g.id === id));
   }, [searchParams]);
   const gender = useMemo(() => parseGenderParam(searchParams.get('gender')), [searchParams]);
+  // Same "read straight from the URL" treatment as gender/age above — the
+  // homepage's "View All Deals" link and a shared/bookmarked
+  // /shop?onSale=true URL both need this active the instant the page mounts,
+  // survive a refresh, and respond to browser Back/Forward.
+  const onSale = searchParams.get('onSale') === 'true';
   const [priceBounds, setPriceBounds] = useState([0, 1000]);
   const [price, setPrice] = useState(null); // null = untouched → use bounds
   const [usedCategoryNames, setUsedCategoryNames] = useState([]);
@@ -113,7 +119,7 @@ export default function Shop() {
   // concern, kept live independently (see useProductCommercial, used on the
   // product detail page) rather than riding along in this cached list.
   const { data: pageDataRaw, isLoading: loading } = useQuery({
-    queryKey: queryKeys.products({ page, perPage, sort, cats, ages, gender, price, search }),
+    queryKey: queryKeys.products({ page, perPage, sort, cats, ages, gender, price, search, onSale }),
     queryFn: async () => {
       const pb = priceBoundsRef.current;
       const activePrice = price || pb;
@@ -129,6 +135,7 @@ export default function Shop() {
         priceMax: activePrice[1],
         priceActive,
         search,
+        onSale,
         includeMeta: !metaLoaded.current,
       });
       // Meta (price bounds / which categories currently have products) isn't
@@ -147,8 +154,8 @@ export default function Shop() {
   const pageData = pageDataRaw || { items: [], total: null, hasMore: false };
 
   const priceActive = !!price && (price[0] !== priceBounds[0] || price[1] !== priceBounds[1]);
-  const hasActive = cats.length > 0 || ages.length > 0 || !!gender || !!search || priceActive;
-  const activeCount = cats.length + ages.length + (gender ? 1 : 0) + (priceActive ? 1 : 0);
+  const hasActive = cats.length > 0 || ages.length > 0 || !!gender || !!search || priceActive || onSale;
+  const activeCount = cats.length + ages.length + (gender ? 1 : 0) + (priceActive ? 1 : 0) + (onSale ? 1 : 0);
 
   // Gender/age live in the URL (see above), so changing them writes back to
   // the URL — via the functional updater, so it merges with whatever else is
@@ -170,6 +177,7 @@ export default function Shop() {
   const onSetCats = (v) => { setCats(v); setPage(1); };
   const onSetAges = (v) => { setUrlParam('age', v); setPage(1); };
   const onSetGender = (v) => { setUrlParam('gender', v); setPage(1); };
+  const onSetOnSale = (v) => { setUrlParam('onSale', v ? 'true' : null); setPage(1); };
   const onSetPrice = (v) => { setPrice(v); setPage(1); };
   const onPerPage = (v) => { setPerPage(v); setPage(1); };
 
@@ -218,6 +226,7 @@ export default function Shop() {
     cats, setCats: onSetCats, ages, setAges: onSetAges, gender, setGender: onSetGender,
     priceBounds, price: displayPrice, setPrice: onSetPrice,
     extraCategories: categories, usedCategoryNames,
+    onSale, setOnSale: onSetOnSale,
   };
 
   return (
@@ -258,6 +267,20 @@ export default function Shop() {
           {/* Quick filters — desktop/tablet only; mobile relies on the
               Filters drawer for everything (see point 18 of the brief). */}
           <div className="hidden md:flex flex-wrap items-center gap-2">
+            {/* A single on/off filter, not a "choose from options" one — a
+                plain toggle pill (same active/inactive styling as every
+                FilterPopover trigger) rather than a popover with one
+                checkbox inside it. */}
+            <button
+              type="button"
+              onClick={() => onSetOnSale(!onSale)}
+              aria-pressed={onSale}
+              className={`squish inline-flex items-center gap-1.5 h-11 px-4 rounded-full text-sm font-heading font-bold transition-colors ${
+                onSale ? 'bg-cosmic text-white' : 'bg-mist text-foreground/80 hover:bg-accent/20'
+              }`}
+            >
+              {onSale && '✓ '}{t('plp.onSale')}
+            </button>
             <FilterPopover label={<>{t('plp.category')} {cats.length > 0 && <CountBadge>{cats.length}</CountBadge>}</>} active={cats.length > 0}>
               <CategorySection cats={cats} setCats={onSetCats} extraCategories={categories} usedCategoryNames={usedCategoryNames} />
             </FilterPopover>
@@ -309,6 +332,7 @@ export default function Shop() {
         {/* ── Active filter chips ─────────────────────────────────────── */}
         {hasActive && (
           <div className="mt-4 flex flex-wrap items-center gap-2">
+            {onSale && <ActiveChip onRemove={() => onSetOnSale(false)}>{t('plp.onSale')}</ActiveChip>}
             {cats.map((c) => (
               <ActiveChip key={`cat-${c}`} onRemove={() => removeCat(c)}>{catLabel(c)}</ActiveChip>
             ))}
@@ -348,8 +372,8 @@ export default function Shop() {
             </div>
           ) : pageData.items.length === 0 ? (
             <div className="text-center py-20">
-              <p className="font-heading font-bold text-2xl">{t('plp.noResults')}</p>
-              <p className="mt-2 text-muted-foreground">{t('plp.noResultsDesc')}</p>
+              <p className="font-heading font-bold text-2xl">{onSale ? t('deals.empty') : t('plp.noResults')}</p>
+              {!onSale && <p className="mt-2 text-muted-foreground">{t('plp.noResultsDesc')}</p>}
               {hasActive && (
                 <button onClick={clearAll} className="mt-5 text-cosmic font-heading font-bold hover:underline">
                   {t('plp.clearAll')}

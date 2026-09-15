@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Save, Plus, Trash2, ArrowUp, ArrowDown, Lock, Type, HelpCircle, BookOpen } from 'lucide-react';
+import { Loader2, Save, Plus, Trash2, ArrowUp, ArrowDown, Lock, Type, HelpCircle, BookOpen, Tag } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useToast } from '@/components/ui/use-toast';
@@ -11,10 +11,11 @@ import { upsertContent, loadContentRecord } from '@/lib/siteContent';
 import { DEFAULT_FAQ_ITEMS, DEFAULT_ABOUT } from '@/lib/siteDefaults';
 import { translations } from '@/context/translations';
 import StickySaveBar from '@/components/admin/StickySaveBar';
+import HomepageDealsAdminSettings from '@/components/admin/HomepageDealsAdminSettings';
 
 // Group translation keys into friendly pages for the override editor.
 const PAGE_GROUPS = [
-  { id: 'home', label: 'Home', prefixes: ['hero.', 'cats.', 'cat.', 'promise.', 'rec.', 'nl.'] },
+  { id: 'home', label: 'Home', prefixes: ['hero.', 'cats.', 'cat.', 'promise.', 'rec.', 'nl.', 'deals.'] },
   { id: 'about', label: 'About', prefixes: ['aboutPage.', 'about.'] },
   { id: 'faq', label: 'FAQ', prefixes: ['faq.'] },
   { id: 'contact', label: 'Contact', prefixes: ['contact.'] },
@@ -29,6 +30,7 @@ const TABS = [
   { id: 'text', label: 'Page Text', icon: Type },
   { id: 'faq', label: 'FAQ', icon: HelpCircle },
   { id: 'about', label: 'About', icon: BookOpen },
+  { id: 'deals', label: 'Homepage Deals', icon: Tag },
 ];
 
 const input = 'w-full h-11 px-3 rounded-2xl bg-mist border border-border/70 outline-none focus:border-cosmic';
@@ -251,6 +253,9 @@ export default function SiteContentAdmin() {
             </StickySaveBar>
           </div>
         )}
+
+        {/* Homepage Deals */}
+        {tab === 'deals' && <HomepageDealsAdminSettings />}
       </div>
       <Footer />
     </div>

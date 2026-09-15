@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Star, Tag, Flame, ThumbsUp, ArrowRight, Plus, Check, Heart } from 'lucide-react';
+import { Star, Flame, ThumbsUp, ArrowRight, Plus, Check, Heart } from 'lucide-react';
 import { db } from '@/api/entities';
 import { Image } from '@/components/ui/image';
 import { useCart } from '@/context/CartContext';
@@ -12,9 +12,14 @@ import { useCategories } from '@/context/CategoryContext';
 import { productName, categoryName } from '@/lib/bilingual';
 import { queryKeys } from '@/lib/queryKeys';
 import { isPublishedReview } from '@/lib/reviews';
+import { priceInfo } from '@/lib/pricing';
+import SaleBadge from '@/components/SaleBadge';
+import DiscountPriceDisplay from '@/components/DiscountPriceDisplay';
 
+// onSale is excluded here — it now renders the shared SaleBadge (with its
+// "-20%" percentage) instead of a generic tag, so it isn't just one more
+// entry in this same-shaped badge list.
 function badgeFor(p, t) {
-  if (p.onSale) return { label: t('rec.onSale'), icon: Tag, cls: 'bg-accent text-white' };
   if (p.purchaseCount >= 3) return { label: t('rec.bestSeller'), icon: Flame, cls: 'bg-cosmic text-white' };
   if (p.avgRating >= 4.5 && p.reviewCount >= 2) return { label: t('rec.topRated'), icon: ThumbsUp, cls: 'bg-emerald-500 text-white' };
   return null;
@@ -24,11 +29,11 @@ export default function Recommendations() {
   const { addItem } = useCart();
   const { flyToCart } = useCartFly();
   const { toggle, isSaved } = useWishlist();
-  const { byName } = useCategories();
+  const { byName, discountPctFor } = useCategories();
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [added, setAdded] = useState({});
-  const { t, formatPrice, lang } = useLanguage();
+  const { t, lang } = useLanguage();
 
   // p.category is the legacy denormalized *name* (Arabic, since Arabic is
   // mandatory) — resolve it through the real category record so English UI
@@ -80,7 +85,11 @@ export default function Recommendations() {
         });
 
         const scored = products.map((p) => {
-          const onSale = p.sale_price != null && p.sale_price < p.price;
+          // Named priceData, deliberately not `price` — p.price is the raw
+          // DB column addItem()/the cart read directly; overwriting it with
+          // this computed object would silently break cart pricing.
+          const priceData = priceInfo(p, discountPctFor(p.category));
+          const onSale = priceData.hasDiscount;
           const purchaseCount = purchases[p.id] || 0;
           const r = ratingMap[p.id];
           const avgRating = r ? r.sum / r.count : 0;
@@ -88,7 +97,7 @@ export default function Recommendations() {
           const eligible = onSale || (purchaseCount >= 2 && avgRating >= 4) || (avgRating >= 4.5 && reviewCount >= 2);
           const score =
             (onSale ? 30 : 0) + purchaseCount * 6 + avgRating * 4 + reviewCount * 2 + (p.featured ? 3 : 0);
-          return { ...p, onSale, purchaseCount, avgRating, reviewCount, eligible, score };
+          return { ...p, onSale, priceData, purchaseCount, avgRating, reviewCount, eligible, score };
         });
 
         let recs = scored.filter((x) => x.eligible).sort((a, b) => b.score - a.score);
@@ -146,11 +155,18 @@ export default function Recommendations() {
                 key={p.id}
                 className="group relative rounded-[2rem] bg-card border border-border/60 overflow-hidden flex flex-col transition-all duration-500 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_-28px_rgba(26,26,30,0.35)]"
               >
-                {b && (
+                {/* Sale badge takes priority over the bestseller/top-rated
+                    tag — both would compete for the same corner otherwise —
+                    and always renders the shared component so its design
+                    and "-X%"/fallback text can never drift from any other
+                    card on the site. */}
+                {p.onSale ? (
+                  <SaleBadge percentage={p.priceData.discountPct} className="absolute top-4 left-4 z-10" />
+                ) : b ? (
                   <span className={`absolute top-4 left-4 z-10 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-heading font-bold ${b.cls}`}>
                     <b.icon className="w-3.5 h-3.5" /> {b.label}
                   </span>
-                )}
+                ) : null}
                 <button
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(p); }}
                   className={`absolute top-4 right-4 z-10 squish grid place-items-center w-10 h-10 rounded-full backdrop-blur-md transition-all duration-300 ${isSaved(p.id) ? 'bg-accent text-white' : 'bg-card/85 text-foreground hover:bg-card'}`}
@@ -186,14 +202,12 @@ export default function Recommendations() {
                     )}
                   </div>
                   <div className="mt-auto pt-4 flex items-center justify-between gap-3">
-                    <div className="flex items-baseline gap-2">
-                      <span className="font-heading font-extrabold text-xl text-cosmic">
-                        {formatPrice(p.onSale ? p.sale_price : p.price)}
-                      </span>
-                      {p.onSale && (
-                        <span className="text-sm text-muted-foreground line-through">{formatPrice(p.price)}</span>
-                      )}
-                    </div>
+                    <DiscountPriceDisplay
+                      original={p.priceData.original}
+                      final={p.priceData.final}
+                      hasDiscount={p.priceData.hasDiscount}
+                      discountPct={p.priceData.discountPct}
+                    />
                     <button
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); quickAdd(p, e.currentTarget); }}
                       className="squish grid place-items-center w-10 h-10 rounded-full bg-cosmic text-white hover:bg-primary transition-colors"
