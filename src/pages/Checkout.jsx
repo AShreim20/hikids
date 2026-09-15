@@ -300,7 +300,16 @@ export default function Checkout() {
           return;
         }
       }
-      if (!commit || commit.success === false) {
+      // Whitelist success rather than blacklist failure: commit_order_stock
+      // can fail as either {success:false, insufficient:[...]} or
+      // {error:'...'} (a permission/ownership/not-found rejection) — and a
+      // guest calling this RPC used to get a permission error that this
+      // check never even reached (it threw, caught by the retry logic
+      // above). Checking `commit.success === true` explicitly, instead of
+      // `!== false`, also means any future/unexpected response shape is
+      // treated as a failure rather than silently passing through as a
+      // false "success" — see the pre-launch review's finding on this.
+      if (!commit || commit.success !== true) {
         // Insufficient stock — the backend already cancelled the order and
         // rolled back any partial deductions. Release the reserved loyalty
         // points and adjust the cart so the customer sees what changed.
