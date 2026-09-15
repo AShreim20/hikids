@@ -59,6 +59,12 @@ export default function ProductGallery({ product, images }) {
             src={current.url}
             alt={product.name}
             fittingType="fill"
+            // This is the largest, most prominent image on the product page —
+            // almost always its Largest Contentful Paint element — so it
+            // loads eagerly/high-priority rather than the lazy default every
+            // other Image use gets (thumbnails below stay lazy).
+            loading="eager"
+            fetchpriority="high"
             className={`w-full h-full object-cover transition-transform duration-300 ease-out cursor-zoom-in ${zoom ? 'scale-[1.8]' : 'scale-100'}`}
             style={{ transformOrigin: `${origin.x}% ${origin.y}%` }}
           />

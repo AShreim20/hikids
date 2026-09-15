@@ -31,21 +31,62 @@ function parseWixMediaUrl(src) {
     const basePath = v1 === -1 ? url.pathname : url.pathname.slice(0, v1)
     const filename = basePath.split("/").pop()
     if (!filename || /\.svg$/i.test(filename)) return null
-    return { baseUrl: `${url.origin}${basePath}`, filename }
+    return { kind: "wix", baseUrl: `${url.origin}${basePath}`, filename, originalSrc: src }
   } catch {
     return null
   }
 }
 
+// Supabase Storage's Image Transformation endpoint — verified live on this
+// project (fetches against the render endpoint returned genuinely resized,
+// re-compressed bytes at several widths/qualities, distinct from the
+// original object). Detected by PATH SHAPE, not a hardcoded project host, so
+// it works for any Supabase project URL and for every public bucket
+// (product/admin uploads AND customer review/challenge photos alike — this
+// is a read-only, fully-fallback-safe display optimization, not a change to
+// what's stored or who can write it).
+//
+// Deliberately WIDTH-ONLY: no `height`/`resize=cover` is ever requested, so
+// the server always returns the whole source image just scaled down, never
+// server-side cropped. Every call site already does its own cropping via
+// CSS `object-fit`/`object-position` (see HeroSlideMedia's focal-position
+// handling, the one real user of off-center cropping) — a server-side crop
+// would silently ignore that positioning (Supabase's transform API has no
+// focal-point equivalent to Wix's `fp_`) and re-crop to dead-center instead.
+// Staying width-only keeps 100% of today's crop/position behavior identical
+// while still cutting the transferred bytes by the same order of magnitude.
+const SUPABASE_OBJECT_PATH_RE = /^\/storage\/v1\/object\/public\/([^/]+)\/(.+)$/
+
+function parseSupabaseStorageUrl(src) {
+  try {
+    const url = new URL(src)
+    const m = url.pathname.match(SUPABASE_OBJECT_PATH_RE)
+    if (!m) return null
+    const [, bucket, path] = m
+    // GIFs (animation) and SVGs (vectors) must never go through a raster
+    // resize — skip detection entirely so they fall through to the plain
+    // <img> path, unchanged.
+    if (/\.(gif|svg)$/i.test(path)) return null
+    return { kind: "supabase", origin: url.origin, bucket, path, originalSrc: src }
+  } catch {
+    return null
+  }
+}
+
+function parseTransformableUrl(src) {
+  return parseWixMediaUrl(src) || parseSupabaseStorageUrl(src)
+}
+
 const clampDim = (n) => Math.min(Math.max(Math.round(n), 1), MAX_DIMENSION)
 const clamp01 = (n) => Math.min(1, Math.max(0, n))
+const clampQuality = (q) => Math.min(100, Math.max(20, Math.round(q)))
 
 /**
  * Builds a Wix Media transform URL:
  * `<base>/v1/{fill|fit}/w_,h_[,fp_x_y|al_c],q_,usm_…/<name>.webp`
  * GIFs keep their extension (WebP output could drop animation).
  */
-function buildTransformUrl({ baseUrl, filename }, { width, height, crop, focalPoint, quality }) {
+function buildWixTransformUrl({ baseUrl, filename }, { width, height, crop, focalPoint, quality }) {
   const params = [`w_${clampDim(width)}`, `h_${clampDim(height || width)}`]
   if (crop) {
     params.push(
@@ -59,6 +100,25 @@ function buildTransformUrl({ baseUrl, filename }, { width, height, crop, focalPo
     ? filename
     : filename.replace(/\.[a-z0-9]+$/i, "") + ".webp"
   return `${baseUrl}/v1/${crop ? "fill" : "fit"}/${params.join(",")}/${outputName}`
+}
+
+// Supabase's render endpoint clamps width to the source's own resolution
+// (verified: requesting width=9999 against a ~2400px-wide source returns
+// byte-identical output to width=2400) so there's no risk of it upscaling a
+// small source — `clampDim` here is only the same defensive ceiling used
+// for Wix, not something Supabase actually needs to stay safe.
+function buildSupabaseTransformUrl({ origin, bucket, path }, { width, quality }) {
+  const params = new URLSearchParams({
+    width: String(clampDim(width)),
+    quality: String(clampQuality(quality)),
+  })
+  return `${origin}/storage/v1/render/image/public/${bucket}/${path}?${params}`
+}
+
+function buildTransformUrl(parsed, options) {
+  return parsed.kind === "supabase"
+    ? buildSupabaseTransformUrl(parsed, options)
+    : buildWixTransformUrl(parsed, options)
 }
 
 function buildSrcSet(parsed, options) {
@@ -84,18 +144,25 @@ const ImageWrapper = React.forwardRef(({ aspectRatio, className, style, children
 ImageWrapper.displayName = "ImageWrapper"
 
 const ResponsiveImage = React.forwardRef(
-  ({ parsed, fittingType, focalPoint, quality, className, style, aspectRatio, onLoad, ...props }, parentRef) => {
+  ({ parsed, fittingType, focalPoint, quality, className, style, aspectRatio, onLoad, onError, ...props }, parentRef) => {
     const wrapperRef = React.useRef(null)
     const imgRef = React.useRef(null)
     const size = useSize(wrapperRef)
     const [loaded, setLoaded] = React.useState(false)
+    // If the transform endpoint itself fails (wrong bucket path, transform
+    // disabled, transient outage), fall back to the plain original URL
+    // before giving up to the generic broken-image graphic one level up —
+    // a transform hiccup should never leave a blank/broken product card.
+    const [transformFailed, setTransformFailed] = React.useState(false)
 
     React.useImperativeHandle(parentRef, () => imgRef.current)
 
-    // Reset the blur-up when the underlying image changes.
+    // Reset the blur-up (and the transform-failure fallback) when the
+    // underlying image changes.
     React.useEffect(() => {
       setLoaded(false)
-    }, [parsed.baseUrl])
+      setTransformFailed(false)
+    }, [parsed.baseUrl, parsed.originalSrc])
 
     const crop = fittingType !== "fit"
     // `size` is null exactly once: the pre-measurement first render, which we
@@ -116,6 +183,33 @@ const ResponsiveImage = React.forwardRef(
     // wasted full-size download per image). useSize measures in
     // useLayoutEffect, so nothing is lost: measurement lands before the
     // first paint.
+    // The transform endpoint failed — render the untouched original URL
+    // (no srcSet/blur-up, since those all depend on the same transform)
+    // rather than a broken image. A second failure (the original URL is
+    // itself unreachable) propagates to the caller's onError, which is
+    // where <Image> swaps in the generic fallback graphic.
+    if (transformFailed) {
+      return (
+        <ImageWrapper ref={wrapperRef} aspectRatio={aspectRatio} className={className} style={style}>
+          <img
+            ref={imgRef}
+            src={parsed.originalSrc}
+            loading="lazy"
+            className={cn(
+              "w-full h-full inset-0 absolute",
+              fittingType === "fit" ? "object-contain" : "object-cover"
+            )}
+            onLoad={(e) => {
+              setLoaded(true)
+              onLoad?.(e)
+            }}
+            onError={onError}
+            {...props}
+          />
+        </ImageWrapper>
+      )
+    }
+
     return (
       <ImageWrapper ref={wrapperRef} aspectRatio={aspectRatio} className={className} style={style}>
         {/* Tiny blurred placeholder (a few hundred bytes) covering the main
@@ -156,6 +250,7 @@ const ResponsiveImage = React.forwardRef(
               setLoaded(true)
               onLoad?.(e)
             }}
+            onError={() => setTransformFailed(true)}
             {...props}
           />
         )}
@@ -166,11 +261,17 @@ const ResponsiveImage = React.forwardRef(
 ResponsiveImage.displayName = "ResponsiveImage"
 
 /**
- * Image with built-in Wix Media Platform support: URLs on media.base44.com /
- * static.wixstatic.com are served resized to the rendered container (per
- * device pixel ratio) and re-encoded to WebP; `fittingType="fill"` crops
- * server-side, optionally anchored at a focal point. Other URLs render as a
- * plain <img>. Failed loads swap to a fallback image.
+ * Image with built-in optimization for two hosts:
+ *  - Wix Media (media.base44.com / static.wixstatic.com): resized to the
+ *    rendered container per device pixel ratio, re-encoded to WebP,
+ *    `fittingType="fill"` crops server-side (optionally at a focal point).
+ *  - Supabase Storage (any project, public buckets): resized to the
+ *    rendered container per device pixel ratio via Supabase's Image
+ *    Transformation endpoint — width-only, never server-cropped (see
+ *    buildSupabaseTransformUrl's comment for why), so existing object-fit/
+ *    object-position/focal-position CSS keeps doing 100% of the cropping.
+ * Other URLs render as a plain <img>. Failed loads first retry the original
+ * (untransformed) URL, then fall back to a generic broken-image graphic.
  */
 const Image = React.forwardRef(
   (
@@ -207,7 +308,7 @@ const Image = React.forwardRef(
 
     // The fallback renders as a plain <img> so a broken upload can't cascade
     // into a second (transformed) failing request.
-    const parsed = imgSrc === FALLBACK_IMAGE_URL ? null : parseWixMediaUrl(imgSrc)
+    const parsed = imgSrc === FALLBACK_IMAGE_URL ? null : parseTransformableUrl(imgSrc)
 
     if (!parsed) {
       const isErrorUrl = imgSrc === FALLBACK_IMAGE_URL
