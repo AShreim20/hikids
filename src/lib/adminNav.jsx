@@ -3,6 +3,24 @@ import {
   Search, ClipboardList, BarChart3, Award, Ticket, Package, Trophy, Sparkles, Gamepad2, Users, FolderTree, Camera, Type, Settings, FileText, Receipt, MessageCircleQuestion,
 } from 'lucide-react';
 
+// Every admin/staff-only route in the app, including the ones not living
+// under the /admin prefix (delivery pricing, orders, loyalty & discounts,
+// staff management, insights). Used to decide where the admin quick-nav
+// (AdminSidebar/AdminMobileMenu) is allowed to render — it must never show
+// up on ordinary customer storefront pages, even for a signed-in admin.
+export const ADMIN_ROUTE_PREFIXES = [
+  '/admin',
+  '/staff',
+  '/delivery',
+  '/discounts',
+  '/loyalty-admin',
+  '/orders-admin',
+  '/analytics',
+];
+
+export const isAdminRoute = (pathname) =>
+  ADMIN_ROUTE_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
+
 // Single source of truth for the admin navigation. Top-level entries are
 // either a direct link or a group with children. Groups collapse several
 // management pages under one icon without merging their functionality.

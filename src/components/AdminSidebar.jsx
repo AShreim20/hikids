@@ -2,13 +2,18 @@ import React, { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
-import { getAdminNav } from '@/lib/adminNav';
+import { getAdminNav, isAdminRoute } from '@/lib/adminNav';
 import AdminNavGroup from '@/components/AdminNavGroup';
 
 // Desktop admin icon rail. Direct links render as simple buttons; merged
 // groups render as AdminNavGroup flyouts. A single `openGroup` state in the
 // rail guarantees only one flyout is open at a time — opening one closes
 // any other, and navigating anywhere closes the open flyout.
+//
+// Only rendered on admin/staff routes (isAdminRoute) — it used to render on
+// every route for a signed-in admin, including the ordinary customer
+// storefront, where its fixed left-0 rail overlaid page content (pre-launch
+// QA finding).
 export default function AdminSidebar() {
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -16,7 +21,7 @@ export default function AdminSidebar() {
   const { pathname } = useLocation();
   const [openGroup, setOpenGroup] = useState(null);
 
-  if (user?.role !== 'admin') return null;
+  if (user?.role !== 'admin' || !isAdminRoute(pathname)) return null;
 
   const nav = getAdminNav(t);
 
