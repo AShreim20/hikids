@@ -275,11 +275,25 @@ export default function Checkout() {
 
       // Recompute every price/total server-side from the real product, category,
       // delivery, discount and loyalty records so a forged client payload can
-      // never lower what the customer pays. Defensive: a transient failure
-      // keeps the client totals rather than blocking the happy path.
+      // never lower what the customer pays. A thrown exception (network
+      // hiccup, dropped response) stays non-blocking, matching commitOrderStock's
+      // retry-friendly resilience below — but an explicit {success:false} is a
+      // deliberate, deterministic rejection (bad bundle, forbidden, order not
+      // found) and must stop checkout, or server-side price verification would
+      // have no effect at all.
+      let secureResult = null;
       try {
-        await secureOrder(orderId);
-      } catch { /* non-blocking */ }
+        secureResult = await secureOrder(orderId);
+      } catch { /* transient failure — non-blocking */ }
+      if (secureResult && secureResult.success === false) {
+        if (reserved) {
+          await releaseLoyaltyPoints(checkoutKey).catch(() => {});
+        }
+        toast({ title: ar ? 'تعذر التحقق من الطلب، حاول مجددًا' : 'Could not verify your order, please try again', variant: 'destructive' });
+        setConfirmOpen(false);
+        setPlacing(false);
+        return;
+      }
 
       // Authoritative stock check + atomic deduction. The cart display is NOT
       // a reservation — this is the single source of truth at order time, so
