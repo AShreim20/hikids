@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, BarChart3, Heart, Settings as SettingsIcon, Search, MapPin, ChevronDown } from 'lucide-react';
+import { ShoppingBag, BarChart3, LayoutDashboard, Heart, Settings as SettingsIcon, Search, MapPin, ChevronDown } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -110,6 +110,11 @@ export default function Navbar() {
       arr.push({ key: 'rewards', label: t('nav.wheelRewards'), to: '/wheel-rewards', external: false });
     }
     if (user?.role === 'admin') {
+      // Only entry point back into /admin while browsing the storefront —
+      // AdminSidebar/AdminMobileMenu are scoped to admin routes only (they
+      // used to overlay every storefront page), so without this an admin
+      // navigating the shop had no visible way back into the dashboard.
+      arr.push({ key: 'adminDashboard', label: t('admin.title'), to: '/admin', external: false });
       arr.push({ key: 'insights', label: t('nav.insights'), to: '/analytics', external: false });
     }
     return arr;
@@ -233,6 +238,15 @@ export default function Navbar() {
               {user && (
                 <Link to="/wheel-rewards" className="text-sm font-medium text-white/85 hover:text-accent transition-colors">
                   {t('nav.wheelRewards')}
+                </Link>
+              )}
+              {user?.role === 'admin' && (
+                // Only entry point back into /admin while browsing the storefront —
+                // AdminSidebar/AdminMobileMenu are scoped to admin routes only (they
+                // used to overlay every storefront page), so without this an admin
+                // navigating the shop had no visible way back into the dashboard.
+                <Link to="/admin" className="text-sm font-medium text-accent hover:text-accent/80 transition-colors flex items-center gap-1.5">
+                  <LayoutDashboard className="w-4 h-4" /> {t('admin.title')}
                 </Link>
               )}
               {user?.role === 'admin' && (
