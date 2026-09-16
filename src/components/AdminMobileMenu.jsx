@@ -4,15 +4,16 @@ import { ChevronDown, Menu } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
-import { getAdminNav, isAdminRoute } from '@/lib/adminNav';
+import { getAdminNav } from '@/lib/adminNav';
 
 // Admin navigation for phones and tablets: a floating button that opens a
 // bottom-sheet drawer with the grouped management menu.
 //
-// Only rendered on admin/staff routes (isAdminRoute) — it used to render on
-// every route for a signed-in admin, including the ordinary customer
-// storefront, where its fixed bottom-right button overlapped ProductDetail's
-// Buy Now / Add to Cart controls (pre-launch QA finding).
+// Renders on every route for a signed-in admin (by owner's request, so the
+// dashboard is always one tap away while browsing the storefront) — a
+// pre-launch QA pass previously scoped this to admin routes only because
+// the fixed bottom-right button can overlap ProductDetail's Buy Now / Add
+// to Cart controls; reverted here.
 export default function AdminMobileMenu() {
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -20,7 +21,7 @@ export default function AdminMobileMenu() {
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
 
-  if (user?.role !== 'admin' || !isAdminRoute(pathname)) return null;
+  if (user?.role !== 'admin') return null;
 
   const nav = getAdminNav(t);
   const go = (to) => {
