@@ -22,6 +22,9 @@ import { ageLabelList } from '@/lib/ages';
 import { loadPreviewSnapshot } from '@/lib/sessionDraft';
 import VariantSelector from '@/components/product/VariantSelector';
 import TrustStrip from '@/components/TrustStrip';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
+import { buildProductSeo } from '@/lib/productSeo';
+import { SITE_URL } from '@/lib/siteUrl';
 import {
   hasVariants, findVariant, defaultSelection, selectionImages,
   variantPrice, isSellable, getOptions,
@@ -69,6 +72,30 @@ export default function ProductDetail({ preview = false }) {
   // Disabled in preview mode (null id) so a live DB update can never
   // silently replace the unsaved values the admin is previewing.
   const commercial = useProductCommercial(preview ? null : id, product);
+
+  // Hooks must run unconditionally on every render (before the loading/
+  // not-found early returns below), so this guards internally instead of
+  // being skipped — reuses the exact same catDiscountPct/priceInfo() the
+  // visible price further down is computed from (see buildProductSeo's own
+  // comment), never a second price calculation. Never indexed while
+  // previewing (unsaved edits, or a draft that may not even be public).
+  const liveProductForSeo = commercial ? { ...product, ...commercial } : product;
+  const productSeo = liveProductForSeo
+    ? buildProductSeo(liveProductForSeo, {
+        catDiscountPct: discountPctFor(liveProductForSeo.category),
+        siteUrl: SITE_URL,
+        lang,
+      })
+    : null;
+  useDocumentMeta({
+    title: productSeo?.title,
+    description: productSeo?.description,
+    canonical: productSeo?.canonical,
+    image: productSeo?.image,
+    type: 'product',
+    noindex: preview || !productSeo,
+    jsonLd: preview ? null : productSeo?.jsonLd,
+  });
 
   useEffect(() => {
     if (preview) {

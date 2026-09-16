@@ -11,10 +11,13 @@ import Footer from '@/components/Footer';
 import InquiryForm from '@/components/faq/InquiryForm';
 import { useLanguage } from '@/context/LanguageContext';
 import { useSiteContent } from '@/context/SiteContentContext';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
+import { SITE_URL } from '@/lib/siteUrl';
 
 export default function FAQ() {
   const { lang, t } = useLanguage();
   const { faqItems } = useSiteContent();
+  useDocumentMeta({ title: `${t('faq.title')} | HiKids`, description: t('faq.subtitle'), canonical: `${SITE_URL}/faq` });
 
   const faqs = (faqItems || []).map((f) => ({
     q: lang === 'ar' ? (f.q_ar || f.q_en || '') : (f.q_en || f.q_ar || ''),

@@ -12,8 +12,36 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
-    <meta name="description" content="HiKids — a gallery of wonder. Curated premium toys for sophisticated play. Order online and pay by card or cash on delivery." />
+    <!-- Description matches the store's actual current capability — card
+         payment is toggled off store-wide right now (see the trust-strip
+         batch's finding), so this no longer claims "pay by card". -->
+    <meta name="description" content="HiKids — a gallery of wonder. Curated premium toys for sophisticated play. Order online, cash on delivery." />
     <title>HiKids — A Gallery of Wonder</title>
+
+    <!-- Homepage/default social + search metadata. https://example.com is a
+         placeholder — Vite's %ENV% HTML replacement leaves the literal token
+         in the output when the var is unset at build time (verified), which
+         would be a worse broken canonical than a clearly-fake domain, so
+         this is a plain hardcoded placeholder instead: once the production
+         domain is registered, replace both example.com URLs below (and set
+         VITE_SITE_URL in Vercel, which src/lib/siteUrl.js and the
+         middleware/api functions already read for everything else). This is
+         also what a non-JS crawler (Facebook/WhatsApp/etc.) sees for every
+         route OTHER than /product/:id, which has its own dynamic snapshot
+         from middleware.js — an honest, disclosed limitation for
+         Shop/Bundles/FAQ/etc. rather than a per-page dynamic solution. -->
+    <link rel="canonical" href="https://example.com/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="HiKids" />
+    <meta property="og:title" content="HiKids — A Gallery of Wonder" />
+    <meta property="og:description" content="Curated premium toys for sophisticated play. Order online, cash on delivery." />
+    <meta property="og:image" content="https://media.base44.com/images/public/6a75c91fa5dfe02359c5f127/7971fd204_HiKidsLogo.webp" />
+    <meta property="og:url" content="https://example.com/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="HiKids — A Gallery of Wonder" />
+    <meta name="twitter:description" content="Curated premium toys for sophisticated play. Order online, cash on delivery." />
+    <meta name="twitter:image" content="https://media.base44.com/images/public/6a75c91fa5dfe02359c5f127/7971fd204_HiKidsLogo.webp" />
+    <meta name="robots" content="index, follow" />
   </head>
   <body>
     <div id="root"></div>

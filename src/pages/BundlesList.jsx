@@ -7,6 +7,8 @@ import Footer from '@/components/Footer';
 import BundleCard from '@/components/bundles/BundleCard';
 import { useLanguage } from '@/context/LanguageContext';
 import { isBundleActive, bundleProductIds } from '@/lib/bundles';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
+import { SITE_URL } from '@/lib/siteUrl';
 
 // Customer-facing bundles index — reuses the same BundleCard already used in
 // Shop.jsx's teaser strip, just without the 4-card cap. Fetches only the
@@ -16,6 +18,7 @@ export default function BundlesList() {
   const { t } = useLanguage();
   const [bundles, setBundles] = useState(null);
   const [stockMap, setStockMap] = useState(null);
+  useDocumentMeta({ title: `${t('nav.bundles')} | HiKids`, description: t('bundle.pageSubtitle'), canonical: `${SITE_URL}/bundles` });
 
   useEffect(() => {
     let cancelled = false;

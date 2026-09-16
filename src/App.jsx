@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from '@/lib/AuthContext';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
+import RouteMeta from './components/RouteMeta';
 import MobileNav from './components/MobileNav';
 import ChatWidget from './components/ai/ChatWidget';
 import WhatsAppButton from './components/WhatsAppButton';
@@ -81,6 +82,8 @@ import { SiteContentProvider } from '@/context/SiteContentContext';
 function AnimatedRoutes() {
   const location = useLocation();
   const routes = (
+    <>
+    <RouteMeta />
     <Routes location={location}>
       {/* Add your page Route elements here */}
       <Route path="/" element={<Home />} />
@@ -143,6 +146,7 @@ function AnimatedRoutes() {
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
+    </>
   );
 
   // The <Routes> element must stay stable across navigations: all page

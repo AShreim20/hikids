@@ -14,6 +14,8 @@ import {
   bundleOriginalPrice, bundleSellingPrice, bundleDiscountPercent,
   bundleAvailability, bundleSavings,
 } from '@/lib/bundles';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
+import { SITE_URL } from '@/lib/siteUrl';
 
 export default function BundleDetail() {
   const { id } = useParams();
@@ -54,6 +56,19 @@ export default function BundleDetail() {
     })();
     return () => { cancelled = true; };
   }, [id]);
+
+  // Hooks must run unconditionally (before the loading/not-found early
+  // returns below) — guards internally instead. Bundles have no per-crawler
+  // server-side snapshot (see middleware.js's comment on why that was scoped
+  // to products only); this covers the browser tab title and Googlebot's own
+  // JS renderer, an intentionally lighter treatment than ProductDetail's.
+  useDocumentMeta({
+    title: bundle ? `${bundle.name} | HiKids` : undefined,
+    description: bundle?.description || undefined,
+    canonical: bundle ? `${SITE_URL}/bundles/${bundle.id}` : undefined,
+    image: bundle?.image_url || undefined,
+    noindex: !bundle,
+  });
 
   if (loading) {
     return (

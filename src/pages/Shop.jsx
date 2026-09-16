@@ -20,6 +20,8 @@ import { useCategories } from '@/context/CategoryContext';
 import { categoryName } from '@/lib/bilingual';
 import { isBundleActive, bundleProductIds } from '@/lib/bundles';
 import { supabase } from '@/api/supabaseClient';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
+import { SITE_URL } from '@/lib/siteUrl';
 import { parseGenderParam, GENDER_MALE, GENDER_FEMALE } from '@/lib/gender';
 
 const SORTS = [
@@ -46,6 +48,11 @@ export default function Shop() {
   const { t, lang } = useLanguage();
   const ar = lang === 'ar';
   const { categories } = useCategories();
+  // Canonical always points at the bare /shop URL regardless of active
+  // filters — avoids indexing a separate "page" per category/age/gender/
+  // search/sort combination (Google's own recommended technique for
+  // faceted navigation) without touching filter/URL behavior itself.
+  useDocumentMeta({ title: `${t('plp.title')} | HiKids`, description: t('plp.subtitle'), canonical: `${SITE_URL}/shop` });
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [bundles, setBundles] = useState([]);

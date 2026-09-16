@@ -4,6 +4,8 @@ import { ShieldCheck } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
+import { SITE_URL } from '@/lib/siteUrl';
 
 const CONTENT = {
   ar: {
@@ -152,6 +154,7 @@ export default function PrivacyPolicy() {
   const { lang } = useLanguage();
   const c = lang === 'ar' ? CONTENT.ar : CONTENT.en;
   const ar = lang === 'ar';
+  useDocumentMeta({ title: `${c.title} | HiKids`, description: c.intro, canonical: `${SITE_URL}/privacy` });
 
   return (
     <div className="min-h-screen bg-background">

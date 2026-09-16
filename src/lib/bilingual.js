@@ -1,4 +1,7 @@
-import { cleanFeatureList } from '@/lib/features';
+// Relative (not '@/lib/features') so this file can be imported outside the
+// Vite build too — middleware.js (Vercel Edge Middleware) imports it via
+// productSeo.js, and the '@/' alias only exists in Vite's own resolver.
+import { cleanFeatureList } from './features.js';
 
 // Bilingual name resolution. Arabic is mandatory; English is optional.
 // Display rule:

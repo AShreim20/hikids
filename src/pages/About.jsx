@@ -6,6 +6,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useSiteContent } from '@/context/SiteContentContext';
+import { useDocumentMeta } from '@/hooks/useDocumentMeta';
+import { SITE_URL } from '@/lib/siteUrl';
 
 const VALUE_ICONS = [Leaf, ShieldCheck, Heart, Star];
 
@@ -13,6 +15,10 @@ export default function About() {
   const { lang, t } = useLanguage();
   const { about } = useSiteContent();
   const ar = lang === 'ar';
+  // Built from about.title only (not about.body, which still claims online
+  // card payment — currently disabled store-wide, see the trust-strip
+  // batch) so this new meta tag never repeats that stale claim.
+  useDocumentMeta({ title: `${t('about.title')} | HiKids`, description: t('about.title'), canonical: `${SITE_URL}/about` });
 
   const story = ar ? (about.storyAr || []) : (about.storyEn || []);
   const valuesRaw = ar ? (about.valuesAr || []) : (about.valuesEn || []);
