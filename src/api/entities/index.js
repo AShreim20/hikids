@@ -66,4 +66,12 @@ export const db = {
   // NewsletterSubscriber above (always .create(payload, {returning:false})).
   // Only an admin can list/read/update — see CustomerInquiries.jsx.
   CustomerInquiry: createEntity('customer_inquiries'),
+  // Returns & Exchanges, Phase 1 (foundation only — no submission/approval
+  // workflow yet). ReturnReason is public-read/permission-write
+  // ('returns.manage'), same shape as Category. ReturnRequest/
+  // ReturnRequestItem are permission-gated for both read and write for now
+  // — no customer-facing policy exists until Phase 2 adds one.
+  ReturnReason: createEntity('return_reasons'),
+  ReturnRequest: createEntity('return_requests'),
+  ReturnRequestItem: createEntity('return_request_items'),
 };

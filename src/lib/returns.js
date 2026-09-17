@@ -1,0 +1,77 @@
+// Returns & Exchanges — shared constants/labels for the Return Reason
+// foundation (Phase 1). Mirrors orderStatus.js/po.js: plain constants +
+// bilingual label maps, no business logic beyond simple lookups. The
+// Return Request workflow itself (statuses, activity log) is prepared in
+// the database (see supabase/migrations/0031_returns_foundation.sql) but
+// has no UI yet — that's Phase 2+.
+
+export const DELIVERY_RESPONSIBILITIES = ['hikids', 'customer', 'manual_review'];
+
+export const DELIVERY_RESPONSIBILITY_LABEL = {
+  hikids: { ar: 'تكلفة التوصيل على HiKids', en: 'HiKids pays delivery' },
+  customer: { ar: 'تكلفة التوصيل على الزبون', en: 'Customer pays delivery' },
+  manual_review: { ar: 'يتم تحديد تكلفة التوصيل بعد مراجعة الطلب', en: 'Delivery cost decided after manual review' },
+};
+
+export const deliveryResponsibilityLabel = (value, lang = 'en') =>
+  DELIVERY_RESPONSIBILITY_LABEL[value]?.[lang] || value;
+
+// Workflow states for a future Return Request (section 6) — foundation
+// only, no status here yet triggers stock/refund/loyalty changes.
+export const RETURN_REQUEST_STATUSES = [
+  'draft', 'submitted', 'under_review', 'needs_information',
+  'approved', 'rejected', 'awaiting_return', 'received',
+  'processing', 'completed', 'cancelled',
+];
+
+export const RETURN_REQUEST_STATUS_LABEL = {
+  en: {
+    draft: 'Draft', submitted: 'Submitted', under_review: 'Under Review',
+    needs_information: 'Needs Information', approved: 'Approved', rejected: 'Rejected',
+    awaiting_return: 'Awaiting Return', received: 'Received', processing: 'Processing',
+    completed: 'Completed', cancelled: 'Cancelled',
+  },
+  ar: {
+    draft: 'مسودة', submitted: 'مُقدَّم', under_review: 'قيد المراجعة',
+    needs_information: 'يتطلب معلومات إضافية', approved: 'مقبول', rejected: 'مرفوض',
+    awaiting_return: 'بانتظار الإرجاع', received: 'تم الاستلام', processing: 'قيد المعالجة',
+    completed: 'مكتمل', cancelled: 'ملغى',
+  },
+};
+
+export const returnRequestStatusLabel = (status, lang = 'en') =>
+  RETURN_REQUEST_STATUS_LABEL[lang === 'ar' ? 'ar' : 'en'][status] || status;
+
+export const REQUEST_TYPES = ['return', 'exchange'];
+
+export const REQUEST_TYPE_LABEL = {
+  return: { ar: 'إرجاع', en: 'Return' },
+  exchange: { ar: 'استبدال', en: 'Exchange' },
+};
+
+// Extensible resolution classification (section 5/20) — plain labels only,
+// no workflow branches on these yet.
+export const RESOLUTION_TYPES = ['missing_item', 'missing_part', 'wrong_item', 'damaged_item'];
+
+export const RESOLUTION_TYPE_LABEL = {
+  missing_item: { ar: 'صنف ناقص من الطلب', en: 'Missing item' },
+  missing_part: { ar: 'قطعة أو جزء ناقص', en: 'Missing part' },
+  wrong_item: { ar: 'وصل منتج خاطئ', en: 'Wrong item' },
+  damaged_item: { ar: 'المنتج وصل تالفاً', en: 'Damaged item' },
+};
+
+// Which "allowed actions" a reason can be configured with (section 10),
+// used by both the admin form and any future customer-facing eligibility
+// check ("can this reason be used for a return? an exchange?").
+export const REASON_ALLOWED_ACTION_FIELDS = [
+  { key: 'allow_return', label: { ar: 'إرجاع', en: 'Return' } },
+  { key: 'allow_exchange', label: { ar: 'استبدال', en: 'Exchange' } },
+  { key: 'allow_missing_item', label: { ar: 'حل صنف ناقص من الطلب', en: 'Missing Item Resolution' } },
+  { key: 'allow_missing_part', label: { ar: 'حل قطعة ناقصة من المنتج', en: 'Missing Part Resolution' } },
+];
+
+export const reasonName = (reason, lang = 'en') =>
+  (lang === 'ar' ? reason?.name : (reason?.name_en || reason?.name)) || '';
+
+export const reasonDescription = (reason, lang = 'en') =>
+  (lang === 'ar' ? reason?.description : (reason?.description_en || reason?.description)) || '';

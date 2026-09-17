@@ -35,6 +35,7 @@ const PurchaseOrders = lazy(() => import('./pages/PurchaseOrders'));
 const POEditor = lazy(() => import('./pages/POEditor'));
 const Suppliers = lazy(() => import('./pages/Suppliers'));
 const Categories = lazy(() => import('./pages/Categories'));
+const ReturnReasons = lazy(() => import('./pages/ReturnReasons'));
 const Reports = lazy(() => import('./pages/Reports'));
 const ExpensesManagement = lazy(() => import('./pages/ExpensesManagement'));
 const ExpenseCategories = lazy(() => import('./pages/ExpenseCategories'));
@@ -106,6 +107,7 @@ function AnimatedRoutes() {
       <Route path="/admin/po/new" element={<POEditor />} />
       <Route path="/admin/po/:id" element={<POEditor />} />
       <Route path="/admin/categories" element={<Categories />} />
+      <Route path="/admin/return-reasons" element={<ReturnReasons />} />
       <Route path="/admin/users" element={<UserManagement />} />
       <Route path="/admin/bundles" element={<Bundles />} />
       <Route path="/admin/bundle/new" element={<BundleEditor />} />
