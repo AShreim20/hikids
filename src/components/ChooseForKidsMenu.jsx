@@ -84,7 +84,9 @@ export function ChooseForKidsMenuDesktop({ onNavigate }) {
   const [open, setOpen] = useState(false);
   const [hoveredGender, setHoveredGender] = useState(null);
   const [genderPanelRef, genderSide] = useMenuSide(open);
-  const [agesPanelRef, agesSide] = useMenuSide(!!hoveredGender);
+  // Ages starts from wherever Gender actually ended up, so the cascade
+  // keeps extending the same direction instead of folding back on itself.
+  const [agesPanelRef, agesSide] = useMenuSide(!!hoveredGender, genderSide);
 
   const close = () => {
     setOpen(false);

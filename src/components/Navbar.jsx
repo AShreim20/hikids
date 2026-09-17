@@ -93,7 +93,7 @@ export default function Navbar() {
             the remaining ones apart. */}
         <div className="hidden md:block relative z-10">
           <div className="max-w-7xl mx-auto px-6 sm:px-10 h-12 md:h-14 flex items-center gap-4">
-            <div className="flex items-center gap-6 lg:gap-8">
+            <div className="flex items-center gap-6 lg:gap-7 xl:gap-9">
               {/* A hash-only link needs a real anchor: React Router's <Link>
                   to a path + hash on a different route doesn't reliably
                   scroll to the fragment. */}

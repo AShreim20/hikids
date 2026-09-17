@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Gift } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
@@ -18,19 +18,30 @@ const ROWS = [
 // source of truth the old standalone "Mystery Wheel" header link read —
 // for both the top-level badge and the Spin & Win row's own count, so
 // there's still only one place that count is fetched.
+//
+// Navbar renders a desktop AND a mobile instance of this component at the
+// same time (one hidden via a `hidden md:block` / `md:hidden` ancestor, not
+// unmounted) and both read the same shared `open` prop. When Rewards is
+// opened from the desktop trigger, the mobile instance's `open` becomes
+// true too, so it *also* mounts its own panel/outside-click listener — and
+// that listener's own root ref only wraps its own (hidden) subtree, so it
+// sees a click on the desktop panel as "outside" and immediately closes the
+// shared state before the click's navigation could complete. Fixed by
+// matching on a shared `data-nav-dropdown` marker instead of a
+// per-instance ref, so every instance agrees a click landing in *either*
+// instance's panel is "inside".
 export default function RewardsMenu({ open, onToggle, onClose, mobile = false }) {
   const { t } = useLanguage();
   const { user } = useAuth();
   const location = useLocation();
   const available = useAvailableSpins();
-  const rootRef = useRef(null);
 
   const isActive = ['/challenges', '/wheel', '/wheel-rewards'].includes(location.pathname);
 
   useEffect(() => {
     if (!open) return;
     const onDocClick = (e) => {
-      if (rootRef.current && !rootRef.current.contains(e.target)) onClose();
+      if (!e.target.closest('[data-nav-dropdown]')) onClose();
     };
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('mousedown', onDocClick);
@@ -76,7 +87,7 @@ export default function RewardsMenu({ open, onToggle, onClose, mobile = false })
   }`;
 
   return (
-    <div ref={rootRef} className="relative shrink-0">
+    <div data-nav-dropdown="rewards" className="relative shrink-0">
       <button
         type="button"
         onClick={onToggle}

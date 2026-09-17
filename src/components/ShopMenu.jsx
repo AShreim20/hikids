@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { LayoutGrid } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
@@ -16,17 +16,27 @@ import { ChooseForKidsMenuDesktop, ChooseForKidsMenuMobile } from '@/components/
 // a nested submenu. Once open, the nested Choose for Kids cascade is still
 // hover-driven — safe here because the panel no longer auto-closes on
 // mouse movement, only on outside click / Escape / navigation / re-click.
+//
+// Navbar renders a desktop AND a mobile instance of this component at once
+// (one hidden via a `hidden md:block` / `md:hidden` ancestor, not
+// unmounted), and both read the same shared `open` prop — opening from one
+// trigger makes the OTHER instance's `open` true too, so it also mounts its
+// own outside-click listener. A per-instance ref only "contains" its own
+// (possibly hidden) subtree, so that other instance sees every click on the
+// visible panel as "outside" and closes the shared state before a link's
+// navigation can complete. Fixed by matching a shared `data-nav-dropdown`
+// marker instead of a per-instance ref, so every instance agrees a click
+// landing in *either* instance's panel is "inside".
 export default function ShopMenu({ open, onToggle, onClose, mobile = false }) {
   const { t } = useLanguage();
   const location = useLocation();
-  const rootRef = useRef(null);
 
   const isActive = location.pathname === '/shop' || location.pathname === '/bundles';
 
   useEffect(() => {
     if (!open) return;
     const onDocClick = (e) => {
-      if (rootRef.current && !rootRef.current.contains(e.target)) onClose();
+      if (!e.target.closest('[data-nav-dropdown]')) onClose();
     };
     const onKey = (e) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('mousedown', onDocClick);
@@ -39,7 +49,7 @@ export default function ShopMenu({ open, onToggle, onClose, mobile = false }) {
 
   if (mobile) {
     return (
-      <div ref={rootRef} className="relative shrink-0">
+      <div data-nav-dropdown="shop" className="relative shrink-0">
         <button
           type="button"
           onClick={onToggle}
@@ -71,7 +81,7 @@ export default function ShopMenu({ open, onToggle, onClose, mobile = false }) {
   }
 
   return (
-    <div ref={rootRef} className="relative">
+    <div data-nav-dropdown="shop" className="relative">
       <button
         type="button"
         onClick={onToggle}
