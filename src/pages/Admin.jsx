@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Loader2, Lock, LayoutGrid, List, Copy, X, Link2, Search, EyeOff, FileSpreadsheet } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Lock, LayoutGrid, List, Copy, X, Link2, Search, EyeOff, FileSpreadsheet, Upload } from 'lucide-react';
 import { db } from '@/api/entities';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { Image } from '@/components/ui/image';
@@ -12,6 +12,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import ProductListRow from '@/components/admin/ProductListRow';
 import ProductExportDialog from '@/components/admin/ProductExportDialog';
+import ProductImportDialog from '@/components/admin/ProductImportDialog';
 import { PeriodSelector, StatCard } from '@/components/reports/ReportShared';
 import { periodRange, profitLoss, buildProductMap } from '@/lib/reports';
 import { categoryName } from '@/lib/bilingual';
@@ -33,6 +34,7 @@ export default function Admin() {
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [exportOpen, setExportOpen] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
 
   // Financial summary row: same profitLoss()/expensesReport() maths as the
   // Reports page, computed here from real orders/expenses so this can never
@@ -356,14 +358,24 @@ export default function Admin() {
                 </button>
               ))}
             </div>
-            <button
-              type="button"
-              onClick={() => setExportOpen(true)}
-              className="squish inline-flex items-center gap-2 h-10 px-4 rounded-full bg-mist border border-border text-sm font-heading font-bold text-foreground/80 hover:border-cosmic transition-colors"
-            >
-              <FileSpreadsheet className="w-4 h-4 shrink-0" />
-              <span className="whitespace-nowrap">{ar ? 'تصدير Excel' : 'Export Excel'}</span>
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setExportOpen(true)}
+                className="squish inline-flex items-center gap-2 h-10 px-4 rounded-full bg-mist border border-border text-sm font-heading font-bold text-foreground/80 hover:border-cosmic transition-colors"
+              >
+                <FileSpreadsheet className="w-4 h-4 shrink-0" />
+                <span className="whitespace-nowrap">{ar ? 'تصدير Excel' : 'Export Excel'}</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setImportOpen(true)}
+                className="squish inline-flex items-center gap-2 h-10 px-4 rounded-full bg-mist border border-border text-sm font-heading font-bold text-foreground/80 hover:border-cosmic transition-colors"
+              >
+                <Upload className="w-4 h-4 shrink-0" />
+                <span className="whitespace-nowrap">{ar ? 'توريد Excel' : 'Import Excel'}</span>
+              </button>
+            </div>
           </div>
 
           {/* Select all + visible count — lives with the list, not the search. */}
@@ -553,6 +565,13 @@ export default function Admin() {
         filterFn={exportFilterFn}
         selectedIds={selected}
         categoryNameById={categoryNameById}
+      />
+
+      <ProductImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        categories={categories}
+        onImported={load}
       />
 
       <Footer />
