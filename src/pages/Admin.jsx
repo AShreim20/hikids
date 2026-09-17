@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Loader2, Lock, LayoutGrid, List, Copy, X, Link2, Search, EyeOff } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Lock, LayoutGrid, List, Copy, X, Link2, Search, EyeOff, FileSpreadsheet } from 'lucide-react';
 import { db } from '@/api/entities';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { Image } from '@/components/ui/image';
@@ -11,13 +11,10 @@ import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import ProductListRow from '@/components/admin/ProductListRow';
-import ExportExcelButton from '@/components/admin/ExportExcelButton';
+import ProductExportDialog from '@/components/admin/ProductExportDialog';
 import { PeriodSelector, StatCard } from '@/components/reports/ReportShared';
 import { periodRange, profitLoss, buildProductMap } from '@/lib/reports';
-import { fetchAllRows, toExcelDate, todayStamp } from '@/lib/excelExportHelpers';
-import { productFeatures, categoryName } from '@/lib/bilingual';
-import { ageLabels } from '@/lib/ages';
-import { hasVariants, getVariants } from '@/lib/variants';
+import { categoryName } from '@/lib/bilingual';
 
 export default function Admin() {
   const { user } = useAuth();
@@ -35,6 +32,7 @@ export default function Admin() {
   const [confirmAction, setConfirmAction] = useState(null);
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [exportOpen, setExportOpen] = useState(false);
 
   // Financial summary row: same profitLoss()/expensesReport() maths as the
   // Reports page, computed here from real orders/expenses so this can never
@@ -138,7 +136,7 @@ export default function Admin() {
     const term = q.trim().toLowerCase();
     if (!term) return true;
     const text = [
-      p.name || '', p.name_en || '', p.barcode || '',
+      p.name || '', p.name_en || '', p.barcode || '', p.product_code || '',
       ...(Array.isArray(p.variants) ? p.variants.flatMap((v) => [v.sku || '', v.barcode || '']) : []),
     ].join(' ').toLowerCase();
     return text.includes(term);
@@ -161,115 +159,8 @@ export default function Admin() {
     });
   const clearSel = () => setSelected(new Set());
 
-  // ── Excel export ──────────────────────────────────────────────────────
-  // Two sheets from one export: full Product detail (task §5) plus an
-  // Inventory/Stock view (task §11) derived from the same rows — both are
-  // "the product list", just projected differently, so one export covers
-  // both required pages instead of duplicating the fetch/format logic.
   const ar = lang === 'ar';
-  const genderLabel = (g) => (g === 'male' ? t('gender.boy') : g === 'female' ? t('gender.girl') : g === 'both' ? t('gender.both') : '');
-  const totalStock = (p) => (hasVariants(p) ? getVariants(p).reduce((s, v) => s + (Number(v.stock) || 0), 0) : Number(p.stock) || 0);
-  const stockStatusLabel = (stock) => (stock > 0 ? (ar ? 'متوفر' : 'Available') : (ar ? 'غير متوفر' : 'Out of stock'));
-
-  const buildProductRow = (p) => {
-    const skus = Array.isArray(p.variants) ? p.variants.map((v) => v.sku).filter(Boolean) : [];
-    const extraCats = Array.isArray(p.category_ids) ? p.category_ids.map((id) => categoryNameById[id]).filter(Boolean) : [];
-    const stock = totalStock(p);
-    return {
-      id: p.id,
-      name: p.name || '',
-      name_en: p.name_en || '',
-      sku: skus.join(' | '),
-      barcode: p.barcode || '',
-      category: p.category || '',
-      extra_categories: extraCats.join(' | '),
-      gender: genderLabel(p.gender),
-      age: ageLabels(p, t),
-      price: Number(p.price) || 0,
-      sale_price: p.sale_price != null ? Number(p.sale_price) : null,
-      unit_cost: p.unit_cost != null ? Number(p.unit_cost) : null,
-      stock,
-      stock_status: stockStatusLabel(stock),
-      status_label: p.status === 'draft' ? t('admin.statusDraft') : t('admin.statusPublished'),
-      features: productFeatures(p, lang).join(' | '),
-      material: p.material || '',
-      tags: Array.isArray(p.tags) ? p.tags.join(' | ') : '',
-      created_date: toExcelDate(p.created_date),
-      updated_date: toExcelDate(p.updated_date),
-    };
-  };
-  const buildInventoryRow = (p) => {
-    const skus = Array.isArray(p.variants) ? p.variants.map((v) => v.sku).filter(Boolean) : [];
-    const stock = totalStock(p);
-    const unitCost = Number(p.unit_cost) || 0;
-    return {
-      name: p.name || '',
-      sku: skus.join(' | '),
-      barcode: p.barcode || '',
-      category: p.category || '',
-      stock,
-      unit_cost: p.unit_cost != null ? unitCost : null,
-      price: Number(p.price) || 0,
-      inventory_value: stock * unitCost,
-      stock_status: stockStatusLabel(stock),
-    };
-  };
-  const productColumns = [
-    { header: ar ? 'معرف المنتج' : 'Product ID', key: 'id', width: 24 },
-    { header: ar ? 'الاسم (عربي)' : 'Arabic Name', key: 'name', width: 26, wrap: true },
-    { header: ar ? 'الاسم (إنجليزي)' : 'English Name', key: 'name_en', width: 26, wrap: true },
-    { header: 'SKU', key: 'sku', width: 18, wrap: true },
-    { header: ar ? 'الباركود' : 'Barcode', key: 'barcode', width: 16 },
-    { header: ar ? 'الفئة الرئيسية' : 'Category', key: 'category', width: 18 },
-    { header: ar ? 'فئات إضافية' : 'Additional Categories', key: 'extra_categories', width: 24, wrap: true },
-    { header: ar ? 'الجنس' : 'Gender', key: 'gender', width: 10 },
-    { header: ar ? 'الفئة العمرية' : 'Age', key: 'age', width: 16 },
-    { header: ar ? 'سعر البيع' : 'Selling Price', key: 'price', width: 14, type: 'currency' },
-    { header: ar ? 'سعر الخصم' : 'Discount Price', key: 'sale_price', width: 14, type: 'currency' },
-    { header: ar ? 'تكلفة الوحدة' : 'Unit Cost', key: 'unit_cost', width: 14, type: 'currency' },
-    { header: ar ? 'الكمية' : 'Stock Quantity', key: 'stock', width: 14, type: 'int' },
-    { header: ar ? 'حالة المخزون' : 'Stock Status', key: 'stock_status', width: 16 },
-    { header: ar ? 'الحالة' : 'Published Status', key: 'status_label', width: 16 },
-    { header: ar ? 'المزايا' : 'Features', key: 'features', width: 32, wrap: true },
-    { header: ar ? 'الخامة' : 'Material', key: 'material', width: 16 },
-    { header: ar ? 'الوسوم' : 'Tags', key: 'tags', width: 22, wrap: true },
-    { header: ar ? 'تاريخ الإنشاء' : 'Created Date', key: 'created_date', width: 14, type: 'date' },
-    { header: ar ? 'تاريخ التحديث' : 'Updated Date', key: 'updated_date', width: 14, type: 'date' },
-  ];
-  const inventoryColumns = [
-    { header: ar ? 'اسم المنتج' : 'Product Name', key: 'name', width: 26, wrap: true },
-    { header: 'SKU', key: 'sku', width: 18, wrap: true },
-    { header: ar ? 'الباركود' : 'Barcode', key: 'barcode', width: 16 },
-    { header: ar ? 'الفئة' : 'Category', key: 'category', width: 18 },
-    { header: ar ? 'المخزون الحالي' : 'Current Stock', key: 'stock', width: 14, type: 'int' },
-    { header: ar ? 'تكلفة الوحدة' : 'Unit Cost', key: 'unit_cost', width: 14, type: 'currency' },
-    { header: ar ? 'سعر البيع' : 'Selling Price', key: 'price', width: 14, type: 'currency' },
-    { header: ar ? 'قيمة المخزون' : 'Inventory Value', key: 'inventory_value', width: 16, type: 'currency' },
-    { header: ar ? 'حالة المخزون' : 'Stock Status', key: 'stock_status', width: 16 },
-  ];
-
-  const getProductSheets = async (scope) => {
-    let rows;
-    if (scope === 'selected') {
-      rows = products.filter((p) => selected.has(p.id));
-      if (!rows.length) {
-        toast({ title: ar ? 'لم يتم تحديد أي صف' : 'No rows selected', variant: 'destructive' });
-        return null;
-      }
-    } else {
-      // Re-fetch beyond the 500-row on-screen cap so the export is complete
-      // even for a catalog larger than what's loaded for display.
-      const all = await fetchAllRows(db.Product, '-updated_date');
-      rows = scope === 'all' ? all : all.filter(matches).filter(matchesStatus);
-    }
-    return {
-      sheets: [
-        { name: ar ? 'المنتجات' : 'Products', columns: productColumns, rows: rows.map(buildProductRow) },
-        { name: ar ? 'المخزون' : 'Inventory', columns: inventoryColumns, rows: rows.map(buildInventoryRow) },
-      ],
-      fileName: `products_${todayStamp()}.xlsx`,
-    };
-  };
+  const exportFilterFn = (p) => matches(p) && matchesStatus(p);
 
   const remove = async (p) => {
     if (!window.confirm(t('admin.confirmDelete'))) return;
@@ -293,11 +184,15 @@ export default function Admin() {
     try {
       const suffix = lang === 'ar' ? '(نسخة)' : '(copy)';
       for (const p of targets) {
-        const { id, created_date, updated_date, created_by_id, ...rest } = p;
+        const { id, created_date, updated_date, created_by_id, product_code, ...rest } = p;
         await db.Product.create({
           ...rest,
           name: `${p.name} ${suffix}`,
           barcode: '',
+          // Never copy the original's Product Code — a duplicate is a
+          // distinct product and must get its own auto-generated code
+          // (product_code omitted here so the DB trigger assigns a fresh
+          // HK-000xxx on insert, exactly like a brand-new product).
           variants: (p.variants || []).map((v) => ({ ...v, sku: '', barcode: '' })),
           // A duplicate always starts as a draft, never auto-published —
           // otherwise a stale copy of a live product could go straight to
@@ -461,10 +356,14 @@ export default function Admin() {
                 </button>
               ))}
             </div>
-            <ExportExcelButton
-              getSheets={getProductSheets}
-              scopes={selected.size > 0 ? ['filtered', 'all', 'selected'] : ['filtered', 'all']}
-            />
+            <button
+              type="button"
+              onClick={() => setExportOpen(true)}
+              className="squish inline-flex items-center gap-2 h-10 px-4 rounded-full bg-mist border border-border text-sm font-heading font-bold text-foreground/80 hover:border-cosmic transition-colors"
+            >
+              <FileSpreadsheet className="w-4 h-4 shrink-0" />
+              <span className="whitespace-nowrap">{ar ? 'تصدير Excel' : 'Export Excel'}</span>
+            </button>
           </div>
 
           {/* Select all + visible count — lives with the list, not the search. */}
@@ -578,6 +477,9 @@ export default function Admin() {
                         <p className="mt-1 text-xs text-muted-foreground">{t('admin.unitCost')}: {formatPrice(p.unit_cost)}</p>
                       )}
                       <p className="mt-1 text-xs text-muted-foreground">{t('pd.inStock')}: {p.stock ?? 0}</p>
+                      {p.product_code && (
+                        <p className="mt-1 text-xs text-muted-foreground/80">{t('admin.productCode')}: {p.product_code}</p>
+                      )}
                       <div className="mt-auto pt-4 flex gap-2">
                         <button
                           onClick={() => openEdit(p)}
@@ -643,6 +545,15 @@ export default function Admin() {
           </div>
         </div>
       )}
+
+      <ProductExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        products={products}
+        filterFn={exportFilterFn}
+        selectedIds={selected}
+        categoryNameById={categoryNameById}
+      />
 
       <Footer />
     </div>

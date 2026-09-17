@@ -17,7 +17,7 @@ import { saveDraft, loadDraft, clearDraft, savePreviewSnapshot } from '@/lib/ses
 import { cleanFeatureList } from '@/lib/features';
 
 const EMPTY = {
-  name: '', name_en: '', description: '', description_en: '', price: '', sale_price: '', unit_cost: '', barcode: '', category: CATEGORIES[0], age_range: '', ages: [],
+  name: '', name_en: '', description: '', description_en: '', price: '', sale_price: '', unit_cost: '', barcode: '', product_code: '', category: CATEGORIES[0], age_range: '', ages: [],
   // Primary Category is left unset for a new product — the admin picks it
   // explicitly rather than a category being silently defaulted; Publish
   // validation requires one before a product can go live (see performSave).
@@ -46,6 +46,7 @@ function productToForm(p) {
     sale_price: p.sale_price ?? '',
     unit_cost: p.unit_cost ?? '',
     barcode: p.barcode || '',
+    product_code: p.product_code || '',
     category: p.category || CATEGORIES[0],
     primary_category_id: p.primary_category_id || null,
     category_ids: Array.isArray(p.category_ids) ? p.category_ids : [],
@@ -286,6 +287,24 @@ export default function ProductEditor() {
         return;
       }
     }
+    // Product Code is the stable business identifier (see productExportFields.js
+    // / the Excel export) — required once a product exists (a brand-new one may
+    // leave it blank and get one auto-generated server-side on insert). Changing
+    // an already-assigned code is allowed but confirmed explicitly, since Excel
+    // files/integrations may already reference the old value.
+    const productCodeValue = (form.product_code || '').trim();
+    if (!isNew) {
+      if (!productCodeValue) {
+        toast({ title: t('admin.productCodeRequired'), variant: 'destructive' });
+        setSaving(false);
+        return;
+      }
+      const originalCode = (baselineRef.current.product_code || '').trim();
+      if (originalCode && productCodeValue.toLowerCase() !== originalCode.toLowerCase() && !window.confirm(t('admin.productCodeChangeWarning'))) {
+        setSaving(false);
+        return;
+      }
+    }
     const payload = {
       name: form.name,
       name_en: (form.name_en || '').trim() || null,
@@ -295,6 +314,10 @@ export default function ProductEditor() {
       sale_price: form.sale_price ? Number(form.sale_price) : null,
       unit_cost: form.unit_cost ? Number(form.unit_cost) : null,
       barcode: form.barcode || '',
+      // null (not '') for a new product with no code typed — sanitize()
+      // would turn '' into null anyway, but explicit here since that null is
+      // exactly what tells the DB trigger to auto-generate one on insert.
+      product_code: productCodeValue || null,
       // `category` stays the denormalized primary-category NAME (every
       // existing reader — cards, ProductDetail, search, category discounts —
       // keeps working unchanged); primary_category_id/category_ids are the
@@ -361,7 +384,11 @@ export default function ProductEditor() {
       clearDraft('product', draftId);
       navigate('/admin');
     } catch (err) {
-      toast({ title: lang === 'ar' ? 'خطأ' : 'Error', description: err.message, variant: 'destructive' });
+      if (err.code === '23505' && String(err.message || '').includes('product_code')) {
+        toast({ title: t('admin.productCodeInUse'), variant: 'destructive' });
+      } else {
+        toast({ title: lang === 'ar' ? 'خطأ' : 'Error', description: err.message, variant: 'destructive' });
+      }
     } finally {
       setSaving(false);
     }
@@ -417,7 +444,7 @@ export default function ProductEditor() {
           <div className="mt-12 grid place-items-center py-20"><Loader2 className="w-8 h-8 animate-spin text-cosmic" /></div>
         ) : (
           <form onSubmit={isPublished ? saveChanges : publishProduct} className="mt-8 rounded-3xl bg-card border border-border/60 p-5 sm:p-8">
-            <ProductFormFields form={form} set={set} />
+            <ProductFormFields form={form} set={set} isNew={isNew} />
 
             {/* Responsive action row: wraps into a clean 2-up grid on
                 narrow screens instead of a line of tiny buttons, and the

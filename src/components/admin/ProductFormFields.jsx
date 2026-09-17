@@ -25,7 +25,7 @@ export const CATEGORIES = [
   'Arts & Crafts',
 ];
 
-export default function ProductFormFields({ form, set }) {
+export default function ProductFormFields({ form, set, isNew }) {
   const { t, lang } = useLanguage();
   const ar = lang === 'ar';
   const { toast } = useToast();
@@ -126,6 +126,16 @@ export default function ProductFormFields({ form, set }) {
       <FormInput label={t('admin.salePrice')} type="number" value={form.sale_price} onChange={(e) => set('sale_price', e.target.value)} />
       <FormInput label={t('admin.unitCost')} type="number" value={form.unit_cost} onChange={(e) => set('unit_cost', e.target.value)} />
       <FormInput label={t('admin.barcode')} value={form.barcode} onChange={(e) => set('barcode', e.target.value)} placeholder="—" dir="ltr" />
+      {/* Stable business identifier — separate from Barcode/SKU. Blank on a
+          new product auto-generates HK-000001-style on save (server-side,
+          race-safe); an existing product always has one already. */}
+      <FormInput
+        label={t('admin.productCode')}
+        value={form.product_code}
+        onChange={(e) => set('product_code', e.target.value)}
+        placeholder={isNew ? t('admin.productCodePlaceholder') : '—'}
+        dir="ltr"
+      />
       <label className="block">
         <span className="text-sm font-medium text-foreground/80">{t('admin.primaryCategory')}</span>
         <SheetSelect

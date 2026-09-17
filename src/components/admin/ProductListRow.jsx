@@ -69,7 +69,9 @@ export default function ProductListRow({ product: p, onEdit, onDelete, selected,
           )}
           {p.age_range ? ` · ${t('pd.ages')} ${p.age_range}` : ''}
         </p>
-        <p className="text-xs text-muted-foreground/80 truncate">SKU: {productSku(p)}</p>
+        <p className="text-xs text-muted-foreground/80 truncate">
+          {p.product_code ? `${p.product_code} · ` : ''}SKU: {productSku(p)}
+        </p>
         {!p.gender && (
           <p className="mt-0.5 inline-flex items-center gap-1 text-[11px] font-medium text-accent">
             <AlertTriangle className="w-3 h-3 shrink-0" />
