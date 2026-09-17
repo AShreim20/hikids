@@ -6,66 +6,65 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useLanguage } from '@/context/LanguageContext';
 import { useToast } from '@/components/ui/use-toast';
-import { db } from '@/api/entities';
-import { fetchAllRows, todayStamp } from '@/lib/excelExportHelpers';
-import {
-  PRODUCT_EXPORT_FIELDS, PRODUCT_EXPORT_FIELDS_BY_KEY, PRODUCT_EXPORT_GROUPS, PRODUCT_EXPORT_PRESETS,
-} from '@/lib/productExportFields';
+import { todayStamp } from '@/lib/excelExportHelpers';
 
-const DEFAULT_FIELDS = ['product_code', 'name', 'barcode', 'category', 'price', 'stock'];
 const HIKIDS_PURPLE = '5D3F85';
 const PREVIEW_ROWS = 5;
-
-// Reads every selected field off one product into a flat row object, plus a
-// few hidden (non-column) flags the workbook's conditional highlighting
-// reads regardless of which columns were actually picked — see
-// excelExport.js: ExcelJS only ever writes keys that appear in `columns`,
-// so stashing extra properties here is safe and never becomes a stray cell.
-function buildRow(product, fieldKeys, ctx) {
-  const row = {};
-  for (const key of fieldKeys) {
-    const field = PRODUCT_EXPORT_FIELDS_BY_KEY[key];
-    if (field) row[key] = field.getValue(product, ctx);
-  }
-  const stock = PRODUCT_EXPORT_FIELDS_BY_KEY.stock.getValue(product, ctx);
-  row._outOfStock = stock === 0;
-  row._lowStock = stock > 0 && stock <= 5;
-  row._discounted = product.sale_price != null && Number(product.sale_price) < Number(product.price);
-  return row;
-}
 
 function presetMatchesSelection(preset, selectedSet) {
   return preset.keys.length === selectedSet.size && preset.keys.every((k) => selectedSet.has(k));
 }
 
-export default function ProductExportDialog({ open, onOpenChange, products, filterFn, selectedIds, categoryNameById }) {
+// The shared, config-driven Excel export dialog used across the whole
+// Admin — Product Management is just its first (and reference) caller, via
+// productExportConfig.js. Every module supplies:
+//   - fields/groups/presets: same registry shape productExportFields.js
+//     already used (label:{ar,en}, type, width, wrap, getValue(record,ctx))
+//   - records/filterFn/selectedIds: whatever "scope" means for that page
+//   - buildRow(record, fieldKeys, ctx): reads one record into a flat row
+//     object (may attach hidden, non-column `_flag` props for cellHighlight)
+//   - fetchAll(): optional full re-fetch beyond the page's on-screen cap,
+//     used for the real export (not the preview, which stays cheap/on-screen)
+// Everything about the actual .xlsx (branding, header row, autofilter,
+// freeze panes, RTL, data types) is unchanged from the Product reference —
+// this component only decides WHICH rows/columns go into that same engine.
+export default function ExcelExportDialog({
+  open, onOpenChange,
+  dialogTitle, sheetName, reportSubtitle, countLabel, fileNamePrefix,
+  fields, groups, presets, defaultFieldKeys,
+  records, filterFn, selectedIds, scopes,
+  buildRow, cellHighlight, fetchAll, fieldCtx: extraCtx,
+}) {
   const { t, lang } = useLanguage();
   const ar = lang === 'ar';
   const { toast } = useToast();
-  const [scope, setScope] = useState('all');
-  const [fieldOrder, setFieldOrder] = useState(DEFAULT_FIELDS);
+  const availableScopes = scopes || (selectedIds ? ['all', 'filtered', 'selected'] : filterFn ? ['all', 'filtered'] : ['all']);
+  const [scope, setScope] = useState(availableScopes[0]);
+  const [fieldOrder, setFieldOrder] = useState(defaultFieldKeys || fields.slice(0, 6).map((f) => f.key));
   const [busy, setBusy] = useState(false);
   const busyRef = useRef(false); // extra synchronous guard against a double-click race the busy state's re-render can't catch in time
 
+  const fieldsByKey = useMemo(() => Object.fromEntries(fields.map((f) => [f.key, f])), [fields]);
   const selectedSet = useMemo(() => new Set(fieldOrder), [fieldOrder]);
-  const fieldCtx = useMemo(() => ({ t, lang, ar, categoryNameById: categoryNameById || {} }), [t, lang, ar, categoryNameById]);
+  const fieldCtx = useMemo(() => ({ t, lang, ar, ...(extraCtx || {}) }), [t, lang, ar, extraCtx]);
+  const selectedCount = selectedIds ? selectedIds.size : 0;
 
   const scopedOnScreen = useMemo(() => {
-    if (scope === 'selected') return products.filter((p) => selectedIds.has(p.id));
-    if (scope === 'filtered') return products.filter(filterFn);
-    return products;
-  }, [products, scope, filterFn, selectedIds]);
+    if (scope === 'selected' && selectedIds) return records.filter((r) => selectedIds.has(r.id));
+    if (scope === 'filtered' && filterFn) return records.filter(filterFn);
+    return records;
+  }, [records, scope, filterFn, selectedIds]);
 
   const previewRows = useMemo(
-    () => scopedOnScreen.slice(0, PREVIEW_ROWS).map((p) => buildRow(p, fieldOrder, fieldCtx)),
-    [scopedOnScreen, fieldOrder, fieldCtx]
+    () => scopedOnScreen.slice(0, PREVIEW_ROWS).map((r) => buildRow(r, fieldOrder, fieldCtx)),
+    [scopedOnScreen, fieldOrder, fieldCtx, buildRow]
   );
 
   const toggleField = (key) => {
     setFieldOrder((cur) => (cur.includes(key) ? cur.filter((k) => k !== key) : [...cur, key]));
   };
   const applyPreset = (keys) => setFieldOrder(keys);
-  const selectAll = () => setFieldOrder(PRODUCT_EXPORT_FIELDS.map((f) => f.key));
+  const selectAll = () => setFieldOrder(fields.map((f) => f.key));
   const clearAll = () => setFieldOrder([]);
   const move = (i, delta) => {
     const target = i + delta;
@@ -82,21 +81,17 @@ export default function ProductExportDialog({ open, onOpenChange, products, filt
     setFieldOrder(next);
   };
 
-  const selectedCount = selectedIds.size;
-
   const runExport = async () => {
     if (busyRef.current || !fieldOrder.length) return;
     busyRef.current = true;
     setBusy(true);
     try {
       let rows;
-      if (scope === 'selected') {
-        rows = products.filter((p) => selectedIds.has(p.id));
+      if (scope === 'selected' && selectedIds) {
+        rows = records.filter((r) => selectedIds.has(r.id));
       } else {
-        // Re-fetch beyond the on-screen 500-row cap so the export is
-        // complete even for a catalog larger than what's loaded for display.
-        const all = await fetchAllRows(db.Product, '-updated_date');
-        rows = scope === 'all' ? all : all.filter(filterFn);
+        const all = fetchAll ? await fetchAll() : records;
+        rows = scope === 'filtered' && filterFn ? all.filter(filterFn) : all;
       }
       if (!rows.length) {
         toast({ title: ar ? 'لا توجد بيانات لتصديرها' : 'No data to export', variant: 'destructive' });
@@ -104,22 +99,22 @@ export default function ProductExportDialog({ open, onOpenChange, products, filt
       }
 
       const columns = fieldOrder.map((key) => {
-        const f = PRODUCT_EXPORT_FIELDS_BY_KEY[key];
+        const f = fieldsByKey[key];
         return { header: f.label[lang] || f.label.en, key, width: f.width, type: f.type, wrap: f.wrap };
       });
-      const exportRows = rows.map((p) => buildRow(p, fieldOrder, fieldCtx));
+      const exportRows = rows.map((r) => buildRow(r, fieldOrder, fieldCtx));
 
       const dateStamp = new Date();
       const dd = String(dateStamp.getDate()).padStart(2, '0');
       const mm = String(dateStamp.getMonth() + 1).padStart(2, '0');
       const meta = [
-        `${ar ? 'عدد الأصناف' : 'Products'}: ${rows.length}`,
+        `${countLabel[lang] || countLabel.en}: ${rows.length}`,
         `${ar ? 'تاريخ التصدير' : 'Export date'}: ${dd}/${mm}/${dateStamp.getFullYear()}`,
       ];
 
-      const matchedPreset = PRODUCT_EXPORT_PRESETS.find((p) => presetMatchesSelection(p, selectedSet));
+      const matchedPreset = (presets || []).find((p) => presetMatchesSelection(p, selectedSet));
       const suffix = matchedPreset ? `_${matchedPreset.label.en.replace(/\s+/g, '')}` : '';
-      const fileName = `HiKids_Products${suffix}_${todayStamp()}.xlsx`;
+      const fileName = `HiKids_${fileNamePrefix}${suffix}_${todayStamp()}.xlsx`;
 
       // ExcelJS is a large dependency most admin page-loads never need —
       // loaded on demand, right when an export is actually requested.
@@ -127,18 +122,13 @@ export default function ProductExportDialog({ open, onOpenChange, products, filt
       const workbook = buildWorkbook({
         rtl: ar,
         sheets: [{
-          name: ar ? 'المنتجات' : 'Products',
+          name: sheetName[lang] || sheetName.en,
           columns,
           rows: exportRows,
-          reportHeader: { title: 'HiKids', subtitle: 'تقرير المنتجات / Products Export', meta },
+          reportHeader: { title: 'HiKids', subtitle: reportSubtitle[lang] || reportSubtitle.en, meta },
           headerStyle: { fill: HIKIDS_PURPLE, fontColor: 'FFFFFF' },
           zebra: true,
-          cellHighlight: (row, key) => {
-            if (key === 'stock' && row._outOfStock) return 'FDECEA';
-            if (key === 'stock' && row._lowStock) return 'FFF4E5';
-            if ((key === 'sale_price' || key === 'price') && row._discounted) return 'E8F5E9';
-            return null;
-          },
+          cellHighlight,
           print: { repeatHeaderRows: true },
         }],
       });
@@ -152,20 +142,24 @@ export default function ProductExportDialog({ open, onOpenChange, products, filt
     }
   };
 
+  const scopeLabels = {
+    all: ar ? `الكل (${records.length})` : `All (${records.length})`,
+    filtered: filterFn ? (ar ? `النتائج المفلترة (${records.filter(filterFn).length})` : `Filtered Results (${records.filter(filterFn).length})`) : '',
+    selected: ar ? `العناصر المحددة (${selectedCount})` : `Selected (${selectedCount})`,
+  };
+
   return (
     <Dialog open={open} onOpenChange={(v) => !busy && onOpenChange(v)}>
       {/* grid-cols-1 overrides the base Dialog's implicit "auto" grid track —
           without it, a nowrap/truncate label anywhere below (there are many:
           field names, scope labels) contributes its full unwrapped text width
           to the track's max-content sizing and forces the whole dialog wider
-          than its own box, causing a horizontal scrollbar. An explicit
-          minmax(0,1fr) track (what grid-cols-1 generates) has no such
-          coupling to descendant content. */}
+          than its own box, causing a horizontal scrollbar. */}
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto grid-cols-1" dir={ar ? 'rtl' : 'ltr'}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileSpreadsheet className="w-5 h-5 text-cosmic" />
-            {ar ? 'تصدير المنتجات إلى Excel' : 'Export Products to Excel'}
+            {dialogTitle[lang] || dialogTitle.en}
           </DialogTitle>
         </DialogHeader>
 
@@ -177,7 +171,7 @@ export default function ProductExportDialog({ open, onOpenChange, products, filt
           <button type="button" onClick={clearAll} className="h-9 px-3.5 rounded-full text-xs font-heading font-bold bg-mist text-foreground/80 squish">
             {ar ? 'إلغاء تحديد الكل' : 'Clear All'}
           </button>
-          {PRODUCT_EXPORT_PRESETS.map((p) => (
+          {(presets || []).map((p) => (
             <button
               key={p.id}
               type="button"
@@ -190,37 +184,35 @@ export default function ProductExportDialog({ open, onOpenChange, products, filt
         </div>
 
         {/* Scope */}
-        <div>
-          <p className="text-sm font-heading font-bold mb-2">{ar ? 'نطاق التصدير' : 'Export Scope'}</p>
-          <RadioGroup value={scope} onValueChange={setScope} className="grid sm:grid-cols-3 gap-2">
-            {[
-              ['all', ar ? `جميع المنتجات (${products.length})` : `All Products (${products.length})`],
-              ['filtered', ar ? `النتائج المفلترة (${products.filter(filterFn).length})` : `Filtered Results (${products.filter(filterFn).length})`],
-              ['selected', ar ? `المنتجات المحددة (${selectedCount})` : `Selected Products (${selectedCount})`],
-            ].map(([value, label]) => (
-              <label
-                key={value}
-                className={`flex items-center gap-2 h-11 px-3 rounded-2xl border text-sm cursor-pointer min-w-0 ${
-                  scope === value ? 'border-cosmic bg-cosmic/5' : 'border-border'
-                } ${value === 'selected' && selectedCount === 0 ? 'opacity-40 pointer-events-none' : ''}`}
-              >
-                <RadioGroupItem value={value} disabled={value === 'selected' && selectedCount === 0} className="shrink-0" />
-                <span className="truncate min-w-0">{label}</span>
-              </label>
-            ))}
-          </RadioGroup>
-        </div>
+        {availableScopes.length > 1 && (
+          <div>
+            <p className="text-sm font-heading font-bold mb-2">{ar ? 'نطاق التصدير' : 'Export Scope'}</p>
+            <RadioGroup value={scope} onValueChange={setScope} className={`grid gap-2 ${availableScopes.length === 3 ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+              {availableScopes.map((value) => (
+                <label
+                  key={value}
+                  className={`flex items-center gap-2 h-11 px-3 rounded-2xl border text-sm cursor-pointer min-w-0 ${
+                    scope === value ? 'border-cosmic bg-cosmic/5' : 'border-border'
+                  } ${value === 'selected' && selectedCount === 0 ? 'opacity-40 pointer-events-none' : ''}`}
+                >
+                  <RadioGroupItem value={value} disabled={value === 'selected' && selectedCount === 0} className="shrink-0" />
+                  <span className="truncate min-w-0">{scopeLabels[value]}</span>
+                </label>
+              ))}
+            </RadioGroup>
+          </div>
+        )}
 
         <div className="grid sm:grid-cols-2 gap-5">
           {/* Field picker, grouped */}
           <div className="min-w-0">
             <p className="text-sm font-heading font-bold mb-2">{ar ? 'الحقول المتاحة' : 'Available Fields'}</p>
             <div className="space-y-3 max-h-72 overflow-y-auto pe-1">
-              {PRODUCT_EXPORT_GROUPS.map((g) => (
+              {groups.map((g) => (
                 <div key={g.id}>
                   <p className="text-xs font-bold text-muted-foreground mb-1">{g.label[lang] || g.label.en}</p>
                   <div className="space-y-1">
-                    {PRODUCT_EXPORT_FIELDS.filter((f) => f.group === g.id).map((f) => (
+                    {fields.filter((f) => f.group === g.id).map((f) => (
                       <label key={f.key} className="flex items-center gap-2 h-8 px-1.5 rounded-lg hover:bg-mist cursor-pointer text-sm min-w-0">
                         <Checkbox checked={selectedSet.has(f.key)} onCheckedChange={() => toggleField(f.key)} className="shrink-0" />
                         <span className="truncate min-w-0">{f.label[lang] || f.label.en}</span>
@@ -247,7 +239,7 @@ export default function ProductExportDialog({ open, onOpenChange, products, filt
                   {(provided) => (
                     <div ref={provided.innerRef} {...provided.droppableProps} className="space-y-1.5 max-h-72 overflow-y-auto pe-1">
                       {fieldOrder.map((key, i) => {
-                        const f = PRODUCT_EXPORT_FIELDS_BY_KEY[key];
+                        const f = fieldsByKey[key];
                         if (!f) return null;
                         return (
                           <Draggable key={key} draggableId={key} index={i}>
@@ -295,7 +287,7 @@ export default function ProductExportDialog({ open, onOpenChange, products, filt
           </p>
           {!fieldOrder.length || !previewRows.length ? (
             <p className="text-sm text-muted-foreground p-3 rounded-2xl bg-mist">
-              {!fieldOrder.length ? (ar ? 'لا توجد حقول محددة' : 'No fields selected') : (ar ? 'لا توجد منتجات مطابقة' : 'No matching products')}
+              {!fieldOrder.length ? (ar ? 'لا توجد حقول محددة' : 'No fields selected') : (ar ? 'لا توجد بيانات مطابقة' : 'No matching records')}
             </p>
           ) : (
             <div className="overflow-x-auto rounded-2xl border border-border">
@@ -304,7 +296,7 @@ export default function ProductExportDialog({ open, onOpenChange, products, filt
                   <tr className="bg-mist">
                     {fieldOrder.map((key) => (
                       <th key={key} className="px-2.5 py-2 text-start font-heading font-bold whitespace-nowrap">
-                        {PRODUCT_EXPORT_FIELDS_BY_KEY[key]?.label[lang] || key}
+                        {fieldsByKey[key]?.label[lang] || key}
                       </th>
                     ))}
                   </tr>

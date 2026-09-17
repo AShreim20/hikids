@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Lock, Loader2 } from 'lucide-react';
+import { Plus, Lock, Loader2, FileSpreadsheet } from 'lucide-react';
 import { db } from '@/api/entities';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
@@ -10,6 +10,8 @@ import { useLanguage } from '@/context/LanguageContext';
 import SupplierFormDialog from '@/components/po/SupplierFormDialog';
 import SupplierDetailDialog from '@/components/po/SupplierDetailDialog';
 import { balancesBySupplier } from '@/lib/suppliers';
+import ExcelExportDialog from '@/components/admin/ExcelExportDialog';
+import { supplierExportDialogProps } from '@/lib/suppliersExportFields';
 
 export default function Suppliers() {
   const { user } = useAuth();
@@ -24,6 +26,7 @@ export default function Suppliers() {
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState(null);
   const [detailId, setDetailId] = useState(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -72,9 +75,14 @@ export default function Suppliers() {
             <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">{t('admin.subtitle')}</p>
             <h1 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl">{ar ? 'المورّدون' : 'Suppliers'}</h1>
           </div>
-          <button onClick={() => { setEditing(null); setFormOpen(true); }} className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold">
-            <Plus className="w-5 h-5" /> {ar ? 'مورّد جديد' : 'New supplier'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setExportOpen(true)} className="squish inline-flex items-center gap-2 h-12 px-5 rounded-full bg-mist border border-border font-heading font-bold">
+              <FileSpreadsheet className="w-5 h-5" /> {ar ? 'تصدير Excel' : 'Export Excel'}
+            </button>
+            <button onClick={() => { setEditing(null); setFormOpen(true); }} className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold">
+              <Plus className="w-5 h-5" /> {ar ? 'مورّد جديد' : 'New supplier'}
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -128,6 +136,11 @@ export default function Suppliers() {
         pos={pos}
         onChanged={load}
         onDeleted={load}
+      />
+      <ExcelExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        {...supplierExportDialogProps({ suppliers, balances })}
       />
     </div>
   );

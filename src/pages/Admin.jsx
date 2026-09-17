@@ -11,7 +11,8 @@ import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import ProductListRow from '@/components/admin/ProductListRow';
-import ProductExportDialog from '@/components/admin/ProductExportDialog';
+import ExcelExportDialog from '@/components/admin/ExcelExportDialog';
+import { productExportDialogProps } from '@/lib/productExportConfig';
 import ProductImportDialog from '@/components/admin/ProductImportDialog';
 import { PeriodSelector, StatCard } from '@/components/reports/ReportShared';
 import { periodRange, profitLoss, buildProductMap } from '@/lib/reports';
@@ -558,13 +559,10 @@ export default function Admin() {
         </div>
       )}
 
-      <ProductExportDialog
+      <ExcelExportDialog
         open={exportOpen}
         onOpenChange={setExportOpen}
-        products={products}
-        filterFn={exportFilterFn}
-        selectedIds={selected}
-        categoryNameById={categoryNameById}
+        {...productExportDialogProps({ products, filterFn: exportFilterFn, selectedIds: selected, categoryNameById })}
       />
 
       <ProductImportDialog

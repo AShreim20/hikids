@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Loader2, Lock, Trophy, X, Check, Image as ImageIcon } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Lock, Trophy, X, Check, Image as ImageIcon, FileSpreadsheet } from 'lucide-react';
 import { db } from '@/api/entities';
 import { challengesReview } from '@/lib/challengeFunctions';
 import { Image } from '@/components/ui/image';
@@ -12,6 +12,8 @@ import { useLanguage } from '@/context/LanguageContext';
 import { rewardLabel } from '@/lib/rewards';
 import { challengeName, submissionChallengeName } from '@/lib/bilingual';
 import ProductPicker from '@/components/admin/ProductPicker';
+import ExcelExportDialog from '@/components/admin/ExcelExportDialog';
+import { challengeExportDialogProps } from '@/lib/challengesExportFields';
 
 const TYPES = [
   { key: 'product_purchase', label: { en: 'Buy a specific product', ar: 'شراء منتج محدد' } },
@@ -37,6 +39,7 @@ export default function ChallengesAdmin() {
   const [progress, setProgress] = useState([]);
   const [history, setHistory] = useState([]);
   const [editing, setEditing] = useState(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -103,7 +106,10 @@ export default function ChallengesAdmin() {
             <div className="grid place-items-center w-12 h-12 rounded-2xl bg-cosmic/10 text-cosmic"><Trophy className="w-6 h-6" /></div>
             <div><h1 className="font-heading font-extrabold text-3xl md:text-4xl">{ar ? 'إدارة التحديات' : 'Challenges'}</h1><p className="text-muted-foreground text-sm">{ar ? 'أنشئ حملات مكافآت' : 'Create reward campaigns'}</p></div>
           </div>
-          <button onClick={() => setEditing({ ...empty })} className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold"><Plus className="w-5 h-5" /> {ar ? 'تحدي جديد' : 'New challenge'}</button>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setExportOpen(true)} className="squish inline-flex items-center gap-2 h-12 px-5 rounded-full bg-mist border border-border font-heading font-bold"><FileSpreadsheet className="w-5 h-5" /> {ar ? 'تصدير Excel' : 'Export Excel'}</button>
+            <button onClick={() => setEditing({ ...empty })} className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold"><Plus className="w-5 h-5" /> {ar ? 'تحدي جديد' : 'New challenge'}</button>
+          </div>
         </div>
 
         {/* Stats */}
@@ -156,6 +162,11 @@ export default function ChallengesAdmin() {
       </div>
 
       {editing && <ChallengeDialog value={editing} onChange={setEditing} onClose={() => setEditing(null)} onSave={save} ar={ar} />}
+      <ExcelExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        {...challengeExportDialogProps({ challenges })}
+      />
       <Footer />
     </div>
   );

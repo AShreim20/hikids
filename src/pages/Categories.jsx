@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Loader2, Lock, Search, Tag, X, Upload, ImageIcon, AlertTriangle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Lock, Search, Tag, X, Upload, ImageIcon, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import { db } from '@/api/entities';
 import { useToast } from '@/components/ui/use-toast';
 import { uploadFile } from '@/lib/uploadFile';
@@ -13,6 +13,8 @@ import { useCategories } from '@/context/CategoryContext';
 import FormInput from '@/components/admin/FormInput';
 import WorldOfPlaySelector from '@/components/admin/WorldOfPlaySelector';
 import { categoryName } from '@/lib/bilingual';
+import ExcelExportDialog from '@/components/admin/ExcelExportDialog';
+import { categoryExportDialogProps } from '@/lib/categoriesExportFields';
 
 // Recommended category image proportions, shown as a hint only — any image
 // is still accepted (see item 5: recommendation, not a requirement).
@@ -30,6 +32,7 @@ export default function Categories() {
   const [q, setQ] = useState('');
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
+  const [exportOpen, setExportOpen] = useState(false);
 
   useEffect(() => {
     if (user?.role === 'admin') {
@@ -54,6 +57,12 @@ export default function Categories() {
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || String(a.name).localeCompare(String(b.name)))
       .filter((c) => !term || String(c.name).toLowerCase().includes(term) || String(c.name_en || '').toLowerCase().includes(term));
   }, [categories, q]);
+
+  const categoryFilterFn = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    if (!term) return null;
+    return (c) => String(c.name).toLowerCase().includes(term) || String(c.name_en || '').toLowerCase().includes(term);
+  }, [q]);
 
   if (user?.role !== 'admin') {
     return (
@@ -105,9 +114,14 @@ export default function Categories() {
             <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">{t('admin.subtitle')}</p>
             <h1 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl">{ar ? 'إدارة الفئات' : 'Categories'}</h1>
           </div>
-          <button onClick={() => { setEditing(null); setOpen(true); }} className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold">
-            <Plus className="w-5 h-5" /> {ar ? 'فئة جديدة' : 'New category'}
-          </button>
+          <div className="flex items-center gap-3">
+            <button onClick={() => setExportOpen(true)} className="squish inline-flex items-center gap-2 h-12 px-5 rounded-full bg-mist border border-border font-heading font-bold">
+              <FileSpreadsheet className="w-5 h-5" /> {ar ? 'تصدير Excel' : 'Export Excel'}
+            </button>
+            <button onClick={() => { setEditing(null); setOpen(true); }} className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold">
+              <Plus className="w-5 h-5" /> {ar ? 'فئة جديدة' : 'New category'}
+            </button>
+          </div>
         </div>
 
         <WorldOfPlaySelector />
@@ -207,6 +221,12 @@ export default function Categories() {
           onSaved={() => { refresh(); setOpen(false); }}
         />
       )}
+
+      <ExcelExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        {...categoryExportDialogProps({ categories, filterFn: categoryFilterFn })}
+      />
     </div>
   );
 }

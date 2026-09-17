@@ -48,11 +48,19 @@ const INT_FMT = '#,##0';
 const NUMBER_FMT = '#,##0.00';
 const DATE_FMT = 'yyyy-mm-dd';
 const TEXT_FMT = '@';
+// A literal "%" suffix on the raw stored number (e.g. 15 -> "15.0%") — NOT
+// Excel's native percentage semantics (which multiplies the display by 100
+// and expects the stored value to be a fraction like 0.15). HiKids stores
+// percentages like discount_percent as plain numbers (15 means 15%), so the
+// native format would misdisplay them as 1500%; this avoids that mismatch
+// while the cell stays a real, summable/sortable number.
+const PERCENT_FMT = '0.0"%"';
 
 function numFmtFor(type) {
   if (type === 'currency') return CURRENCY_FMT;
   if (type === 'int') return INT_FMT;
   if (type === 'number') return NUMBER_FMT;
+  if (type === 'percent') return PERCENT_FMT;
   if (type === 'date') return DATE_FMT;
   if (type === 'text') return TEXT_FMT;
   return undefined;

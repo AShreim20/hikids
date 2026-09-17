@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Plus, Pencil, Trash2, Loader2, Lock, Search, Receipt, X, Eye, FolderTree } from 'lucide-react';
+import { Plus, Pencil, Trash2, Loader2, Lock, Search, Receipt, X, Eye, FolderTree, FileSpreadsheet } from 'lucide-react';
 import { db } from '@/api/entities';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
@@ -13,15 +13,8 @@ import SheetSelect from '@/components/ui/SheetSelect';
 import { PeriodSelector } from '@/components/reports/ReportShared';
 import { periodRange, inRange } from '@/lib/reports';
 import { PAYMENT_METHODS } from '@/lib/po';
-import { fetchAllRows, toExcelDate, rangeStamp } from '@/lib/excelExportHelpers';
-import ExportExcelButton from '@/components/admin/ExportExcelButton';
-
-const PAYMENT_METHOD_LABEL = {
-  cash: { ar: 'نقدًا', en: 'Cash' },
-  card: { ar: 'بطاقة', en: 'Card' },
-  bank_transfer: { ar: 'تحويل بنكي', en: 'Bank Transfer' },
-  cheque: { ar: 'شيك', en: 'Cheque' },
-};
+import ExcelExportDialog from '@/components/admin/ExcelExportDialog';
+import { expenseExportDialogProps } from '@/lib/expensesExportFields';
 
 const SORT_OPTIONS = [
   { value: '-expense_date', label: 'date_desc' },
@@ -53,6 +46,7 @@ export default function ExpensesManagement() {
 
   const [editing, setEditing] = useState(null); // expense row | 'new' | null
   const [viewing, setViewing] = useState(null); // expense row | null (read-only)
+  const [exportOpen, setExportOpen] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -130,33 +124,6 @@ export default function ExpensesManagement() {
   }, [expenses, range, categoryFilter, q, categoryMap, sort]);
 
   const total = useMemo(() => filtered.reduce((s, e) => s + (Number(e.amount) || 0), 0), [filtered]);
-
-  // ── Excel export ──────────────────────────────────────────────────────
-  const expenseColumns = [
-    { header: ar ? 'التاريخ' : 'Date', key: 'date', width: 14, type: 'date' },
-    { header: ar ? 'نوع المصروف' : 'Expense Type', key: 'category', width: 20 },
-    { header: ar ? 'الوصف' : 'Description', key: 'description', width: 26, wrap: true },
-    { header: ar ? 'المبلغ' : 'Amount', key: 'amount', width: 14, type: 'currency' },
-    { header: ar ? 'طريقة الدفع' : 'Payment Method', key: 'payment_method', width: 16 },
-    { header: ar ? 'ملاحظات' : 'Notes', key: 'notes', width: 26, wrap: true },
-    { header: ar ? 'أُنشئ بواسطة' : 'Created By', key: 'created_by', width: 18 },
-  ];
-  const buildExpenseRow = (e) => ({
-    date: toExcelDate(e.expense_date || e.created_date),
-    category: categoryLabel(categoryMap[e.category_id]),
-    description: e.description || '',
-    amount: Number(e.amount) || 0,
-    payment_method: e.payment_method ? (PAYMENT_METHOD_LABEL[e.payment_method]?.[lang] || e.payment_method) : '',
-    notes: e.notes || '',
-    created_by: creatorLabel(e.created_by_id),
-  });
-  const getExpenseSheets = async (scope) => {
-    const rows = scope === 'all' ? await fetchAllRows(db.Expense, '-expense_date') : filtered;
-    return {
-      sheets: [{ name: ar ? 'المصروفات' : 'Expenses', columns: expenseColumns, rows: rows.map(buildExpenseRow) }],
-      fileName: `expenses_${rangeStamp(range.start, range.end)}.xlsx`,
-    };
-  };
 
   if (!canView) {
     return (
@@ -243,7 +210,9 @@ export default function ExpensesManagement() {
             includeEmpty
             className="h-11 px-4 rounded-2xl bg-mist border border-border text-sm min-w-[180px]"
           />
-          <ExportExcelButton getSheets={getExpenseSheets} scopes={['filtered', 'all']} className="ms-auto" />
+          <button onClick={() => setExportOpen(true)} className="squish ms-auto inline-flex items-center gap-2 h-11 px-5 rounded-2xl bg-mist border border-border font-heading font-bold text-sm">
+            <FileSpreadsheet className="w-4 h-4" /> {ar ? 'تصدير Excel' : 'Export Excel'}
+          </button>
           <SheetSelect
             value={sort}
             onChange={setSort}
@@ -364,6 +333,12 @@ export default function ExpensesManagement() {
           onClose={() => setViewing(null)}
         />
       )}
+
+      <ExcelExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        {...expenseExportDialogProps({ filteredExpenses: filtered, categoryLabel: (e) => categoryLabel(categoryMap[e.category_id]), creatorLabel })}
+      />
     </div>
   );
 }

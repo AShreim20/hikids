@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Plus, Lock, Loader2, Pencil, Trash2, Send, Ban, Search } from 'lucide-react';
+import { Plus, Lock, Loader2, Pencil, Trash2, Send, Ban, Search, FileSpreadsheet } from 'lucide-react';
 import { db } from '@/api/entities';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
@@ -10,8 +10,9 @@ import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import SheetSelect from '@/components/ui/SheetSelect';
 import { PO_PAYMENT_STATUSES, PO_STATUSES } from '@/lib/po';
-import { fetchAllRows, toExcelDate, todayStamp } from '@/lib/excelExportHelpers';
-import ExportExcelButton from '@/components/admin/ExportExcelButton';
+import { fetchAllRows } from '@/lib/excelExportHelpers';
+import ExcelExportDialog from '@/components/admin/ExcelExportDialog';
+import { purchaseOrderExportDialogProps, flattenPurchaseOrders } from '@/lib/purchaseOrdersExportFields';
 
 export default function PurchaseOrders() {
   const { user } = useAuth();
@@ -24,6 +25,7 @@ export default function PurchaseOrders() {
   const [suppliers, setSuppliers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const [q, setQ] = useState('');
   const [fSupplier, setFSupplier] = useState('');
@@ -61,41 +63,23 @@ export default function PurchaseOrders() {
     });
   }, [pos, q, fSupplier, fPay, fStatus, from, to]);
 
-  // ── Excel export ──────────────────────────────────────────────────────
-  const poColumns = [
-    { header: ar ? 'رقم أمر الشراء' : 'Purchase Number', key: 'po_number', width: 16 },
-    { header: ar ? 'التاريخ' : 'Date', key: 'date', width: 14, type: 'date' },
-    { header: ar ? 'المورّد' : 'Supplier', key: 'supplier', width: 20 },
-    { header: ar ? 'المنتج' : 'Product', key: 'product', width: 26, wrap: true },
-    { header: 'SKU', key: 'sku', width: 16 },
-    { header: ar ? 'الكمية' : 'Quantity', key: 'quantity', width: 12, type: 'int' },
-    { header: ar ? 'تكلفة الوحدة' : 'Unit Cost', key: 'unit_cost', width: 14, type: 'currency' },
-    { header: ar ? 'إجمالي التكلفة' : 'Total Cost', key: 'total_cost', width: 14, type: 'currency' },
-    { header: ar ? 'ملاحظات' : 'Notes', key: 'notes', width: 26, wrap: true },
-    { header: ar ? 'أُنشئ بواسطة' : 'Created By', key: 'created_by', width: 20 },
-  ];
-  const buildPurchaseRows = (list) =>
-    list.flatMap((p) =>
-      (p.items && p.items.length ? p.items : [{}]).map((it) => ({
-        po_number: p.po_number || '',
-        date: toExcelDate(p.purchase_date || p.created_date),
-        supplier: p.supplier_name || '',
-        product: it.name || '',
-        sku: it.sku || '',
-        quantity: Number(it.quantity) || 0,
-        unit_cost: it.unit_cost != null ? Number(it.unit_cost) : null,
-        total_cost: it.total != null ? Number(it.total) : (Number(it.quantity) || 0) * (Number(it.unit_cost) || 0),
-        notes: p.notes || '',
-        created_by: p.created_by_email || '',
-      }))
-    );
-  const getPurchaseSheets = async (scope) => {
-    const rows = scope === 'all' ? await fetchAllRows(db.PurchaseOrder, '-created_date') : filtered;
-    return {
-      sheets: [{ name: ar ? 'أوامر الشراء' : 'Purchase Orders', columns: poColumns, rows: buildPurchaseRows(rows) }],
-      fileName: `purchases_${todayStamp()}.xlsx`,
+  // Same predicate as `filtered` above, applied to the flattened per-line-item
+  // export rows via their hidden `_`-prefixed context fields (see
+  // purchaseOrdersExportFields.js) so Export respects the page's current
+  // search/supplier/payment/status/date filters.
+  const poExportFilterFn = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    if (!term && !fSupplier && !fPay && !fStatus && !from && !to) return null;
+    return (r) => {
+      if (term && !r._term.includes(term)) return false;
+      if (fSupplier && r._supplier_id !== fSupplier) return false;
+      if (fPay && r._payment_status !== fPay) return false;
+      if (fStatus && r._status !== fStatus) return false;
+      if (from && r._purchase_date && r._purchase_date < from) return false;
+      if (to && r._purchase_date && r._purchase_date > to) return false;
+      return true;
     };
-  };
+  }, [q, fSupplier, fPay, fStatus, from, to]);
 
   if (user?.role !== 'admin') {
     return (
@@ -173,7 +157,9 @@ export default function PurchaseOrders() {
         </div>
 
         <div className="mt-6 flex justify-end">
-          <ExportExcelButton getSheets={getPurchaseSheets} scopes={['filtered', 'all']} />
+          <button onClick={() => setExportOpen(true)} className="squish inline-flex items-center gap-2 h-11 px-5 rounded-2xl bg-mist border border-border font-heading font-bold text-sm">
+            <FileSpreadsheet className="w-4 h-4" /> {ar ? 'تصدير Excel' : 'Export Excel'}
+          </button>
         </div>
 
         {/* Filters */}
@@ -251,6 +237,16 @@ export default function PurchaseOrders() {
         )}
       </div>
       <Footer />
+
+      <ExcelExportDialog
+        open={exportOpen}
+        onOpenChange={setExportOpen}
+        {...purchaseOrderExportDialogProps({
+          purchaseOrders: pos,
+          filterFn: poExportFilterFn,
+          fetchAllFlattened: () => fetchAllRows(db.PurchaseOrder, '-created_date').then(flattenPurchaseOrders),
+        })}
+      />
     </div>
   );
 }
