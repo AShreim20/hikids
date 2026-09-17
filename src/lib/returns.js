@@ -75,3 +75,68 @@ export const reasonName = (reason, lang = 'en') =>
 
 export const reasonDescription = (reason, lang = 'en') =>
   (lang === 'ar' ? reason?.description : (reason?.description_en || reason?.description)) || '';
+
+// ---------------------------------------------------------------------------
+// Phase 2 — customer eligibility helpers. These are DISPLAY-ONLY: the
+// backend (submit_return_request, migration 0032) re-derives all of this
+// itself from the server's own clock and is the only authoritative check.
+// Mirroring the same "delivered" transition lookup here just lets the UI
+// show a sensible badge/deadline without waiting on a round trip.
+// ---------------------------------------------------------------------------
+export const RETURN_WINDOW_DAYS = 3;
+
+// Same lookup submit_return_request() does in SQL: the most recent
+// orders.activity entry whose status transition landed on 'delivered'.
+export function getDeliveredAt(order) {
+  const entries = Array.isArray(order?.activity) ? order.activity : [];
+  const hits = entries.filter((e) => e?.action === 'status' && e?.to === 'delivered' && e?.at);
+  if (!hits.length) return null;
+  return hits.map((e) => new Date(e.at)).sort((a, b) => b - a)[0];
+}
+
+export function getReturnDeadline(order) {
+  const deliveredAt = getDeliveredAt(order);
+  if (!deliveredAt) return null;
+  return new Date(deliveredAt.getTime() + RETURN_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+}
+
+// { eligible, deadline, deliveredAt } — `eligible` is false when the order
+// isn't delivered yet, has no recorded delivery timestamp, or the 3-day
+// window has passed.
+export function getReturnEligibility(order, now = new Date()) {
+  if (order?.status !== 'delivered') return { eligible: false, deadline: null, deliveredAt: null };
+  const deliveredAt = getDeliveredAt(order);
+  if (!deliveredAt) return { eligible: false, deadline: null, deliveredAt: null };
+  const deadline = getReturnDeadline(order);
+  return { eligible: now <= deadline, deadline, deliveredAt };
+}
+
+// Compact "2 days left" / "8 hours left" — never seconds/minutes, matching
+// the "not unnecessarily stressful" requirement (no countdown animation).
+export function formatTimeRemaining(deadline, lang = 'en', now = new Date()) {
+  const ms = deadline - now;
+  if (ms <= 0) return null;
+  const hours = Math.ceil(ms / (60 * 60 * 1000));
+  const days = Math.ceil(hours / 24);
+  const ar = lang === 'ar';
+  if (hours < 24) return ar ? `متبقٍ ${hours} ${hours === 1 ? 'ساعة' : 'ساعات'}` : `${hours}h remaining`;
+  return ar ? `متبقٍ ${days} ${days === 1 ? 'يوم' : 'أيام'}` : `${days}d remaining`;
+}
+
+// Remaining eligible quantity per original order-item index, given the
+// customer's own return_request_items (each expected to carry its parent
+// request's `status` — see ReturnRequestItem query in the wizard/list
+// pages). Rejected/cancelled requests never consume quantity, matching the
+// backend's own rule exactly.
+export function remainingQuantityByItemIndex(order, myReturnItems) {
+  const purchased = (order?.items || []).map((it) => Number(it.qty) || 0);
+  const reserved = new Array(purchased.length).fill(0);
+  for (const item of myReturnItems || []) {
+    if (item.order_id !== order.id) continue;
+    if (['rejected', 'cancelled'].includes(item._status)) continue;
+    const idx = item.order_item_index;
+    if (idx == null || idx < 0 || idx >= reserved.length) continue;
+    reserved[idx] += Number(item.requested_quantity) || 0;
+  }
+  return purchased.map((qty, i) => Math.max(0, qty - reserved[i]));
+}

@@ -40,6 +40,9 @@ const Reports = lazy(() => import('./pages/Reports'));
 const ExpensesManagement = lazy(() => import('./pages/ExpensesManagement'));
 const ExpenseCategories = lazy(() => import('./pages/ExpenseCategories'));
 const MyOrders = lazy(() => import('./pages/MyOrders'));
+const MyReturnRequests = lazy(() => import('./pages/MyReturnRequests'));
+const ReturnRequestNew = lazy(() => import('./pages/ReturnRequestNew'));
+const ReturnRequestDetail = lazy(() => import('./pages/ReturnRequestDetail'));
 const StaffManagement = lazy(() => import('./pages/StaffManagement'));
 const UserManagement = lazy(() => import('./pages/UserManagement'));
 const OrdersManagement = lazy(() => import('./pages/OrdersManagement'));
@@ -140,6 +143,9 @@ function AnimatedRoutes() {
       <Route path="/loyalty" element={<MyLoyalty />} />
       <Route path="/loyalty-admin" element={<LoyaltyManagement />} />
       <Route path="/orders" element={<MyOrders />} />
+      <Route path="/returns" element={<MyReturnRequests />} />
+      <Route path="/returns/new/:orderId" element={<ReturnRequestNew />} />
+      <Route path="/returns/:id" element={<ReturnRequestDetail />} />
       <Route path="/orders-admin" element={<OrdersManagement />} />
       <Route path="/orders-admin/:id" element={<OrderDetail />} />
       <Route path="/login" element={<Login />} />

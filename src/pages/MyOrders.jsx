@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package } from 'lucide-react';
+import { Package, Undo2, ListChecks } from 'lucide-react';
 import { db } from '@/api/entities';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
@@ -8,6 +8,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { statusLabel, statusColor } from '@/lib/orderStatus';
 import { lineItemName } from '@/lib/bilingual';
+import { getReturnEligibility, formatTimeRemaining } from '@/lib/returns';
 
 export default function MyOrders() {
   const { t, formatPrice, lang } = useLanguage();
@@ -49,8 +50,18 @@ export default function MyOrders() {
     <div className="min-h-screen bg-background">
       <PageHeader title={t('orders.title')} />
       <div className="max-w-3xl mx-auto px-5 sm:px-8 py-12">
-        <h1 className="font-heading font-extrabold text-4xl md:text-5xl">{t('orders.title')}</h1>
-        <p className="mt-3 text-muted-foreground">{t('orders.subtitle')}</p>
+        <div className="flex items-start justify-between flex-wrap gap-4">
+          <div>
+            <h1 className="font-heading font-extrabold text-4xl md:text-5xl">{t('orders.title')}</h1>
+            <p className="mt-3 text-muted-foreground">{t('orders.subtitle')}</p>
+          </div>
+          <Link
+            to="/returns"
+            className="inline-flex items-center gap-2 h-11 px-5 rounded-full bg-mist border border-border font-heading font-bold text-sm shrink-0"
+          >
+            <ListChecks className="w-4 h-4" /> {t('returns.myRequests')}
+          </Link>
+        </div>
 
         {loading ? (
           <div className="mt-10 grid gap-4">
@@ -103,12 +114,48 @@ export default function MyOrders() {
                     <p className="mt-1 text-sm italic">"{o.gift_message}"</p>
                   </div>
                 )}
+                <ReturnEligibilityRow order={o} />
               </div>
             ))}
           </div>
         )}
       </div>
       <Footer />
+    </div>
+  );
+}
+
+// Shown only for delivered orders — hidden entirely for any other status
+// (section 9: normal customer Return/Exchange only begins after delivery).
+// Still visible (as a muted closed-window message) once the 3-day window
+// has passed, rather than disappearing silently (section 8).
+function ReturnEligibilityRow({ order }) {
+  const { t, lang } = useLanguage();
+  if (order.status !== 'delivered') return null;
+
+  const { eligible, deadline } = getReturnEligibility(order);
+  const remaining = deadline ? formatTimeRemaining(deadline, lang) : null;
+
+  return (
+    <div className="mt-4 pt-4 border-t border-border/60">
+      {eligible ? (
+        <div className="flex items-center justify-between flex-wrap gap-3">
+          <div>
+            <p className="text-sm text-muted-foreground">
+              {t('returns.eligibleUntil')} {deadline.toLocaleDateString(lang === 'ar' ? 'ar-u-nu-latn' : 'en')}
+            </p>
+            {remaining && <p className="text-xs text-accent font-heading font-bold mt-0.5">{remaining}</p>}
+          </div>
+          <Link
+            to={`/returns/new/${order.id}`}
+            className="squish inline-flex items-center gap-2 h-11 px-5 rounded-full bg-cosmic text-white font-heading font-bold text-sm shrink-0"
+          >
+            <Undo2 className="w-4 h-4" /> {t('returns.startAction')}
+          </Link>
+        </div>
+      ) : (
+        <p className="text-sm text-muted-foreground">{t('returns.windowClosed')}</p>
+      )}
     </div>
   );
 }
