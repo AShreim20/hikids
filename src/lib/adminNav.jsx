@@ -1,6 +1,6 @@
 import {
   LayoutDashboard, GalleryHorizontal, ShoppingCart, Truck, Layers,
-  Search, ClipboardList, BarChart3, Award, Ticket, Package, Trophy, Sparkles, Gamepad2, Users, FolderTree, Camera, Type, Settings, FileText, Receipt, MessageCircleQuestion, Undo2,
+  Search, ClipboardList, BarChart3, Award, Ticket, Package, Trophy, Sparkles, Gamepad2, Users, FolderTree, Camera, Type, Settings, FileText, Receipt, MessageCircleQuestion, Undo2, LineChart,
 } from 'lucide-react';
 
 // Single source of truth for the admin navigation. Top-level entries are
@@ -39,6 +39,11 @@ export function getAdminNav(t) {
       ],
     },
     { type: 'link', to: '/admin/reports', label: t('nav.reports'), icon: BarChart3 },
+    // Moved here from the storefront Navbar (header consolidation) — this is
+    // the only admin nav entry for it now, so an admin can still reach it
+    // via AdminSidebar (desktop) / AdminMobileMenu (mobile), both of which
+    // render globally off this same getAdminNav() array.
+    { type: 'link', to: '/analytics', label: t('nav.insights'), icon: LineChart },
     {
       type: 'group', id: 'expenses', label: t('nav.expenses'), icon: Receipt,
       children: [

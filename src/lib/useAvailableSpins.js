@@ -1,17 +1,16 @@
-import React, { useEffect, useState } from 'react';
-import { Link, useLocation } from 'react-router-dom';
-import { Gift } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { wheelState } from '@/lib/wheelFunctions';
 import { useAuth } from '@/lib/AuthContext';
-import { useLanguage } from '@/context/LanguageContext';
 
-// Header entry for the Surprise Box / Mystery Wheel. Shows the user's live
-// available-spin count as a small badge — only when > 0 — so the header
-// never displays a misleading positive indicator. Refetches on navigation
-// and when the tab regains focus so the count stays current.
-export default function HeaderWheelSpins() {
+// The single source of truth for the header's "available spins" count —
+// extracted from the old standalone HeaderWheelSpins nav link so the new
+// RewardsMenu (its top-level badge AND its Spin & Win row) both read the
+// same fetch/state instead of each doing their own wheelState() call.
+// Refetches on navigation and when the tab regains focus so the count
+// stays current.
+export function useAvailableSpins() {
   const { user } = useAuth();
-  const { t } = useLanguage();
   const location = useLocation();
   const [available, setAvailable] = useState(null);
 
@@ -46,17 +45,5 @@ export default function HeaderWheelSpins() {
     };
   }, [user]);
 
-  if (!user) return null;
-
-  return (
-    <Link to="/wheel" className="relative inline-flex items-center gap-1.5 text-sm font-medium text-accent hover:text-accent/80 transition-colors">
-      <Gift className="w-4 h-4" />
-      <span>{t('nav.wheel')}</span>
-      {available > 0 && (
-        <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-highlight text-foreground text-[11px] font-bold leading-none shadow-sm">
-          {available}
-        </span>
-      )}
-    </Link>
-  );
+  return available;
 }
