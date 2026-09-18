@@ -165,3 +165,85 @@ export function allowedAdminActions(status) {
 
 export const returnItemName = (item, lang = 'en') =>
   (lang === 'ar' ? item?.product_name : (item?.product_name_en || item?.product_name)) || '';
+
+// ---------------------------------------------------------------------------
+// Phase 4 -- physical receiving, inspection, disposition, resolution.
+// ---------------------------------------------------------------------------
+
+export const INSPECTION_CONDITIONS = ['sellable', 'damaged', 'incomplete', 'needs_inspection'];
+
+export const INSPECTION_CONDITION_LABEL = {
+  sellable: { ar: 'قابل للبيع', en: 'Sellable' },
+  damaged: { ar: 'تالف / غير قابل للبيع', en: 'Damaged' },
+  incomplete: { ar: 'ناقص قطع أو ملحقات', en: 'Incomplete' },
+  needs_inspection: { ar: 'يحتاج فحص إضافي', en: 'Needs further inspection' },
+};
+
+export const inspectionConditionLabel = (value, lang = 'en') =>
+  INSPECTION_CONDITION_LABEL[value]?.[lang] || value;
+
+export const REFUND_METHODS = ['wallet', 'refund'];
+
+export const REFUND_METHOD_LABEL = {
+  wallet: { ar: 'محفظة HiKids', en: 'HiKids Wallet' },
+  refund: { ar: 'استرداد الأموال', en: 'Refund' },
+};
+
+export const refundMethodLabel = (value, lang = 'en') =>
+  REFUND_METHOD_LABEL[value]?.[lang] || value;
+
+export const MISSING_RESOLUTION_LABEL = {
+  send_missing_item: { ar: 'إرسال الصنف الناقص', en: 'Send missing item' },
+  send_missing_part: { ar: 'إرسال القطعة الناقصة', en: 'Send missing part' },
+  full_exchange: { ar: 'استبدال كامل للمنتج', en: 'Full product exchange' },
+};
+
+export const missingResolutionLabel = (value, lang = 'en') =>
+  MISSING_RESOLUTION_LABEL[value]?.[lang] || value;
+
+// Per-item received/pending totals derived from the receipts/inspections
+// event logs (never stored as a single mutable counter) -- mirrors exactly
+// what the admin_receive_return_item / admin_inspect_return_item RPCs
+// compute server-side, so the UI can show the same numbers before/without
+// a round trip.
+export function receivedTotals(item, receipts) {
+  const received = (receipts || [])
+    .filter((r) => r.return_request_item_id === item.id)
+    .reduce((n, r) => n + Number(r.received_quantity || 0), 0);
+  return { received, remaining: Math.max(0, Number(item.requested_quantity || 0) - received) };
+}
+
+export function inspectionTotals(item, receipts, inspections) {
+  const { received } = receivedTotals(item, receipts);
+  const rows = (inspections || []).filter((i) => i.return_request_item_id === item.id);
+  const finalized = rows
+    .filter((i) => i.condition !== 'needs_inspection')
+    .reduce((n, i) => n + Number(i.quantity || 0), 0);
+  const sellable = rows.filter((i) => i.condition === 'sellable').reduce((n, i) => n + Number(i.quantity || 0), 0);
+  const damaged = rows.filter((i) => i.condition === 'damaged').reduce((n, i) => n + Number(i.quantity || 0), 0);
+  const incomplete = rows.filter((i) => i.condition === 'incomplete').reduce((n, i) => n + Number(i.quantity || 0), 0);
+  return { pending: Math.max(0, received - finalized), sellable, damaged, incomplete };
+}
+
+// Whether an item is a physical return/exchange line (went through
+// AWAITING_RETURN) vs a missing item/part claim (never has a physical
+// item to receive) -- purely a display-routing helper.
+export const isPhysicalItem = (item) => !['missing_item', 'missing_part'].includes(item?.resolution_type);
+
+// Customer-facing timeline labels for activity actions that don't carry a
+// status transition (`entry.to` is deliberately left blank for these on the
+// backend -- section 49: the raw action code / internal detail is
+// admin-only, the customer gets a plain milestone instead).
+const ACTIVITY_ACTION_LABEL = {
+  ITEM_RECEIVED: { ar: 'تم استلام المنتج', en: 'Item received' },
+  INSPECTION_RECORDED: { ar: 'تم فحص المنتج', en: 'Item inspected' },
+  REFUND_METHOD_SELECTED: { ar: 'تم اختيار طريقة الاسترداد', en: 'Refund method selected' },
+  EXCHANGE_REPLACEMENT_RESERVED: { ar: 'تم تأكيد المنتج البديل', en: 'Replacement confirmed' },
+  EXCHANGE_RESERVATION_RELEASED: { ar: 'تم إلغاء حجز الاستبدال', en: 'Replacement reservation released' },
+  DISPOSITION_REVIEW_CLEARED: { ar: 'تمت مراجعة الطلب من قبل الفريق', en: 'Reviewed by our team' },
+};
+
+export function activityEntryLabel(entry, lang = 'en') {
+  if (entry?.to) return returnRequestStatusLabel(entry.to, lang);
+  return ACTIVITY_ACTION_LABEL[entry?.action]?.[lang] || entry?.action || '';
+}

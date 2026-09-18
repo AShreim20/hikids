@@ -2,10 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import {
   Lock, Loader2, Copy, Check, ImageOff, StickyNote, ShieldCheck, XCircle,
-  MessageCircleQuestion, ImageIcon,
+  MessageCircleQuestion, ImageIcon, PackageCheck, Search as SearchIcon, Camera, X,
 } from 'lucide-react';
 import { db } from '@/api/entities';
 import { useToast } from '@/components/ui/use-toast';
+import { uploadFile } from '@/lib/uploadFile';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import FormInput from '@/components/admin/FormInput';
@@ -15,12 +16,16 @@ import { usePermissions } from '@/lib/permissions';
 import { orderRef, orderTotals } from '@/lib/orderStatus';
 import {
   returnRequestStatusLabel, REQUEST_TYPE_LABEL, deliveryResponsibilityLabel,
-  allowedAdminActions, returnItemName, getDeliveredAt,
+  allowedAdminActions, returnItemName, getDeliveredAt, INSPECTION_CONDITIONS,
+  inspectionConditionLabel, refundMethodLabel, missingResolutionLabel,
+  receivedTotals, inspectionTotals, isPhysicalItem,
 } from '@/lib/returns';
 import EvidenceLightbox, { useLightbox } from '@/components/returns/EvidenceLightbox';
 import {
   adminStartReview, adminRequestInformation, adminApproveReturnRequest,
-  adminRejectReturnRequest, adminAddInternalNote,
+  adminRejectReturnRequest, adminAddInternalNote, adminReceiveReturnItem,
+  adminInspectReturnItem, adminClearDispositionReview, adminReleaseExchangeReservation,
+  adminSetMissingResolution,
 } from '@/lib/returnFunctions';
 
 export default function ReturnRequestAdminDetail() {
@@ -37,13 +42,20 @@ export default function ReturnRequestAdminDetail() {
   const [order, setOrder] = useState(null);
   const [products, setProducts] = useState({});
   const [notes, setNotes] = useState([]);
+  const [receipts, setReceipts] = useState([]);
+  const [inspections, setInspections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
-  const [dialog, setDialog] = useState(null); // 'approve' | 'reject' | 'info' | null
+  const [dialog, setDialog] = useState(null); // 'approve' | 'reject' | 'info' | 'receive' | 'inspect' | null
+  const [dialogItem, setDialogItem] = useState(null);
   const [staleNotice, setStaleNotice] = useState(null);
   const [startingReview, setStartingReview] = useState(false);
   const [noteText, setNoteText] = useState('');
   const [savingNote, setSavingNote] = useState(false);
+  const [clearingReview, setClearingReview] = useState(false);
+  const [releasingItemId, setReleasingItemId] = useState(null);
+  const [missingResolutionChoice, setMissingResolutionChoice] = useState({});
+  const [settingResolutionItemId, setSettingResolutionItemId] = useState(null);
 
   const load = async () => {
     setLoading(true);
@@ -69,6 +81,12 @@ export default function ReturnRequestAdminDetail() {
         } else {
           setProducts({});
         }
+        const [rcs, ins] = await Promise.all([
+          Promise.all((its || []).map((i) => db.ReturnRequestItemReceipt.filter({ return_request_item_id: i.id }).catch(() => []))),
+          Promise.all((its || []).map((i) => db.ReturnRequestItemInspection.filter({ return_request_item_id: i.id }).catch(() => []))),
+        ]);
+        setReceipts(rcs.flat());
+        setInspections(ins.flat());
       }
     } catch {
       setRequest(null);
@@ -85,6 +103,9 @@ export default function ReturnRequestAdminDetail() {
   const isManualReview = snapshot?.delivery_responsibility === 'manual_review';
   const deliveredAt = order ? getDeliveredAt(order) : null;
   const evidenceUrls = useMemo(() => items.flatMap((it) => it.evidence_urls || []), [items]);
+  const physicalItems = useMemo(() => items.filter(isPhysicalItem), [items]);
+  const missingItems = useMemo(() => items.filter((it) => !isPhysicalItem(it)), [items]);
+  const isExchangeItem = (it) => request?.request_type === 'exchange' || it.missing_resolution === 'full_exchange';
 
   const copyCode = () => {
     navigator.clipboard?.writeText(request.request_code).then(() => {
@@ -143,6 +164,44 @@ export default function ReturnRequestAdminDetail() {
     }
   };
 
+  const clearReview = async () => {
+    setClearingReview(true);
+    try {
+      const res = await adminClearDispositionReview(request.id, null);
+      handleResult(res, ar ? 'تم رفع علامة المراجعة الإضافية' : 'Review flag cleared');
+    } catch (err) {
+      toast({ title: err.message, variant: 'destructive' });
+    } finally {
+      setClearingReview(false);
+    }
+  };
+
+  const releaseReservation = async (itemId) => {
+    setReleasingItemId(itemId);
+    try {
+      const res = await adminReleaseExchangeReservation(itemId, null);
+      handleResult(res, ar ? 'تم إلغاء حجز الاستبدال' : 'Reservation released');
+    } catch (err) {
+      toast({ title: err.message, variant: 'destructive' });
+    } finally {
+      setReleasingItemId(null);
+    }
+  };
+
+  const setMissingResolution = async (itemId) => {
+    const resolution = missingResolutionChoice[itemId];
+    if (!resolution) return;
+    setSettingResolutionItemId(itemId);
+    try {
+      const res = await adminSetMissingResolution(itemId, resolution);
+      handleResult(res, ar ? 'تم تحديد طريقة الحل' : 'Resolution set');
+    } catch (err) {
+      toast({ title: err.message, variant: 'destructive' });
+    } finally {
+      setSettingResolutionItemId(null);
+    }
+  };
+
   if (!allowed) {
     return (
       <div className="min-h-screen bg-background">
@@ -194,6 +253,19 @@ export default function ReturnRequestAdminDetail() {
           <div className="mt-5 rounded-2xl bg-amber-50 border border-amber-200 p-4 flex items-start justify-between gap-3">
             <p className="text-sm text-amber-800">{staleNotice}</p>
             <button onClick={() => setStaleNotice(null)} className="text-amber-800 shrink-0">✕</button>
+          </div>
+        )}
+
+        {request.needs_admin_disposition_review && (
+          <div className="mt-5 rounded-2xl bg-amber-50 border border-amber-200 p-4 flex items-start justify-between gap-3 flex-wrap">
+            <p className="text-sm text-amber-800">
+              {ar
+                ? 'المنتج عاد بحالة تالفة/ناقصة رغم أن سياسة السبب تشترط عودته بحالة جيدة. الحل النهائي (طريقة الاسترداد أو الاستبدال) متوقف حتى تراجع الحالة.'
+                : 'The item came back damaged/incomplete even though this reason\'s policy requires it back in acceptable condition. Customer resolution is on hold until you review this.'}
+            </p>
+            <button onClick={clearReview} disabled={clearingReview} className="h-10 px-4 rounded-full bg-amber-800 text-white font-heading font-bold text-sm inline-flex items-center gap-2 shrink-0 disabled:opacity-60">
+              {clearingReview && <Loader2 className="w-4 h-4 animate-spin" />} {ar ? 'مراجعة والسماح بالمتابعة' : 'Review & allow to proceed'}
+            </button>
           </div>
         )}
 
@@ -359,6 +431,125 @@ export default function ReturnRequestAdminDetail() {
           </div>
         </Section>
 
+        {/* Receiving & Inspection (physical items only) */}
+        {physicalItems.length > 0 && (
+          <Section title={ar ? 'استلام وفحص المنتجات' : 'Receiving & Inspection'}>
+            <div className="grid gap-4">
+              {physicalItems.map((it) => {
+                const { received, remaining } = receivedTotals(it, receipts);
+                const totals = inspectionTotals(it, receipts, inspections);
+                const canReceive = request.status === 'awaiting_return' && remaining > 0;
+                const canInspect = totals.pending > 0;
+                return (
+                  <div key={it.id} className="rounded-2xl bg-mist/60 p-4">
+                    <p className="font-heading font-bold text-sm">{returnItemName(it, lang)}</p>
+                    <div className="mt-2 grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                      <Field label={ar ? 'الكمية المعتمدة' : 'Approved qty'} value={it.requested_quantity} />
+                      <Field label={ar ? 'المستلمة' : 'Received'} value={received} />
+                      <Field label={ar ? 'المتبقية' : 'Remaining'} value={remaining} />
+                      <Field label={ar ? 'بانتظار الفحص' : 'Pending inspection'} value={totals.pending} />
+                    </div>
+                    {(totals.sellable > 0 || totals.damaged > 0 || totals.incomplete > 0) && (
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        {ar ? 'قابل للبيع' : 'Sellable'}: {totals.sellable} · {ar ? 'تالف' : 'Damaged'}: {totals.damaged} · {ar ? 'ناقص' : 'Incomplete'}: {totals.incomplete}
+                      </p>
+                    )}
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {canReceive && (
+                        <button onClick={() => { setDialogItem(it); setDialog('receive'); }} className="h-9 px-4 rounded-full bg-cosmic text-white font-heading font-bold text-xs inline-flex items-center gap-1.5">
+                          <PackageCheck className="w-3.5 h-3.5" /> {ar ? 'استلام المنتج' : 'Receive Returned Item'}
+                        </button>
+                      )}
+                      {canInspect && (
+                        <button onClick={() => { setDialogItem(it); setDialog('inspect'); }} className="h-9 px-4 rounded-full bg-mist border border-border font-heading font-bold text-xs inline-flex items-center gap-1.5">
+                          <SearchIcon className="w-3.5 h-3.5" /> {ar ? 'فحص المنتج' : 'Inspect Returned Item'}
+                        </button>
+                      )}
+                      {!canReceive && !canInspect && (
+                        <p className="text-xs text-muted-foreground">{ar ? 'لا توجد إجراءات متاحة حالياً لهذا الصنف' : 'No actions currently available for this item'}</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </Section>
+        )}
+
+        {/* Resolution -- refund method (return) / exchange replacement / missing item-part */}
+        {(physicalItems.length > 0 || missingItems.length > 0) && (request.status === 'processing' || request.status === 'approved') && (
+          <Section title={ar ? 'قرار الحل النهائي' : 'Resolution'}>
+            <div className="grid gap-4">
+              {request.request_type === 'return' && (
+                <div>
+                  <p className="text-xs text-muted-foreground mb-1">{ar ? 'طريقة الاسترداد التي اختارها الزبون' : "Customer's chosen refund method"}</p>
+                  <p className="text-sm font-medium">
+                    {request.refund_method ? refundMethodLabel(request.refund_method, lang) : (ar ? 'لم يختر الزبون بعد' : 'Not selected yet')}
+                  </p>
+                </div>
+              )}
+
+              {items.filter((it) => isExchangeItem(it)).map((it) => (
+                <div key={it.id} className="rounded-2xl bg-mist/60 p-4">
+                  <p className="font-heading font-bold text-sm mb-2">{returnItemName(it, lang)} — {ar ? 'الاستبدال' : 'Exchange'}</p>
+                  {it.replacement_reserved_at ? (
+                    <div className="grid gap-1 text-sm">
+                      <SummaryRow label={ar ? 'المنتج البديل' : 'Replacement product'} value={products[it.replacement_product_id]?.name || it.replacement_product_id} />
+                      <SummaryRow label={ar ? 'الكمية' : 'Quantity'} value={it.replacement_quantity} />
+                      <SummaryRow label={ar ? 'السعر' : 'Unit price'} value={it.replacement_unit_price?.toFixed?.(2)} dir="ltr" />
+                      <SummaryRow
+                        label={ar ? 'الفرق المتوقع' : 'Expected difference'}
+                        value={it.replacement_price_difference > 0
+                          ? (ar ? `الزبون يدفع ${it.replacement_price_difference.toFixed(2)}` : `Customer owes ${it.replacement_price_difference.toFixed(2)}`)
+                          : it.replacement_price_difference < 0
+                            ? (ar ? `يُرد للزبون ${Math.abs(it.replacement_price_difference).toFixed(2)}` : `Customer is owed ${Math.abs(it.replacement_price_difference).toFixed(2)}`)
+                            : (ar ? 'لا يوجد فرق' : 'No difference')}
+                      />
+                      <button
+                        onClick={() => releaseReservation(it.id)}
+                        disabled={releasingItemId === it.id}
+                        className="mt-2 justify-self-start h-9 px-4 rounded-full bg-destructive/10 text-destructive font-heading font-bold text-xs inline-flex items-center gap-1.5 disabled:opacity-60"
+                      >
+                        {releasingItemId === it.id && <Loader2 className="w-3.5 h-3.5 animate-spin" />} {ar ? 'إلغاء الحجز' : 'Release Reservation'}
+                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">{ar ? 'لم يختر الزبون البديل بعد' : 'Customer has not selected a replacement yet'}</p>
+                  )}
+                </div>
+              ))}
+
+              {missingItems.filter((it) => !it.missing_resolution).map((it) => (
+                <div key={it.id} className="rounded-2xl bg-mist/60 p-4">
+                  <p className="font-heading font-bold text-sm mb-2">{returnItemName(it, lang)} — {ar ? 'صنف/قطعة ناقصة' : 'Missing item/part'}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <select
+                      value={missingResolutionChoice[it.id] || ''}
+                      onChange={(e) => setMissingResolutionChoice((s) => ({ ...s, [it.id]: e.target.value }))}
+                      className="h-10 px-3 rounded-2xl bg-mist border border-border text-sm"
+                    >
+                      <option value="">{ar ? 'اختر طريقة الحل' : 'Choose a resolution'}</option>
+                      {it.resolution_type === 'missing_item' && <option value="send_missing_item">{missingResolutionLabel('send_missing_item', lang)}</option>}
+                      {it.resolution_type === 'missing_part' && <option value="send_missing_part">{missingResolutionLabel('send_missing_part', lang)}</option>}
+                      {it.resolution_type === 'missing_part' && <option value="full_exchange">{missingResolutionLabel('full_exchange', lang)}</option>}
+                    </select>
+                    <button
+                      onClick={() => setMissingResolution(it.id)}
+                      disabled={!missingResolutionChoice[it.id] || settingResolutionItemId === it.id}
+                      className="h-10 px-4 rounded-full bg-cosmic text-white font-heading font-bold text-sm disabled:opacity-60 inline-flex items-center gap-1.5"
+                    >
+                      {settingResolutionItemId === it.id && <Loader2 className="w-3.5 h-3.5 animate-spin" />} {ar ? 'تأكيد' : 'Confirm'}
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {missingItems.filter((it) => it.missing_resolution).map((it) => (
+                <Field key={it.id} label={returnItemName(it, lang)} value={missingResolutionLabel(it.missing_resolution, lang)} />
+              ))}
+            </div>
+          </Section>
+        )}
+
         {/* H — Internal Notes */}
         <Section title={ar ? 'ملاحظات داخلية (للموظفين فقط)' : 'Internal Notes (staff-only)'}>
           <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5"><StickyNote className="w-3.5 h-3.5" /> {ar ? 'لا تظهر هذه الملاحظات للزبون أبداً' : 'These notes are never visible to the customer'}</p>
@@ -441,6 +632,26 @@ export default function ReturnRequestAdminDetail() {
           }}
         />
       )}
+      {dialog === 'receive' && dialogItem && (
+        <ReceiveDialog
+          item={dialogItem} remaining={receivedTotals(dialogItem, receipts).remaining} lang={lang}
+          onClose={() => { setDialog(null); setDialogItem(null); }}
+          onConfirm={async (quantity, note, photos, idempotencyKey) => {
+            const res = await adminReceiveReturnItem(dialogItem.id, quantity, note, photos, idempotencyKey);
+            return handleResult(res, ar ? 'تم تسجيل الاستلام' : 'Receiving recorded');
+          }}
+        />
+      )}
+      {dialog === 'inspect' && dialogItem && (
+        <InspectDialog
+          item={dialogItem} pending={inspectionTotals(dialogItem, receipts, inspections).pending} lang={lang}
+          onClose={() => { setDialog(null); setDialogItem(null); }}
+          onConfirm={async (quantity, condition, note, photos, idempotencyKey) => {
+            const res = await adminInspectReturnItem(dialogItem.id, quantity, condition, note, photos, idempotencyKey);
+            return handleResult(res, ar ? 'تم تسجيل الفحص' : 'Inspection recorded');
+          }}
+        />
+      )}
     </div>
   );
 }
@@ -455,10 +666,11 @@ function Section({ title, children }) {
 }
 
 function Field({ label, value, dir }) {
+  const display = value === 0 ? 0 : (value || '—');
   return (
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-medium break-words" dir={dir}>{value || '—'}</p>
+      <p className="text-sm font-medium break-words" dir={dir}>{display}</p>
     </div>
   );
 }
@@ -623,6 +835,134 @@ function InfoRequestDialog({ request, lang, onClose, onConfirm }) {
       <p className="text-sm text-muted-foreground">{ar ? `رقم الطلب: ${request.request_code}` : `RET Code: ${request.request_code}`}</p>
       <FormInput label={ar ? 'ما المعلومات المطلوبة من الزبون؟ (سيظهر للزبون) *' : 'What information is needed from the customer? (shown to customer) *'} value={message} onChange={(e) => setMessage(e.target.value)} textarea required />
       <DialogActions onCancel={guardedClose} onConfirm={submit} confirmDisabled={!message.trim()} submitting={submitting} confirmLabel={ar ? 'إرسال الطلب' : 'Send Request'} confirmClass="bg-cosmic hover:bg-cosmic/90" lang={lang} />
+    </Modal>
+  );
+}
+
+// Staff-only inspection/receiving photos -- the default uploadFile() bucket
+// ('uploads', admin-only per storage RLS), never the customer-uploads
+// bucket, keeping inspection evidence structurally distinct from customer
+// evidence (section 19).
+function StaffPhotoUploader({ photos, setPhotos, lang }) {
+  const ar = lang === 'ar';
+  const [uploading, setUploading] = useState(false);
+
+  const addPhotos = async (fileList) => {
+    const files = Array.from(fileList || []).filter((f) => f.type.startsWith('image/'));
+    if (!files.length) return;
+    setUploading(true);
+    try {
+      for (const file of files) {
+        const { file_url } = await uploadFile(file);
+        setPhotos((prev) => [...prev, file_url]);
+      }
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  return (
+    <div>
+      <p className="text-sm font-medium text-foreground/80 mb-1.5">{ar ? 'صور (اختياري)' : 'Photos (optional)'}</p>
+      <div className="flex flex-wrap gap-2">
+        {photos.map((url, i) => (
+          <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden bg-mist">
+            <img src={url} alt="" className="w-full h-full object-cover" />
+            <button onClick={() => setPhotos((prev) => prev.filter((_, j) => j !== i))} className="absolute top-0.5 end-0.5 grid place-items-center w-5 h-5 rounded-full bg-black/60 text-white">
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        ))}
+        <label className="w-16 h-16 rounded-xl border-2 border-dashed border-border grid place-items-center cursor-pointer text-muted-foreground">
+          {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Camera className="w-5 h-5" />}
+          <input type="file" accept="image/*" multiple className="hidden" disabled={uploading} onChange={(e) => addPhotos(e.target.files)} />
+        </label>
+      </div>
+    </div>
+  );
+}
+
+function ReceiveDialog({ item, remaining, lang, onClose, onConfirm }) {
+  const ar = lang === 'ar';
+  const [quantity, setQuantity] = useState(remaining);
+  const [note, setNote] = useState('');
+  const [photos, setPhotos] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const guardedClose = useGuardedClose(!!note.trim(), onClose, lang);
+
+  const valid = Number(quantity) > 0 && Number(quantity) <= remaining;
+
+  const submit = async () => {
+    if (!valid) return;
+    setSubmitting(true);
+    try {
+      await onConfirm(Number(quantity), note.trim(), photos, idempotencyKey);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal title={ar ? 'استلام المنتج' : 'Receive Returned Item'} onClose={submitting ? () => {} : guardedClose}>
+      <p className="text-sm text-muted-foreground">{returnItemName(item, lang)}</p>
+      <FormInput
+        label={ar ? `الكمية المستلمة (الحد الأقصى ${remaining})` : `Received quantity (max ${remaining})`}
+        type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)}
+      />
+      <FormInput label={ar ? 'ملاحظة (اختياري)' : 'Note (optional)'} value={note} onChange={(e) => setNote(e.target.value)} textarea />
+      <StaffPhotoUploader photos={photos} setPhotos={setPhotos} lang={lang} />
+      <DialogActions onCancel={guardedClose} onConfirm={submit} confirmDisabled={!valid} submitting={submitting} confirmLabel={ar ? 'تأكيد الاستلام' : 'Confirm Receiving'} confirmClass="bg-cosmic hover:bg-cosmic/90" lang={lang} />
+    </Modal>
+  );
+}
+
+function InspectDialog({ item, pending, lang, onClose, onConfirm }) {
+  const ar = lang === 'ar';
+  const [quantity, setQuantity] = useState(pending);
+  const [condition, setCondition] = useState('sellable');
+  const [note, setNote] = useState('');
+  const [photos, setPhotos] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const guardedClose = useGuardedClose(!!note.trim(), onClose, lang);
+
+  const valid = Number(quantity) > 0 && Number(quantity) <= pending && INSPECTION_CONDITIONS.includes(condition);
+
+  const submit = async () => {
+    if (!valid) return;
+    setSubmitting(true);
+    try {
+      await onConfirm(Number(quantity), condition, note.trim(), photos, idempotencyKey);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Modal title={ar ? 'فحص المنتج' : 'Inspect Returned Item'} onClose={submitting ? () => {} : guardedClose}>
+      <p className="text-sm text-muted-foreground">{returnItemName(item, lang)}</p>
+      <FormInput
+        label={ar ? `الكمية قيد الفحص (الحد الأقصى ${pending})` : `Quantity being inspected (max ${pending})`}
+        type="number" value={quantity} onChange={(e) => setQuantity(e.target.value)}
+      />
+      <div>
+        <p className="text-sm font-medium text-foreground/80 mb-1.5">{ar ? 'الحالة' : 'Condition'}</p>
+        <div className="grid grid-cols-2 gap-2">
+          {INSPECTION_CONDITIONS.map((c) => (
+            <label key={c} className={`flex items-center gap-2 h-11 px-3.5 rounded-2xl border cursor-pointer ${condition === c ? 'border-cosmic bg-cosmic/5' : 'border-border bg-mist'}`}>
+              <input type="radio" checked={condition === c} onChange={() => setCondition(c)} className="w-4 h-4 accent-cosmic" />
+              <span className="text-sm font-medium">{inspectionConditionLabel(c, lang)}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+      <FormInput label={ar ? 'ملاحظة (اختياري)' : 'Note (optional)'} value={note} onChange={(e) => setNote(e.target.value)} textarea />
+      <StaffPhotoUploader photos={photos} setPhotos={setPhotos} lang={lang} />
+      {condition === 'sellable' && (
+        <p className="text-xs text-muted-foreground -mt-2">{ar ? 'سيتم إضافة هذه الكمية إلى المخزون المتاح تلقائياً.' : 'This quantity will be added to available stock automatically.'}</p>
+      )}
+      <DialogActions onCancel={guardedClose} onConfirm={submit} confirmDisabled={!valid} submitting={submitting} confirmLabel={ar ? 'تأكيد الفحص' : 'Confirm Inspection'} confirmClass="bg-cosmic hover:bg-cosmic/90" lang={lang} />
     </Modal>
   );
 }

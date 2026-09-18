@@ -87,3 +87,64 @@ export async function adminAddInternalNote(requestId, note) {
   if (error) throw error;
   return data;
 }
+
+// --- Phase 4: physical receiving, inspection, resolution (migration 0034) --
+
+export async function adminReceiveReturnItem(requestItemId, quantity, note, photos, idempotencyKey) {
+  const { data, error } = await supabase.rpc('admin_receive_return_item', {
+    p_request_item_id: requestItemId, p_quantity: quantity,
+    p_note: note || null, p_photos: photos || [], p_idempotency_key: idempotencyKey || null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function adminInspectReturnItem(requestItemId, quantity, condition, note, photos, idempotencyKey) {
+  const { data, error } = await supabase.rpc('admin_inspect_return_item', {
+    p_request_item_id: requestItemId, p_quantity: quantity, p_condition: condition,
+    p_note: note || null, p_photos: photos || [], p_idempotency_key: idempotencyKey || null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function adminClearDispositionReview(requestId, note) {
+  const { data, error } = await supabase.rpc('admin_clear_disposition_review', {
+    p_request_id: requestId, p_note: note || null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function adminReleaseExchangeReservation(requestItemId, note) {
+  const { data, error } = await supabase.rpc('admin_release_exchange_reservation', {
+    p_request_item_id: requestItemId, p_note: note || null,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function adminSetMissingResolution(requestItemId, resolution) {
+  const { data, error } = await supabase.rpc('admin_set_missing_resolution', {
+    p_request_item_id: requestItemId, p_resolution: resolution,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function customerSelectRefundMethod(requestId, method) {
+  const { data, error } = await supabase.rpc('customer_select_refund_method', {
+    p_request_id: requestId, p_method: method,
+  });
+  if (error) throw error;
+  return data;
+}
+
+export async function customerSelectExchangeReplacement(requestItemId, mode, productId, variantKey, quantity) {
+  const { data, error } = await supabase.rpc('customer_select_exchange_replacement', {
+    p_request_item_id: requestItemId, p_mode: mode, p_product_id: productId || null,
+    p_variant_key: variantKey || null, p_quantity: quantity,
+  });
+  if (error) throw error;
+  return data;
+}

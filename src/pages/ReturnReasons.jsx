@@ -223,6 +223,7 @@ function ReturnReasonDialog({ initial, onClose, onSaved }) {
     evidence_max_images: initial?.evidence_max_images ?? 5,
     evidence_instructions: initial?.evidence_instructions || '',
     evidence_instructions_en: initial?.evidence_instructions_en || '',
+    requires_undamaged_return: initial?.requires_undamaged_return ?? false,
     active: initial?.active !== false,
     sort_order: initial?.sort_order ?? 0,
   }));
@@ -255,6 +256,7 @@ function ReturnReasonDialog({ initial, onClose, onSaved }) {
         evidence_max_images: maxImg,
         evidence_instructions: form.evidence_instructions.trim(),
         evidence_instructions_en: form.evidence_instructions_en.trim(),
+        requires_undamaged_return: !!form.requires_undamaged_return,
         active: form.active !== false,
         sort_order: Number(form.sort_order) || 0,
       };
@@ -311,6 +313,20 @@ function ReturnReasonDialog({ initial, onClose, onSaved }) {
                 </label>
               ))}
             </div>
+          </section>
+
+          {/* Physical condition policy (Phase 4) */}
+          <section className="grid gap-2">
+            <p className="text-xs font-heading font-bold uppercase tracking-wider text-muted-foreground">{ar ? 'شرط حالة الإرجاع' : 'Return Condition Policy'}</p>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={form.requires_undamaged_return} onChange={(e) => set('requires_undamaged_return', e.target.checked)} className="w-5 h-5 rounded accent-cosmic" />
+              <span className="font-medium text-sm">{ar ? 'يجب أن يعود المنتج بحالة سليمة (مثل: غيرت رأيي)' : 'Product must come back in acceptable condition (e.g. changed mind)'}</span>
+            </label>
+            <p className="text-xs text-muted-foreground">
+              {ar
+                ? 'إذا كان المنتج تالفاً عند الفحص لسبب مثل هذا، يتم إيقاف الحل مؤقتاً لمراجعة الموظف بدلاً من رفض المطالبة تلقائياً.'
+                : "If the product comes back damaged for a reason like this, resolution is held for staff review instead of auto-rejecting the claim."}
+            </p>
           </section>
 
           {/* Evidence */}

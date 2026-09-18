@@ -78,4 +78,12 @@ export const db = {
   // policy exists at all for this table (see migration 0033) — write only
   // via admin_add_internal_note(), never a direct .create().
   ReturnRequestNote: createEntity('return_request_notes'),
+  // Phase 4: physical receiving/inspection event logs and the inventory
+  // ledger they can produce. Same staff-only shape as ReturnRequestNote —
+  // no customer RLS policy at all (migration 0034) — write only via
+  // adminReceiveReturnItem()/adminInspectReturnItem(), never a direct
+  // .create().
+  ReturnRequestItemReceipt: createEntity('return_request_item_receipts'),
+  ReturnRequestItemInspection: createEntity('return_request_item_inspections'),
+  InventoryMovement: createEntity('inventory_movements'),
 };

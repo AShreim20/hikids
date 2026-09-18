@@ -12,7 +12,10 @@ import { useAuth } from '@/lib/AuthContext';
 import { lineItemName } from '@/lib/bilingual';
 import {
   returnRequestStatusLabel, REQUEST_TYPE_LABEL, deliveryResponsibilityLabel,
+  activityEntryLabel, REFUND_METHODS, refundMethodLabel,
 } from '@/lib/returns';
+import { customerSelectRefundMethod, customerSelectExchangeReplacement } from '@/lib/returnFunctions';
+import ReplacementProductPicker from '@/components/returns/ReplacementProductPicker';
 
 const CANCELLABLE_STATUSES = ['submitted', 'under_review', 'needs_information'];
 
@@ -135,6 +138,19 @@ export default function ReturnRequestDetail() {
             <p className="text-sm font-heading font-bold text-destructive">{request.rejection_reason}</p>
           </div>
         )}
+        {request.needs_admin_disposition_review && (
+          <div className="mt-5 rounded-2xl bg-amber-50 border border-amber-200 p-4">
+            <p className="text-sm font-heading font-bold text-amber-800">
+              {ar ? 'يقوم فريق HiKids بمراجعة إضافية لطلبك حالياً.' : 'Our team is doing one more review of your request.'}
+            </p>
+          </div>
+        )}
+        {request.status === 'processing' && !request.needs_admin_disposition_review && request.request_type === 'return' && (
+          <RefundMethodSelector requestId={request.id} refundMethod={request.refund_method} onDone={load} />
+        )}
+        {request.status === 'processing' && !request.needs_admin_disposition_review && items.filter((it) => request.request_type === 'exchange' || it.missing_resolution === 'full_exchange').map((it) => (
+          <ExchangeReplacementSelector key={it.id} item={it} onDone={load} />
+        ))}
 
         <div className="mt-6 rounded-3xl bg-card border border-border/60 p-5 grid gap-4">
           {order && (
@@ -204,7 +220,7 @@ export default function ReturnRequestDetail() {
                   <div className="w-2 h-2 rounded-full bg-cosmic mt-1.5 shrink-0" />
                   <div>
                     <p className="text-sm font-medium">
-                      {entry.to ? returnRequestStatusLabel(entry.to, lang) : entry.action}
+                      {activityEntryLabel(entry, lang)}
                     </p>
                     <p className="text-xs text-muted-foreground" dir="ltr">
                       {new Date(entry.at).toLocaleString(ar ? 'ar-u-nu-latn' : 'en')}
@@ -235,6 +251,167 @@ export default function ReturnRequestDetail() {
       <Footer />
     </div>
   );
+}
+
+// Customer's refund-method choice (Phase 4) -- HiKids Wallet (₪ balance,
+// never Loyalty Points) or a cash/card refund. Recording only; no money
+// moves here (that belongs to the later Financial phase).
+function RefundMethodSelector({ requestId, refundMethod, onDone }) {
+  const { toast } = useToast();
+  const { lang } = useLanguage();
+  const ar = lang === 'ar';
+  const [choice, setChoice] = useState(refundMethod || '');
+  const [submitting, setSubmitting] = useState(false);
+
+  if (refundMethod) {
+    return (
+      <div className="mt-5 rounded-2xl bg-card border border-border/60 p-4">
+        <p className="text-sm text-muted-foreground">{ar ? 'طريقة الاسترداد المختارة' : 'Chosen refund method'}</p>
+        <p className="font-heading font-bold">{refundMethodLabel(refundMethod, lang)}</p>
+        {refundMethod === 'refund' && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            {ar ? 'تستغرق عملية استرداد الأموال من 3 إلى 7 أيام بعد اعتماد الإرجاع.' : 'Refunds take 3–7 days to process after the return is approved.'}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  const confirm = async () => {
+    if (!choice || submitting) return;
+    setSubmitting(true);
+    try {
+      const res = await customerSelectRefundMethod(requestId, choice);
+      if (!res?.success) {
+        toast({ title: res?.message || (ar ? 'حدث خطأ' : 'Something went wrong'), variant: 'destructive' });
+        return;
+      }
+      onDone();
+    } catch (err) {
+      toast({ title: err.message, variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mt-5 rounded-2xl bg-card border border-border/60 p-4 grid gap-3">
+      <p className="font-heading font-bold text-sm">{ar ? 'كيف تفضّل استلام قيمة الإرجاع؟' : 'How would you like to receive your refund?'}</p>
+      <div className="grid gap-2">
+        {REFUND_METHODS.map((m) => (
+          <label key={m} className={`flex items-center gap-2 h-12 px-4 rounded-2xl border cursor-pointer ${choice === m ? 'border-cosmic bg-cosmic/5' : 'border-border bg-mist'}`}>
+            <input type="radio" checked={choice === m} onChange={() => setChoice(m)} className="w-4 h-4 accent-cosmic" />
+            <span className="text-sm font-medium">{refundMethodLabel(m, lang)}</span>
+          </label>
+        ))}
+      </div>
+      {choice === 'refund' && (
+        <p className="text-xs text-muted-foreground">
+          {ar ? 'تستغرق عملية استرداد الأموال من 3 إلى 7 أيام بعد اعتماد الإرجاع.' : 'Refunds take 3–7 days to process after the return is approved.'}
+        </p>
+      )}
+      <button
+        onClick={confirm}
+        disabled={!choice || submitting}
+        className="justify-self-start h-11 px-6 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center gap-2 disabled:opacity-60"
+      >
+        {submitting && <Loader2 className="w-4 h-4 animate-spin" />} {ar ? 'تأكيد الاختيار' : 'Confirm Choice'}
+      </button>
+    </div>
+  );
+}
+
+// Customer's replacement-product choice for an Exchange (Phase 4). Selection
+// and reservation happen together at confirm time (never on open) -- the
+// backend re-validates availability regardless of what this page showed.
+function ExchangeReplacementSelector({ item, onDone }) {
+  const { toast } = useToast();
+  const { lang } = useLanguage();
+  const ar = lang === 'ar';
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  if (item.replacement_reserved_at) {
+    return (
+      <div className="mt-5 rounded-2xl bg-card border border-border/60 p-4">
+        <p className="text-sm text-muted-foreground">{ar ? 'المنتج البديل المؤكد' : 'Confirmed replacement'}</p>
+        <p className="font-heading font-bold">{returnItemNameFallback(item, lang)}</p>
+        {typeof item.replacement_price_difference === 'number' && item.replacement_price_difference !== 0 && (
+          <p className="mt-1 text-xs text-muted-foreground">
+            {item.replacement_price_difference > 0
+              ? (ar ? `فرق سعر متوقع عليك: ${item.replacement_price_difference.toFixed(2)}` : `Expected amount you owe: ${item.replacement_price_difference.toFixed(2)}`)
+              : (ar ? `فرق سعر متوقع لك: ${Math.abs(item.replacement_price_difference).toFixed(2)}` : `Expected amount owed to you: ${Math.abs(item.replacement_price_difference).toFixed(2)}`)}
+          </p>
+        )}
+      </div>
+    );
+  }
+
+  const confirmSame = async () => {
+    setSubmitting(true);
+    try {
+      const res = await customerSelectExchangeReplacement(item.id, 'same_product', null, null, item.requested_quantity);
+      if (!res?.success) {
+        toast({ title: res?.message || (ar ? 'حدث خطأ' : 'Something went wrong'), variant: 'destructive' });
+        return;
+      }
+      onDone();
+    } catch (err) {
+      toast({ title: err.message, variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const confirmDifferent = async (product, variantKey) => {
+    setSubmitting(true);
+    try {
+      const res = await customerSelectExchangeReplacement(item.id, 'different_product', product.id, variantKey, item.requested_quantity);
+      if (!res?.success) {
+        toast({ title: res?.message || (ar ? 'حدث خطأ' : 'Something went wrong'), variant: 'destructive' });
+        return;
+      }
+      setPickerOpen(false);
+      onDone();
+    } catch (err) {
+      toast({ title: err.message, variant: 'destructive' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="mt-5 rounded-2xl bg-card border border-border/60 p-4 grid gap-3">
+      <p className="font-heading font-bold text-sm">{ar ? `اختر البديل لـ ${returnItemNameFallback(item, lang)}` : `Choose a replacement for ${returnItemNameFallback(item, lang)}`}</p>
+      <div className="grid gap-2">
+        <button
+          onClick={confirmSame}
+          disabled={submitting || !item.product_id}
+          className="h-12 px-4 rounded-2xl border border-border bg-mist text-start font-medium text-sm disabled:opacity-60"
+        >
+          {submitting && <Loader2 className="w-4 h-4 animate-spin inline me-2" />}
+          {ar ? 'نفس المنتج' : 'Same Product'}
+        </button>
+        <button
+          onClick={() => setPickerOpen(true)}
+          disabled={submitting}
+          className="h-12 px-4 rounded-2xl border border-border bg-mist text-start font-medium text-sm disabled:opacity-60"
+        >
+          {ar ? 'منتج مختلف' : 'Different Product'}
+        </button>
+      </div>
+      {pickerOpen && (
+        <ReplacementProductPicker
+          onClose={() => setPickerOpen(false)}
+          onSelect={(product, variantKey) => confirmDifferent(product, variantKey)}
+        />
+      )}
+    </div>
+  );
+}
+
+function returnItemNameFallback(item, lang) {
+  return (lang === 'ar' ? item?.product_name : (item?.product_name_en || item?.product_name)) || '';
 }
 
 // Structured request/response, not live chat (section 34/35) -- one message
