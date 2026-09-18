@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Loader2, Lock } from 'lucide-react';
+import { Loader2, Lock, Camera, X } from 'lucide-react';
 import { db } from '@/api/entities';
-import { cancelReturnRequest } from '@/lib/returnFunctions';
+import { cancelReturnRequest, respondToInformationRequest } from '@/lib/returnFunctions';
+import { uploadFile } from '@/lib/uploadFile';
 import { useToast } from '@/components/ui/use-toast';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
@@ -126,6 +127,9 @@ export default function ReturnRequestDetail() {
             {request.admin_note && <p className="mt-1 text-sm text-amber-700">{request.admin_note}</p>}
           </div>
         )}
+        {request.status === 'needs_information' && (
+          <RespondToInfoForm requestId={request.id} maxImages={items[0]?.reason_policy_snapshot?.evidence_max_images ?? 5} onSent={load} />
+        )}
         {request.status === 'rejected' && request.rejection_reason && (
           <div className="mt-5 rounded-2xl bg-destructive/10 p-4">
             <p className="text-sm font-heading font-bold text-destructive">{request.rejection_reason}</p>
@@ -229,6 +233,103 @@ export default function ReturnRequestDetail() {
         </div>
       </div>
       <Footer />
+    </div>
+  );
+}
+
+// Structured request/response, not live chat (section 34/35) -- one message
+// plus optional additional photos per submission, appended to the request's
+// activity timeline server-side. Reuses ReturnRequestNew.jsx's own
+// upload-then-collect-URL pattern.
+function RespondToInfoForm({ requestId, maxImages, onSent }) {
+  const { t, lang } = useLanguage();
+  const { toast } = useToast();
+  const { user } = useAuth();
+  const ar = lang === 'ar';
+  const [message, setMessage] = useState('');
+  const [files, setFiles] = useState([]); // [{ file, preview, url, uploading }]
+  const [sending, setSending] = useState(false);
+
+  const addPhotos = async (fileList) => {
+    const picked = Array.from(fileList || []).filter((f) => f.type.startsWith('image/'));
+    if (!picked.length) return;
+    const room = Math.max(0, maxImages - files.length);
+    if (room <= 0) {
+      toast({ title: ar ? `الحد الأقصى ${maxImages} صور` : `Maximum ${maxImages} photos`, variant: 'destructive' });
+      return;
+    }
+    const toAdd = picked.slice(0, room).map((file) => ({ file, preview: URL.createObjectURL(file), url: null, uploading: true }));
+    setFiles((prev) => [...prev, ...toAdd]);
+    for (const entry of toAdd) {
+      try {
+        const { file_url } = await uploadFile(entry.file, { bucket: 'customer-uploads', folder: 'returns', ownerId: user.id });
+        setFiles((prev) => prev.map((f) => (f === entry ? { ...f, url: file_url, uploading: false } : f)));
+      } catch {
+        setFiles((prev) => prev.filter((f) => f !== entry));
+        toast({ title: ar ? 'تعذّر رفع إحدى الصور' : 'One of the photos failed to upload', variant: 'destructive' });
+      }
+    }
+  };
+  const removePhoto = (entry) => setFiles((prev) => prev.filter((f) => f !== entry));
+
+  const uploading = files.some((f) => f.uploading);
+  const evidenceUrls = files.filter((f) => f.url).map((f) => f.url);
+  const canSend = !uploading && (message.trim() || evidenceUrls.length > 0);
+
+  const send = async () => {
+    if (!canSend || sending) return;
+    setSending(true);
+    try {
+      const res = await respondToInformationRequest(requestId, message.trim(), evidenceUrls);
+      if (!res?.success) {
+        toast({ title: res?.message || t('returns.error'), variant: 'destructive' });
+        return;
+      }
+      toast({ title: ar ? 'تم إرسال ردك' : 'Your response has been sent' });
+      setMessage('');
+      setFiles([]);
+      onSent();
+    } catch (err) {
+      toast({ title: err.message || t('returns.error'), variant: 'destructive' });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="mt-4 rounded-2xl bg-card border border-border/60 p-4 grid gap-3">
+      <p className="text-sm font-heading font-bold">{ar ? 'الرد على طلب المعلومات' : 'Respond to information request'}</p>
+      <textarea
+        value={message}
+        onChange={(e) => setMessage(e.target.value)}
+        placeholder={ar ? 'اكتب ردك هنا…' : 'Type your response…'}
+        rows={3}
+        className="w-full p-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 resize-none text-sm"
+      />
+      <div className="flex flex-wrap gap-2">
+        {files.map((f, i) => (
+          <div key={i} className="relative w-16 h-16 rounded-xl overflow-hidden bg-mist">
+            <img src={f.preview} alt="" className="w-full h-full object-cover" />
+            {f.uploading && <div className="absolute inset-0 grid place-items-center bg-black/40"><Loader2 className="w-4 h-4 animate-spin text-white" /></div>}
+            <button onClick={() => removePhoto(f)} className="absolute top-0.5 end-0.5 grid place-items-center w-5 h-5 rounded-full bg-black/60 text-white" aria-label={ar ? 'إزالة' : 'Remove'}>
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        ))}
+        {files.length < maxImages && (
+          <label className="w-16 h-16 rounded-xl border-2 border-dashed border-border grid place-items-center cursor-pointer text-muted-foreground">
+            <Camera className="w-5 h-5" />
+            <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => addPhotos(e.target.files)} />
+          </label>
+        )}
+      </div>
+      <button
+        onClick={send}
+        disabled={!canSend || sending}
+        className="justify-self-start h-11 px-6 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center gap-2 disabled:opacity-60"
+      >
+        {sending && <Loader2 className="w-4 h-4 animate-spin" />} {ar ? 'إرسال الرد' : 'Send Response'}
+      </button>
     </div>
   );
 }

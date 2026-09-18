@@ -140,3 +140,28 @@ export function remainingQuantityByItemIndex(order, myReturnItems) {
   }
   return purchased.map((qty, i) => Math.max(0, qty - reserved[i]));
 }
+
+// ---------------------------------------------------------------------------
+// Phase 3 — admin review helpers.
+// ---------------------------------------------------------------------------
+
+// Status quick-filter tabs for the admin list (section 7) — real Phase 1
+// enum values only, "all" is a client-side pseudo-filter.
+export const ADMIN_STATUS_TABS = [
+  'all', 'submitted', 'under_review', 'needs_information',
+  'approved', 'rejected', 'awaiting_return', 'completed', 'cancelled',
+];
+
+// Which of the three main review actions make sense from a given status —
+// purely a UI-enablement hint; the RPCs re-validate the real transition
+// server-side regardless.
+export function allowedAdminActions(status) {
+  return {
+    canRequestInfo: ['submitted', 'under_review'].includes(status),
+    canApprove: status === 'under_review',
+    canReject: status === 'under_review',
+  };
+}
+
+export const returnItemName = (item, lang = 'en') =>
+  (lang === 'ar' ? item?.product_name : (item?.product_name_en || item?.product_name)) || '';

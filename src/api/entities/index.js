@@ -74,4 +74,8 @@ export const db = {
   ReturnReason: createEntity('return_reasons'),
   ReturnRequest: createEntity('return_requests'),
   ReturnRequestItem: createEntity('return_request_items'),
+  // Phase 3: staff-only internal notes on a Return Request. No customer RLS
+  // policy exists at all for this table (see migration 0033) — write only
+  // via admin_add_internal_note(), never a direct .create().
+  ReturnRequestNote: createEntity('return_request_notes'),
 };
