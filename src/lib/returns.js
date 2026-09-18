@@ -241,9 +241,53 @@ const ACTIVITY_ACTION_LABEL = {
   EXCHANGE_REPLACEMENT_RESERVED: { ar: 'تم تأكيد المنتج البديل', en: 'Replacement confirmed' },
   EXCHANGE_RESERVATION_RELEASED: { ar: 'تم إلغاء حجز الاستبدال', en: 'Replacement reservation released' },
   DISPOSITION_REVIEW_CLEARED: { ar: 'تمت مراجعة الطلب من قبل الفريق', en: 'Reviewed by our team' },
+  SETTLEMENT_CALCULATED: { ar: 'تم إعداد التسوية المالية', en: 'Settlement prepared' },
+  SETTLEMENT_CONFIRMED: { ar: 'تم اعتماد التسوية المالية', en: 'Settlement confirmed' },
+  SETTLEMENT_REVERSED: { ar: 'تم عكس التسوية المالية', en: 'Settlement reversed' },
+  REFUND_COMPLETED: { ar: 'تم استرداد المبلغ', en: 'Refund completed' },
+  REFUND_FAILED: { ar: 'تعذر تنفيذ الاسترداد — تتم المراجعة', en: 'Refund requires review' },
+  REFUND_RETRY: { ar: 'تتم إعادة محاولة الاسترداد', en: 'Retrying refund' },
+  EXCHANGE_DIFFERENCE_PAID: { ar: 'تم دفع فرق الاستبدال', en: 'Exchange difference paid' },
 };
 
 export function activityEntryLabel(entry, lang = 'en') {
   if (entry?.to) return returnRequestStatusLabel(entry.to, lang);
   return ACTIVITY_ACTION_LABEL[entry?.action]?.[lang] || entry?.action || '';
 }
+
+// ---------------------------------------------------------------------------
+// Phase 5 -- financial settlement, refunds, HiKids Wallet.
+// ---------------------------------------------------------------------------
+
+export const REFUND_STATUS_LABEL = {
+  pending: { ar: 'قيد الانتظار', en: 'Pending' },
+  processing: { ar: 'جاري تجهيز الاسترداد', en: 'Refund Processing' },
+  completed: { ar: 'تم استرداد المبلغ', en: 'Refund Completed' },
+  failed: { ar: 'تعذر تنفيذ الاسترداد — تتم المراجعة', en: 'Refund Requires Review' },
+  cancelled: { ar: 'أُلغي الاسترداد', en: 'Refund Cancelled' },
+};
+
+export const refundStatusLabel = (value, lang = 'en') => REFUND_STATUS_LABEL[value]?.[lang] || value;
+
+export const SETTLEMENT_STATUS_LABEL = {
+  calculated: { ar: 'قيد الإعداد', en: 'Preview' },
+  confirmed: { ar: 'تم التأكيد', en: 'Confirmed' },
+  completed: { ar: 'مكتملة', en: 'Completed' },
+  reversed: { ar: 'أُلغيت التسوية', en: 'Reversed' },
+};
+
+export const settlementStatusLabel = (value, lang = 'en') => SETTLEMENT_STATUS_LABEL[value]?.[lang] || value;
+
+// Wallet transaction "type" -> a short, customer-friendly description
+// (section 23 -- no raw internal codes in the customer's own history view).
+export const WALLET_TX_TYPE_LABEL = {
+  RETURN_CREDIT: { ar: 'إرجاع طلب', en: 'Order return' },
+  EXCHANGE_CREDIT: { ar: 'فرق استبدال', en: 'Exchange difference' },
+  EXCHANGE_DEBIT: { ar: 'دفع فرق استبدال', en: 'Exchange payment' },
+  TOP_UP: { ar: 'شحن رصيد', en: 'Top-up' },
+  PURCHASE_DEBIT: { ar: 'شراء', en: 'Purchase' },
+  ADMIN_ADJUSTMENT: { ar: 'تعديل من الإدارة', en: 'Admin adjustment' },
+  REVERSAL: { ar: 'إلغاء عملية سابقة', en: 'Reversal' },
+};
+
+export const walletTxTypeLabel = (value, lang = 'en') => WALLET_TX_TYPE_LABEL[value]?.[lang] || value;

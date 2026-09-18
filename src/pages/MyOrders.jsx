@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Undo2, ListChecks } from 'lucide-react';
+import { Package, Undo2, ListChecks, Wallet } from 'lucide-react';
 import { db } from '@/api/entities';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
@@ -55,12 +55,20 @@ export default function MyOrders() {
             <h1 className="font-heading font-extrabold text-4xl md:text-5xl">{t('orders.title')}</h1>
             <p className="mt-3 text-muted-foreground">{t('orders.subtitle')}</p>
           </div>
-          <Link
-            to="/returns"
-            className="inline-flex items-center gap-2 h-11 px-5 rounded-full bg-mist border border-border font-heading font-bold text-sm shrink-0"
-          >
-            <ListChecks className="w-4 h-4" /> {t('returns.myRequests')}
-          </Link>
+          <div className="flex flex-wrap gap-2">
+            <Link
+              to="/wallet"
+              className="inline-flex items-center gap-2 h-11 px-5 rounded-full bg-mist border border-border font-heading font-bold text-sm shrink-0"
+            >
+              <Wallet className="w-4 h-4" /> {lang === 'ar' ? 'محفظتي' : 'My Wallet'}
+            </Link>
+            <Link
+              to="/returns"
+              className="inline-flex items-center gap-2 h-11 px-5 rounded-full bg-mist border border-border font-heading font-bold text-sm shrink-0"
+            >
+              <ListChecks className="w-4 h-4" /> {t('returns.myRequests')}
+            </Link>
+          </div>
         </div>
 
         {loading ? (

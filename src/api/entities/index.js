@@ -86,4 +86,13 @@ export const db = {
   ReturnRequestItemReceipt: createEntity('return_request_item_receipts'),
   ReturnRequestItemInspection: createEntity('return_request_item_inspections'),
   InventoryMovement: createEntity('inventory_movements'),
+  // Phase 5: HiKids Wallet (monetary ₪ ledger, separate from Loyalty
+  // Points) and the return financial-settlement/refund records. Wallet
+  // balance and settlement/refund status only ever change via the RPCs in
+  // src/lib/walletFunctions.js — wallets/wallet_transactions have no
+  // INSERT/UPDATE RLS policy at all (migration 0035).
+  Wallet: createEntity('wallets'),
+  WalletTransaction: createEntity('wallet_transactions'),
+  ReturnRefund: createEntity('return_refunds'),
+  ReturnSettlement: createEntity('return_settlements'),
 };

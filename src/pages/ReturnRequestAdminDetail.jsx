@@ -18,7 +18,8 @@ import {
   returnRequestStatusLabel, REQUEST_TYPE_LABEL, deliveryResponsibilityLabel,
   allowedAdminActions, returnItemName, getDeliveredAt, INSPECTION_CONDITIONS,
   inspectionConditionLabel, refundMethodLabel, missingResolutionLabel,
-  receivedTotals, inspectionTotals, isPhysicalItem,
+  receivedTotals, inspectionTotals, isPhysicalItem, refundStatusLabel,
+  settlementStatusLabel,
 } from '@/lib/returns';
 import EvidenceLightbox, { useLightbox } from '@/components/returns/EvidenceLightbox';
 import {
@@ -27,6 +28,10 @@ import {
   adminInspectReturnItem, adminClearDispositionReview, adminReleaseExchangeReservation,
   adminSetMissingResolution,
 } from '@/lib/returnFunctions';
+import {
+  calculateReturnSettlement, adminConfirmReturnSettlement, adminCompleteManualRefund,
+  adminFailRefund, adminRetryRefund, adminReverseSettlement,
+} from '@/lib/walletFunctions';
 
 export default function ReturnRequestAdminDetail() {
   const { id } = useParams();
@@ -56,6 +61,12 @@ export default function ReturnRequestAdminDetail() {
   const [releasingItemId, setReleasingItemId] = useState(null);
   const [missingResolutionChoice, setMissingResolutionChoice] = useState({});
   const [settingResolutionItemId, setSettingResolutionItemId] = useState(null);
+  const [settlement, setSettlement] = useState(null);
+  const [refund, setRefund] = useState(null);
+  const [confirmingSettlement, setConfirmingSettlement] = useState(false);
+  const [reversingSettlement, setReversingSettlement] = useState(false);
+  const [refundDialog, setRefundDialog] = useState(null); // 'complete' | 'fail' | null
+  const [refundActionBusy, setRefundActionBusy] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -87,6 +98,26 @@ export default function ReturnRequestAdminDetail() {
         ]);
         setReceipts(rcs.flat());
         setInspections(ins.flat());
+
+        let s = await db.ReturnSettlement.filter({ return_request_id: r.id }).then((rows) => rows?.[0] || null).catch(() => null);
+        // Auto-calculate the settlement preview once the request is ready --
+        // read-only/idempotent, so silently retrying on every load is safe;
+        // the RPC itself rejects (silently ignored here) if not ready yet.
+        if (!s && r.status === 'processing') {
+          try {
+            const res = await calculateReturnSettlement(r.id);
+            if (res?.success) s = res.settlement;
+          } catch {
+            // not ready yet -- fine, no settlement to show
+          }
+        }
+        setSettlement(s);
+        if (s?.return_refund_id) {
+          const rf = await db.ReturnRefund.get(s.return_refund_id).catch(() => null);
+          setRefund(rf);
+        } else {
+          setRefund(null);
+        }
       }
     } catch {
       setRequest(null);
@@ -185,6 +216,73 @@ export default function ReturnRequestAdminDetail() {
       toast({ title: err.message, variant: 'destructive' });
     } finally {
       setReleasingItemId(null);
+    }
+  };
+
+  const confirmSettlement = async () => {
+    if (!settlement) return;
+    setConfirmingSettlement(true);
+    try {
+      const res = await adminConfirmReturnSettlement(settlement.id, settlement.status);
+      handleResult(res, ar ? 'تم تأكيد التسوية' : 'Settlement confirmed');
+    } catch (err) {
+      toast({ title: err.message, variant: 'destructive' });
+    } finally {
+      setConfirmingSettlement(false);
+    }
+  };
+
+  const reverseSettlement = async (reason) => {
+    if (!settlement) return;
+    setReversingSettlement(true);
+    try {
+      const res = await adminReverseSettlement(settlement.id, reason);
+      handleResult(res, ar ? 'تم عكس التسوية' : 'Settlement reversed');
+    } catch (err) {
+      toast({ title: err.message, variant: 'destructive' });
+    } finally {
+      setReversingSettlement(false);
+    }
+  };
+
+  const completeRefund = async (externalReference, note) => {
+    if (!refund) return;
+    setRefundActionBusy(true);
+    try {
+      const res = await adminCompleteManualRefund(refund.id, externalReference, note);
+      if (res?.success) { toast({ title: ar ? 'تم إكمال الاسترداد' : 'Refund completed' }); setRefundDialog(null); load(); }
+      else toast({ title: res?.message || (ar ? 'حدث خطأ' : 'Something went wrong'), variant: 'destructive' });
+    } catch (err) {
+      toast({ title: err.message, variant: 'destructive' });
+    } finally {
+      setRefundActionBusy(false);
+    }
+  };
+
+  const failRefund = async (reason) => {
+    if (!refund) return;
+    setRefundActionBusy(true);
+    try {
+      const res = await adminFailRefund(refund.id, reason);
+      if (res?.success) { toast({ title: ar ? 'تم تعليم الاسترداد كفاشل' : 'Refund marked failed' }); setRefundDialog(null); load(); }
+      else toast({ title: res?.message || (ar ? 'حدث خطأ' : 'Something went wrong'), variant: 'destructive' });
+    } catch (err) {
+      toast({ title: err.message, variant: 'destructive' });
+    } finally {
+      setRefundActionBusy(false);
+    }
+  };
+
+  const retryRefund = async () => {
+    if (!refund) return;
+    setRefundActionBusy(true);
+    try {
+      const res = await adminRetryRefund(refund.id);
+      handleResult(res, ar ? 'تتم إعادة المحاولة' : 'Retrying refund');
+    } catch (err) {
+      toast({ title: err.message, variant: 'destructive' });
+    } finally {
+      setRefundActionBusy(false);
     }
   };
 
@@ -550,6 +648,80 @@ export default function ReturnRequestAdminDetail() {
           </Section>
         )}
 
+        {/* Financial Settlement -- kept separate from operational receiving/
+            inspection details (section 56). Read-only preview once
+            calculated; money only moves via the explicit Confirm action. */}
+        {settlement && (
+          <Section title={ar ? 'التسوية المالية' : 'Financial Settlement'}>
+            <div className="grid gap-4">
+              <div className="grid sm:grid-cols-2 gap-4">
+                <Field label={ar ? 'القيمة المستحقة للإرجاع' : 'Eligible Return Value'} value={settlement.eligible_merchandise_value?.toFixed?.(2)} dir="ltr" />
+                <Field label={ar ? 'استرداد رسوم التوصيل الأصلية' : 'Original delivery refund'} value={(0).toFixed(2)} dir="ltr" />
+                {settlement.request_type === 'return' && (
+                  <Field label={ar ? 'طريقة الاسترداد' : 'Refund method'} value={settlement.refund_method ? refundMethodLabel(settlement.refund_method, lang) : '—'} />
+                )}
+                {settlement.points_to_restore > 0 && (
+                  <Field label={ar ? 'نقاط ولاء مستردة' : 'Loyalty points restored'} value={`${settlement.points_to_restore}${settlement.points_restored ? '' : (ar ? ' (لم تُسترد بعد)' : ' (not yet restored)')}`} />
+                )}
+                {settlement.request_type === 'return' && (
+                  <Field label={ar ? 'المبلغ النقدي' : 'Cash amount'} value={settlement.cash_settlement_amount?.toFixed?.(2)} dir="ltr" />
+                )}
+                {settlement.request_type === 'exchange' && typeof settlement.exchange_difference === 'number' && (
+                  <Field
+                    label={ar ? 'فرق الاستبدال' : 'Exchange difference'}
+                    value={settlement.exchange_difference > 0
+                      ? (ar ? `الزبون يدفع ${settlement.exchange_difference.toFixed(2)}` : `Customer owes ${settlement.exchange_difference.toFixed(2)}`)
+                      : settlement.exchange_difference < 0
+                        ? (ar ? `HiKids يدفع ${Math.abs(settlement.exchange_difference).toFixed(2)}` : `HiKids owes ${Math.abs(settlement.exchange_difference).toFixed(2)}`)
+                        : (ar ? 'لا يوجد فرق' : 'No difference')}
+                  />
+                )}
+                <Field label={ar ? 'حالة التسوية' : 'Settlement status'} value={settlementStatusLabel(settlement.status, lang)} />
+              </div>
+
+              {refund && (
+                <div className="rounded-2xl bg-mist/60 p-4 grid gap-2">
+                  <p className="text-xs font-heading font-bold uppercase tracking-wider text-muted-foreground">{ar ? 'سجل الاسترداد' : 'Refund Record'}</p>
+                  <SummaryRow label={ar ? 'رقم الاسترداد' : 'Refund code'} value={refund.refund_code} dir="ltr" />
+                  <SummaryRow label={ar ? 'المبلغ' : 'Amount'} value={refund.amount?.toFixed?.(2)} dir="ltr" />
+                  <SummaryRow label={ar ? 'الحالة' : 'Status'} value={refundStatusLabel(refund.status, lang)} />
+                  {refund.external_reference && <SummaryRow label={ar ? 'المرجع' : 'Reference'} value={refund.external_reference} dir="ltr" />}
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {refund.status === 'processing' && (
+                      <>
+                        <button onClick={() => setRefundDialog('complete')} className="h-9 px-4 rounded-full bg-emerald-600 text-white font-heading font-bold text-xs">
+                          {ar ? 'تأكيد إتمام الاسترداد' : 'Confirm Refund Completed'}
+                        </button>
+                        <button onClick={() => setRefundDialog('fail')} className="h-9 px-4 rounded-full bg-destructive/10 text-destructive font-heading font-bold text-xs">
+                          {ar ? 'تعليم كفاشل' : 'Mark Failed'}
+                        </button>
+                      </>
+                    )}
+                    {refund.status === 'failed' && (
+                      <button onClick={retryRefund} disabled={refundActionBusy} className="h-9 px-4 rounded-full bg-cosmic text-white font-heading font-bold text-xs disabled:opacity-60">
+                        {ar ? 'إعادة المحاولة' : 'Retry'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-2">
+                {settlement.status === 'calculated' && (
+                  <button onClick={confirmSettlement} disabled={confirmingSettlement} className="h-11 px-5 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center gap-2 disabled:opacity-60">
+                    {confirmingSettlement && <Loader2 className="w-4 h-4 animate-spin" />} {ar ? 'تأكيد التسوية' : 'Confirm Settlement'}
+                  </button>
+                )}
+                {settlement.status === 'completed' && (
+                  <button onClick={() => setRefundDialog('reverse')} className="h-11 px-5 rounded-full bg-destructive/10 text-destructive font-heading font-bold text-sm">
+                    {ar ? 'عكس التسوية' : 'Reverse Settlement'}
+                  </button>
+                )}
+              </div>
+            </div>
+          </Section>
+        )}
+
         {/* H — Internal Notes */}
         <Section title={ar ? 'ملاحظات داخلية (للموظفين فقط)' : 'Internal Notes (staff-only)'}>
           <p className="text-xs text-muted-foreground mb-3 flex items-center gap-1.5"><StickyNote className="w-3.5 h-3.5" /> {ar ? 'لا تظهر هذه الملاحظات للزبون أبداً' : 'These notes are never visible to the customer'}</p>
@@ -650,6 +822,33 @@ export default function ReturnRequestAdminDetail() {
             const res = await adminInspectReturnItem(dialogItem.id, quantity, condition, note, photos, idempotencyKey);
             return handleResult(res, ar ? 'تم تسجيل الفحص' : 'Inspection recorded');
           }}
+        />
+      )}
+      {refundDialog === 'complete' && (
+        <CompleteRefundDialog
+          refund={refund} lang={lang} busy={refundActionBusy}
+          onClose={() => setRefundDialog(null)}
+          onConfirm={completeRefund}
+        />
+      )}
+      {refundDialog === 'fail' && (
+        <ReasonDialog
+          title={ar ? 'تعليم الاسترداد كفاشل' : 'Mark Refund Failed'}
+          label={ar ? 'سبب الفشل (داخلي فقط)' : 'Failure reason (internal only)'}
+          confirmLabel={ar ? 'تأكيد' : 'Confirm'} confirmClass="bg-destructive hover:bg-destructive/90"
+          lang={lang} busy={refundActionBusy}
+          onClose={() => setRefundDialog(null)}
+          onConfirm={failRefund}
+        />
+      )}
+      {refundDialog === 'reverse' && (
+        <ReasonDialog
+          title={ar ? 'عكس التسوية المالية' : 'Reverse Financial Settlement'}
+          label={ar ? 'سبب العكس (داخلي فقط)' : 'Reversal reason (internal only)'}
+          confirmLabel={ar ? 'تأكيد العكس' : 'Confirm Reversal'} confirmClass="bg-destructive hover:bg-destructive/90"
+          lang={lang} busy={reversingSettlement}
+          onClose={() => setRefundDialog(null)}
+          onConfirm={async (reason) => { await reverseSettlement(reason); setRefundDialog(null); }}
         />
       )}
     </div>
@@ -963,6 +1162,50 @@ function InspectDialog({ item, pending, lang, onClose, onConfirm }) {
         <p className="text-xs text-muted-foreground -mt-2">{ar ? 'سيتم إضافة هذه الكمية إلى المخزون المتاح تلقائياً.' : 'This quantity will be added to available stock automatically.'}</p>
       )}
       <DialogActions onCancel={guardedClose} onConfirm={submit} confirmDisabled={!valid} submitting={submitting} confirmLabel={ar ? 'تأكيد الفحص' : 'Confirm Inspection'} confirmClass="bg-cosmic hover:bg-cosmic/90" lang={lang} />
+    </Modal>
+  );
+}
+
+// Completing a manual refund requires an explicit payment reference --
+// never a bare one-click "done" (section 58).
+function CompleteRefundDialog({ refund, lang, busy, onClose, onConfirm }) {
+  const ar = lang === 'ar';
+  const [reference, setReference] = useState('');
+  const [note, setNote] = useState('');
+  const guardedClose = useGuardedClose(!!reference.trim() || !!note.trim(), onClose, lang);
+
+  return (
+    <Modal title={ar ? 'تأكيد إتمام الاسترداد' : 'Confirm Refund Completed'} onClose={busy ? () => {} : guardedClose}>
+      <p className="text-sm text-muted-foreground">
+        {ar ? `المبلغ: ${refund?.amount?.toFixed?.(2)}` : `Amount: ${refund?.amount?.toFixed?.(2)}`}
+      </p>
+      <FormInput label={ar ? 'مرجع الدفع (رقم التحويل مثلاً) *' : 'Payment reference (e.g. transfer number) *'} value={reference} onChange={(e) => setReference(e.target.value)} required />
+      <FormInput label={ar ? 'ملاحظة داخلية (اختياري)' : 'Internal note (optional)'} value={note} onChange={(e) => setNote(e.target.value)} textarea />
+      <DialogActions
+        onCancel={guardedClose} submitting={busy} confirmDisabled={!reference.trim()}
+        onConfirm={() => onConfirm(reference.trim(), note.trim())}
+        confirmLabel={ar ? 'تأكيد الإتمام' : 'Confirm Completed'} confirmClass="bg-emerald-600 hover:bg-emerald-700" lang={lang}
+      />
+    </Modal>
+  );
+}
+
+// Shared reason-required dialog for failing a refund or reversing a
+// settlement -- the text is stored internally (return_request_notes), never
+// in the customer-visible activity log (see migration 0035's comments).
+function ReasonDialog({ title, label, confirmLabel, confirmClass, lang, busy, onClose, onConfirm }) {
+  const ar = lang === 'ar';
+  const [reason, setReason] = useState('');
+  const guardedClose = useGuardedClose(!!reason.trim(), onClose, lang);
+
+  return (
+    <Modal title={title} onClose={busy ? () => {} : guardedClose}>
+      <FormInput label={label} value={reason} onChange={(e) => setReason(e.target.value)} textarea required />
+      <DialogActions
+        onCancel={guardedClose} submitting={busy} confirmDisabled={!reason.trim()}
+        onConfirm={() => onConfirm(reason.trim())}
+        confirmLabel={confirmLabel} confirmClass={confirmClass} lang={lang}
+      />
     </Modal>
   );
 }

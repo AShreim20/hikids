@@ -12,9 +12,10 @@ import { useAuth } from '@/lib/AuthContext';
 import { lineItemName } from '@/lib/bilingual';
 import {
   returnRequestStatusLabel, REQUEST_TYPE_LABEL, deliveryResponsibilityLabel,
-  activityEntryLabel, REFUND_METHODS, refundMethodLabel,
+  activityEntryLabel, REFUND_METHODS, refundMethodLabel, refundStatusLabel,
 } from '@/lib/returns';
 import { customerSelectRefundMethod, customerSelectExchangeReplacement } from '@/lib/returnFunctions';
+import { calculateReturnSettlement, customerPayExchangeDifferenceFromWallet } from '@/lib/walletFunctions';
 import ReplacementProductPicker from '@/components/returns/ReplacementProductPicker';
 
 const CANCELLABLE_STATUSES = ['submitted', 'under_review', 'needs_information'];
@@ -30,8 +31,11 @@ export default function ReturnRequestDetail() {
   const [request, setRequest] = useState(null);
   const [items, setItems] = useState([]);
   const [order, setOrder] = useState(null);
+  const [settlement, setSettlement] = useState(null);
+  const [refund, setRefund] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [payingDifference, setPayingDifference] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -45,6 +49,23 @@ export default function ReturnRequestDetail() {
           ]);
           setItems(its || []);
           setOrder(o);
+
+          let s = await db.ReturnSettlement.filter({ return_request_id: r.id }).then((rows) => rows?.[0] || null).catch(() => null);
+          if (!s && r.status === 'processing') {
+            try {
+              const res = await calculateReturnSettlement(r.id);
+              if (res?.success) s = res.settlement;
+            } catch {
+              // not ready yet
+            }
+          }
+          setSettlement(s);
+          if (s?.return_refund_id) {
+            const rf = await db.ReturnRefund.get(s.return_refund_id).catch(() => null);
+            setRefund(rf);
+          } else {
+            setRefund(null);
+          }
         }
       })
       .catch(() => setRequest(null))
@@ -52,6 +73,24 @@ export default function ReturnRequestDetail() {
   };
 
   useEffect(() => { if (user) load(); else setLoading(false); }, [id, user]);
+
+  const payExchangeDifference = async () => {
+    if (!settlement) return;
+    setPayingDifference(true);
+    try {
+      const res = await customerPayExchangeDifferenceFromWallet(settlement.id);
+      if (!res?.success) {
+        toast({ title: res?.message || t('returns.error'), variant: 'destructive' });
+        return;
+      }
+      toast({ title: ar ? 'تم الدفع من محفظتك' : 'Paid from your wallet' });
+      load();
+    } catch (err) {
+      toast({ title: err.message || t('returns.error'), variant: 'destructive' });
+    } finally {
+      setPayingDifference(false);
+    }
+  };
 
   const cancel = async () => {
     if (!window.confirm(t('returns.cancelConfirm'))) return;
@@ -151,6 +190,46 @@ export default function ReturnRequestDetail() {
         {request.status === 'processing' && !request.needs_admin_disposition_review && items.filter((it) => request.request_type === 'exchange' || it.missing_resolution === 'full_exchange').map((it) => (
           <ExchangeReplacementSelector key={it.id} item={it} onDone={load} />
         ))}
+
+        {settlement && (
+          <div className="mt-5 rounded-2xl bg-card border border-border/60 p-4 grid gap-3">
+            <p className="text-sm font-heading font-bold">{ar ? 'ملخص التسوية المالية' : 'Settlement Summary'}</p>
+            <div className="grid gap-1.5 text-sm">
+              <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'القيمة المستحقة للإرجاع' : 'Eligible return value'}</span><span dir="ltr">{settlement.eligible_merchandise_value?.toFixed?.(2)}</span></div>
+              <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'استرداد رسوم التوصيل الأصلية' : 'Original delivery refund'}</span><span dir="ltr">0.00</span></div>
+              {settlement.points_to_restore > 0 && (
+                <div className="flex justify-between"><span className="text-muted-foreground">{ar ? 'نقاط ولاء مستردة' : 'Loyalty points restored'}</span><span dir="ltr">{settlement.points_to_restore}</span></div>
+              )}
+            </div>
+
+            {settlement.request_type === 'return' && settlement.status === 'completed' && settlement.refund_method === 'wallet' && (
+              <p className="text-sm text-emerald-700 font-medium">
+                {ar ? `تمت إضافة ${settlement.cash_settlement_amount?.toFixed?.(2)} إلى محفظتك.` : `${settlement.cash_settlement_amount?.toFixed?.(2)} has been added to your wallet.`}{' '}
+                <Link to="/wallet" className="underline">{ar ? 'محفظتي' : 'My Wallet'}</Link>
+              </p>
+            )}
+            {settlement.request_type === 'return' && settlement.refund_method === 'refund' && refund && (
+              <p className="text-sm font-medium">{refundStatusLabel(refund.status, lang)}</p>
+            )}
+
+            {settlement.request_type === 'exchange' && settlement.exchange_difference_status === 'due' && settlement.status === 'confirmed' && (
+              <div className="rounded-2xl bg-amber-50 border border-amber-200 p-3 grid gap-2">
+                <p className="text-sm text-amber-800">
+                  {ar ? `المبلغ المستحق عليك: ${settlement.exchange_difference?.toFixed?.(2)}` : `Amount you owe: ${settlement.exchange_difference?.toFixed?.(2)}`}
+                </p>
+                <button onClick={payExchangeDifference} disabled={payingDifference} className="justify-self-start h-10 px-4 rounded-full bg-cosmic text-white font-heading font-bold text-sm inline-flex items-center gap-2 disabled:opacity-60">
+                  {payingDifference && <Loader2 className="w-4 h-4 animate-spin" />} {ar ? 'ادفع من محفظتي' : 'Pay from My Wallet'}
+                </button>
+              </div>
+            )}
+            {settlement.request_type === 'exchange' && settlement.status === 'completed' && settlement.exchange_difference_status === 'owed_to_customer' && (
+              <p className="text-sm text-emerald-700 font-medium">
+                {ar ? `تمت إضافة ${Math.abs(settlement.exchange_difference)?.toFixed?.(2)} إلى محفظتك.` : `${Math.abs(settlement.exchange_difference)?.toFixed?.(2)} has been added to your wallet.`}{' '}
+                <Link to="/wallet" className="underline">{ar ? 'محفظتي' : 'My Wallet'}</Link>
+              </p>
+            )}
+          </div>
+        )}
 
         <div className="mt-6 rounded-3xl bg-card border border-border/60 p-5 grid gap-4">
           {order && (
