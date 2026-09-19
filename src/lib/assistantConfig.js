@@ -1,7 +1,8 @@
 // Owner-controlled assistant settings (Admin > Site Content > Assistant).
 // Stored as one site_content record; read by the storefront chat to build its
-// prompt. Fixed answers are quoted as written; promotions only bias which
+// prompt. Owner answers supply the facts; promotions only bias which
 // products/categories get recommended when they genuinely fit the request.
+// Answers are content, not scripts: the assistant words them to fit the question.
 export const ASSISTANT_CONFIG_KEY = 'assistant_config';
 export const ASSISTANT_CONFIG_DEFAULT = { fixed_answers: [], promoted_categories: [], promoted_product_ids: [] };
 
@@ -12,8 +13,8 @@ export function buildAssistantConfigText(cfg, lang) {
   const answers = (cfg.fixed_answers || []).filter((x) => x?.q?.trim() && (x.a?.trim() || x.a_en?.trim()));
   const parts = [];
   if (answers.length) {
-    const lines = answers.map((x) => `Q: ${x.q.trim()}\nA (use exactly): ${((lang === 'ar' ? x.a : (x.a_en || x.a)) || x.a || x.a_en).trim()}`).join('\n\n');
-    parts.push(`FIXED ANSWERS (set by the store owner). When the customer's question matches one of these, reply with the given answer exactly as written — do not rephrase, extend, shorten, or contradict it:\n${lines}`);
+    const lines = answers.map((x) => `Q: ${x.q.trim()}\nA (facts to convey): ${((lang === 'ar' ? x.a : (x.a_en || x.a)) || x.a || x.a_en).trim()}`).join('\n\n');
+    parts.push(`OWNER-SET ANSWERS. When the customer's question means the same as one of these (in any wording or dialect), answer using ONLY the facts in the given answer, phrased naturally and directly for what the customer actually asked. Do not change or drop any fact, number, duration, condition or link, do not contradict it, and do not add HiKids details that are not given here or in STORE FACTS:\n${lines}`);
   }
   const hasPromo = (cfg.promoted_categories || []).length || (cfg.promoted_product_ids || []).length;
   if (hasPromo) {

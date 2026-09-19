@@ -65,9 +65,9 @@ export default function AssistantAdminSettings() {
   return (
     <div className="mt-6 space-y-8">
       <section className="space-y-3">
-        <h2 className="font-heading font-extrabold text-lg">{ar ? 'ردود ثابتة' : 'Fixed answers'}</h2>
+        <h2 className="font-heading font-extrabold text-lg">{ar ? 'ردود ومعلومات ثابتة' : 'Owner answers'}</h2>
         <p className="text-sm text-muted-foreground">
-          {ar ? 'عندما يطابق سؤال الزبون أحد الأسئلة هنا، يجيب المساعد بالنص كما كتبته تمامًا.' : 'When a customer question matches one here, the assistant replies with your exact text.'}
+          {ar ? 'عندما يطابق معنى سؤال الزبون أحد الأسئلة هنا، يأخذ المساعد مضمون جوابك ويصوغه بنفسه بما يناسب سؤال الزبون، بدون تغيير الحقائق أو الأرقام أو الشروط.' : 'When a customer asks the same thing, the assistant uses the facts in your answer and words it to fit the question, without changing any facts, numbers or conditions.'}
         </p>
         {cfg.fixed_answers.map((x, i) => (
           <div key={i} className="rounded-3xl bg-card border border-border/60 p-4 grid gap-2">
