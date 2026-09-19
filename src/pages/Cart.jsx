@@ -280,6 +280,9 @@ export default function Cart() {
                     </button>
                   </div>
                   <div className="mt-auto flex items-center justify-between">
+                    {i.is_wheel_reward ? (
+                      <span className="px-4 h-10 grid place-items-center rounded-full bg-mist font-heading font-bold text-sm">×1</span>
+                    ) : (
                     <div className="flex items-center rounded-full bg-mist">
                       <button onClick={() => updateQty(id, i.qty - 1)} disabled={unavail} className="grid place-items-center w-10 h-10 rounded-full hover:bg-card disabled:opacity-40 disabled:hover:bg-mist" aria-label="-">
                         <Minus className="w-4 h-4" />
@@ -289,6 +292,7 @@ export default function Cart() {
                         <Plus className="w-4 h-4" />
                       </button>
                     </div>
+                    )}
                     <p className="font-heading font-extrabold">{unavail ? '—' : formatPrice(i.price * i.qty)}</p>
                   </div>
                 </div>

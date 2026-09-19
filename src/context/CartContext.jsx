@@ -149,6 +149,8 @@ export function CartProvider({ children }) {
   const updateQty = (lineId, qty) => {
     const line = items.find((i) => (i.lineId || i.id) === lineId);
     const max = line && typeof line.stock === 'number' && Number.isFinite(line.stock) ? line.stock : Infinity;
+    // A free wheel reward is exactly one unit -- never adjustable.
+    if (line?.is_wheel_reward) return { capped: false, available: null, finalQty: 1 };
     const finalQty = Number.isFinite(max) ? Math.min(Math.max(1, qty), Math.max(1, max)) : Math.max(1, qty);
     const capped = Number.isFinite(max) && qty > max;
     setItems((prev) =>
