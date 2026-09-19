@@ -15,7 +15,7 @@ import {
   activityEntryLabel, REFUND_METHODS, refundMethodLabel, refundStatusLabel,
 } from '@/lib/returns';
 import { customerSelectRefundMethod, customerSelectExchangeReplacement } from '@/lib/returnFunctions';
-import { calculateReturnSettlement, customerPayExchangeDifferenceFromWallet } from '@/lib/walletFunctions';
+import { calculateReturnSettlement, customerPayExchangeDifferenceFromWallet, customerChooseExchangeCashOnDelivery } from '@/lib/walletFunctions';
 import ReplacementProductPicker from '@/components/returns/ReplacementProductPicker';
 
 const CANCELLABLE_STATUSES = ['submitted', 'under_review', 'needs_information'];
@@ -84,6 +84,21 @@ export default function ReturnRequestDetail() {
         return;
       }
       toast({ title: ar ? 'تم الدفع من محفظتك' : 'Paid from your wallet' });
+      load();
+    } catch (err) {
+      toast({ title: err.message || t('returns.error'), variant: 'destructive' });
+    } finally {
+      setPayingDifference(false);
+    }
+  };
+
+  const chooseCash = async () => {
+    if (!settlement) return;
+    setPayingDifference(true);
+    try {
+      const res = await customerChooseExchangeCashOnDelivery(settlement.id);
+      if (!res?.success) { toast({ title: res?.message || t('returns.error'), variant: 'destructive' }); return; }
+      toast({ title: ar ? 'تم اختيار الدفع نقدًا عند الاستلام' : 'Cash on delivery selected' });
       load();
     } catch (err) {
       toast({ title: err.message || t('returns.error'), variant: 'destructive' });
@@ -220,7 +235,15 @@ export default function ReturnRequestDetail() {
                 <button onClick={payExchangeDifference} disabled={payingDifference} className="justify-self-start h-10 px-4 rounded-full bg-cosmic text-white font-heading font-bold text-sm inline-flex items-center gap-2 disabled:opacity-60">
                   {payingDifference && <Loader2 className="w-4 h-4 animate-spin" />} {ar ? 'ادفع من محفظتي' : 'Pay from My Wallet'}
                 </button>
+                <button onClick={chooseCash} disabled={payingDifference} className="justify-self-start h-10 px-4 rounded-full bg-mist text-foreground font-heading font-bold text-sm disabled:opacity-60">
+                  {ar ? 'الدفع نقدًا عند الاستلام' : 'Pay cash on delivery'}
+                </button>
               </div>
+            )}
+            {settlement.request_type === 'exchange' && settlement.exchange_difference_status === 'cod_pending' && settlement.status === 'confirmed' && (
+              <p className="text-sm text-amber-800 rounded-2xl bg-amber-50 border border-amber-200 p-3">
+                {ar ? `ستدفع ${settlement.exchange_difference?.toFixed?.(2)} نقدًا عند استلام المنتج البديل.` : `You will pay ${settlement.exchange_difference?.toFixed?.(2)} in cash when the replacement is delivered.`}
+              </p>
             )}
             {settlement.request_type === 'exchange' && settlement.status === 'completed' && settlement.exchange_difference_status === 'owed_to_customer' && (
               <p className="text-sm text-emerald-700 font-medium">

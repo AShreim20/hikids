@@ -50,3 +50,15 @@ export async function adminReverseSettlement(settlementId, reason) {
   if (error) throw error;
   return data;
 }
+
+export async function customerChooseExchangeCashOnDelivery(settlementId) {
+  const { data, error } = await supabase.rpc('customer_choose_exchange_cash_on_delivery', { p_settlement_id: settlementId });
+  if (error) throw error;
+  return data;
+}
+
+export async function adminConfirmExchangeCashCollected(settlementId) {
+  const { data, error } = await supabase.rpc('admin_confirm_exchange_cash_collected', { p_settlement_id: settlementId });
+  if (error) throw error;
+  return data;
+}

@@ -29,7 +29,7 @@ import {
   adminSetMissingResolution,
 } from '@/lib/returnFunctions';
 import {
-  calculateReturnSettlement, adminConfirmReturnSettlement, adminCompleteManualRefund,
+  calculateReturnSettlement, adminConfirmReturnSettlement, adminConfirmExchangeCashCollected, adminCompleteManualRefund,
   adminFailRefund, adminRetryRefund, adminReverseSettlement,
 } from '@/lib/walletFunctions';
 
@@ -216,6 +216,19 @@ export default function ReturnRequestAdminDetail() {
       toast({ title: err.message, variant: 'destructive' });
     } finally {
       setReleasingItemId(null);
+    }
+  };
+
+  const confirmCashCollected = async () => {
+    if (!settlement || !window.confirm(ar ? 'تأكيد استلام المبلغ نقدًا من الزبون؟' : 'Confirm the cash was collected from the customer?')) return;
+    setConfirmingSettlement(true);
+    try {
+      const res = await adminConfirmExchangeCashCollected(settlement.id);
+      handleResult(res, ar ? 'تم تأكيد استلام المبلغ' : 'Cash collection confirmed');
+    } catch (err) {
+      toast({ title: err.message, variant: 'destructive' });
+    } finally {
+      setConfirmingSettlement(false);
     }
   };
 
@@ -707,6 +720,11 @@ export default function ReturnRequestAdminDetail() {
               )}
 
               <div className="flex flex-wrap gap-2">
+                {settlement.status === 'confirmed' && settlement.exchange_difference_status === 'cod_pending' && (
+                  <button onClick={confirmCashCollected} disabled={confirmingSettlement} className="h-11 px-5 rounded-full bg-emerald-600 text-white font-heading font-bold disabled:opacity-60">
+                    {ar ? `تم استلام ${settlement.exchange_difference?.toFixed?.(2)} نقدًا` : `Cash ${settlement.exchange_difference?.toFixed?.(2)} collected`}
+                  </button>
+                )}
                 {settlement.status === 'calculated' && (
                   <button onClick={confirmSettlement} disabled={confirmingSettlement} className="h-11 px-5 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center gap-2 disabled:opacity-60">
                     {confirmingSettlement && <Loader2 className="w-4 h-4 animate-spin" />} {ar ? 'تأكيد التسوية' : 'Confirm Settlement'}
