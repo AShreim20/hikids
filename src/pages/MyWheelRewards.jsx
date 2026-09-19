@@ -21,7 +21,7 @@ const statusOf = (s) => {
 const statusStyle = (st, ar) => {
   const label = {
     used: ar ? 'مستخدم' : 'Used',
-    unused: ar ? 'غير مستخدم' : 'Unused',
+    unused: ar ? 'متاح' : 'Available',
     expired: ar ? 'منتهي' : 'Expired',
     unavailable: ar ? 'غير متاح' : 'Unavailable',
   }[st];
@@ -112,6 +112,9 @@ export default function MyWheelRewards() {
                       ) : (
                         <button onClick={() => addWheelReward({ id: s.product_id, name: s.product_name, name_en: s.product_name_en, image_url: s.product_image }, s.id, s.product_price)} className="mt-3 inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-cosmic text-white text-xs font-heading font-bold"><Plus className="w-4 h-4" /> {ar ? 'أضف إلى السلة مجانًا' : 'Add to cart (free)'}</button>
                       )
+                    )}
+                    {s.reward_type === 'free_delivery' && st === 'unused' && (
+                      <p className="mt-2 text-xs text-muted-foreground">{ar ? 'اختر "استخدام مكافأة التوصيل المجاني" عند إتمام الطلب' : 'Choose "Use Free Delivery Reward" at checkout'}</p>
                     )}
                     {s.fulfillment === 'manual' && s.reward_type !== 'product' && st === 'unused' && (
                       <p className="mt-2 text-xs text-muted-foreground">{ar ? 'سيتم تواصل المتجر معك لاستلام المكافأة' : 'The store will contact you to fulfill this reward'}</p>

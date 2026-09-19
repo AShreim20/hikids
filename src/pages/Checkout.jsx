@@ -67,6 +67,10 @@ export default function Checkout() {
   const [saveAddr, setSaveAddr] = useState(false);
   const [appliedDiscount, setAppliedDiscount] = useState(null);
   const [loyaltyRedeem, setLoyaltyRedeem] = useState(null);
+  // Unused wheel Free Delivery reward (account-owned). Only applied when the customer opts in;
+  // it is consumed server-side (secure_order) after the order row exists.
+  const [freeDeliverySpin, setFreeDeliverySpin] = useState(null);
+  const [useFreeDelivery, setUseFreeDelivery] = useState(false);
   const [loyaltyBalance, setLoyaltyBalance] = useState(0);
   const [loyaltyRate, setLoyaltyRate] = useState(0.1);
   const [cardEnabled, setCardEnabled] = useState(true);
@@ -80,7 +84,8 @@ export default function Checkout() {
   const availableCardTypes = useMemo(() => (cardEnabled ? CARD_TYPES : []), [cardEnabled]);
 
   const selectedCity = cities.find((c) => c.id === cityId);
-  const deliveryCost = selectedCity ? selectedCity.price : 0;
+  const freeDeliveryApplied = !!(useFreeDelivery && freeDeliverySpin && selectedCity);
+  const deliveryCost = selectedCity && !freeDeliveryApplied ? selectedCity.price : 0;
   const discountAmount = appliedDiscount?.amount || 0;
   const loyaltyDiscount = loyaltyRedeem?.amount || 0;
   const grandTotal = Math.max(0, total + deliveryCost - discountAmount - loyaltyDiscount);
@@ -92,6 +97,11 @@ export default function Checkout() {
   useEffect(() => {
     db.DeliveryCity.filter({ active: true }).then(setCities).catch(() => {});
     if (user) db.Address.list('-created_date', 50).then(setAddresses).catch(() => {});
+    if (user) {
+      db.WheelSpin.filter({ user_id: user.id, reward_type: 'free_delivery', status: 'unused' })
+        .then((r) => setFreeDeliverySpin((r || []).find((x) => !x.expires_at || new Date(x.expires_at) >= new Date()) || null))
+        .catch(() => {});
+    }
     getSetting('visa_payment_enabled', 1).then((v) => setCardEnabled(!!v)).catch(() => {});
   }, [user]);
 
@@ -252,6 +262,7 @@ export default function Checkout() {
         })),
         subtotal: total,
         delivery_cost: deliveryCost,
+        free_delivery_spin_id: freeDeliveryApplied ? freeDeliverySpin.id : undefined,
         discount_code: appliedDiscount?.code,
         discount_amount: discountAmount,
         loyalty_points: loyaltyPoints,
@@ -637,6 +648,12 @@ export default function Checkout() {
                 onRemoved={() => setAppliedDiscount(null)}
               />
             </div>
+            {freeDeliverySpin && (
+              <label className="mt-4 flex items-center gap-3 rounded-2xl bg-mist/60 p-4 cursor-pointer text-sm font-heading font-bold">
+                <input type="checkbox" checked={useFreeDelivery} onChange={(e) => setUseFreeDelivery(e.target.checked)} />
+                {ar ? 'استخدام مكافأة التوصيل المجاني' : 'Use Free Delivery Reward'}
+              </label>
+            )}
             {user && payment !== 'loyalty' && (
               <div className="mt-4">
                 <LoyaltyRedeem
