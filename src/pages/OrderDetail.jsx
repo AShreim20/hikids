@@ -6,6 +6,7 @@ import { awardLoyaltyPoints, reverseOrderLoyalty } from '@/lib/loyaltyFunctions'
 import { reverseWheelRewards } from '@/lib/wheelFunctions';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
+import ReleaseRewardsCard from '@/components/orders/ReleaseRewardsCard';
 import OrderTimeline from '@/components/orders/OrderTimeline';
 import OrderActivityLog from '@/components/orders/OrderActivityLog';
 import OrderItemsList from '@/components/orders/OrderItemsList';
@@ -244,6 +245,7 @@ export default function OrderDetail() {
           <div className="space-y-6">
             <StatusChanger order={order} isOwner={isOwner} onChange={changeStatus} saving={saving} />
             <OrderTimeline order={order} />
+            <ReleaseRewardsCard order={order} />
             {can('customers.manage') && <ContactCustomer order={order} />}
             {history.length > 0 && can('customers.manage') && (
               <div className="rounded-3xl bg-card border border-border/60 p-5 sm:p-6">

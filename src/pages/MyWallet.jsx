@@ -7,6 +7,8 @@ import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { walletTxTypeLabel } from '@/lib/returns';
+import { myPendingRewards } from '@/lib/loyaltyFunctions';
+import { wheelState } from '@/lib/wheelFunctions';
 
 // محفظتي / My Wallet -- the monetary ₪ balance (Phase 5), shown clearly
 // separate from Loyalty Points (section 17/72): different card, different
@@ -19,6 +21,8 @@ export default function MyWallet() {
   const [wallet, setWallet] = useState(null);
   const [transactions, setTransactions] = useState([]);
   const [loyalty, setLoyalty] = useState(null);
+  const [pending, setPending] = useState(null);
+  const [spins, setSpins] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -30,6 +34,8 @@ export default function MyWallet() {
           db.Wallet.filter({ user_id: user.id }).catch(() => []),
           db.LoyaltyAccount.filter({ user_id: user.id }).catch(() => []),
         ]);
+        setPending(await myPendingRewards().catch(() => null));
+        setSpins(await wheelState().catch(() => null));
         const w = wallets?.[0] || null;
         setWallet(w);
         setLoyalty(loyaltyAccounts?.[0] || null);
@@ -77,6 +83,15 @@ export default function MyWallet() {
                   <Award className="w-4 h-4" /> {ar ? 'نقاط الولاء' : 'Loyalty Points'}
                 </div>
                 <p className="font-heading font-extrabold text-3xl">{loyalty?.balance ?? 0} {ar ? 'نقطة' : 'pts'}</p>
+                {(pending?.pending_points > 0 || spins?.pending_spins > 0) && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    {ar ? 'معلّقة' : 'Pending'}: {pending?.pending_points ?? 0} {ar ? 'نقطة' : 'pts'} · {spins?.pending_spins ?? 0} {ar ? 'دورة' : 'spins'}
+                  </p>
+                )}
+                {(pending?.return_hold || spins?.return_hold) && (
+                  <p className="mt-1 text-xs text-accent">بانتظار اكتمال طلب الإرجاع</p>
+                )}
+                {spins?.active && <p className="mt-2 text-xs text-muted-foreground">{ar ? 'الدورات المتاحة' : 'Available spins'}: {spins.available ?? 0}</p>}
               </div>
             </div>
 

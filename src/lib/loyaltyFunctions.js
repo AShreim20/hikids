@@ -69,3 +69,22 @@ export async function adminLoyaltyWallet(userEmail, limit = 50) {
   if (error) throw error;
   return data;
 }
+
+// Phase 6: purchase rewards stay pending until the return window closes.
+export async function myPendingRewards() {
+  const { data, error } = await supabase.rpc('my_pending_rewards');
+  if (error) throw error;
+  return data;
+}
+
+export async function orderRewardsPreview(orderId) {
+  const { data, error } = await supabase.rpc('order_rewards_preview', { p_order_id: orderId });
+  if (error) throw error;
+  return data;
+}
+
+export async function adminReleaseRewardsNow(orderId) {
+  const { data, error } = await supabase.rpc('admin_release_rewards_now', { p_order_id: orderId });
+  if (error) throw error;
+  return data;
+}
