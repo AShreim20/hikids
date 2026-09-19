@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Save, Plus, Trash2, ArrowUp, ArrowDown, Lock, Type, HelpCircle, BookOpen, Tag } from 'lucide-react';
+import { Loader2, Save, Plus, Trash2, ArrowUp, ArrowDown, Lock, Type, HelpCircle, BookOpen, Tag, Bot } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useToast } from '@/components/ui/use-toast';
@@ -12,6 +12,7 @@ import { DEFAULT_FAQ_ITEMS, DEFAULT_ABOUT } from '@/lib/siteDefaults';
 import { translations } from '@/context/translations';
 import StickySaveBar from '@/components/admin/StickySaveBar';
 import HomepageDealsAdminSettings from '@/components/admin/HomepageDealsAdminSettings';
+import AssistantAdminSettings from '@/components/admin/AssistantAdminSettings';
 
 // Group translation keys into friendly pages for the override editor.
 const PAGE_GROUPS = [
@@ -31,6 +32,7 @@ const TABS = [
   { id: 'faq', label: 'FAQ', icon: HelpCircle },
   { id: 'about', label: 'About', icon: BookOpen },
   { id: 'deals', label: 'Homepage Deals', icon: Tag },
+  { id: 'assistant', label: 'Assistant', icon: Bot },
 ];
 
 const input = 'w-full h-11 px-3 rounded-2xl bg-mist border border-border/70 outline-none focus:border-cosmic';
@@ -256,6 +258,7 @@ export default function SiteContentAdmin() {
 
         {/* Homepage Deals */}
         {tab === 'deals' && <HomepageDealsAdminSettings />}
+        {tab === 'assistant' && <AssistantAdminSettings />}
       </div>
       <Footer />
     </div>

@@ -11,6 +11,8 @@ import { priceInfo } from '@/lib/pricing';
 import { productName } from '@/lib/bilingual';
 import { detectTextDir } from '@/lib/textDirection';
 import { buildStoreFacts } from '@/lib/assistantPolicy';
+import { useSiteContent } from '@/context/SiteContentContext';
+import { ASSISTANT_CONFIG_KEY, ASSISTANT_CONFIG_DEFAULT, isPromoted, buildAssistantConfigText } from '@/lib/assistantConfig';
 import Logo from '@/components/Logo';
 import ChatMarkdown from './ChatMarkdown';
 import ChatProductCard from './ChatProductCard';
@@ -25,6 +27,9 @@ export default function ChatPanel({ onClose }) {
   const ar = lang === 'ar';
   const { addItem } = useCart();
   const { discountPctFor } = useCategories();
+  const { content } = useSiteContent();
+  const aiCfg = { ...ASSISTANT_CONFIG_DEFAULT, ...content(ASSISTANT_CONFIG_KEY, ASSISTANT_CONFIG_DEFAULT) };
+  const promotedKey = (aiCfg.promoted_product_ids || []).join(',');
   // Which messages have had their product cards expanded past the initial
   // limit — local UI state only, deliberately not persisted with the
   // conversation (a reload starts collapsed again, same as any "show more").
@@ -83,10 +88,18 @@ export default function ChatPanel({ onClose }) {
   // (a plain sale_price check would silently miss it). The app never shows
   // this text to the customer, and never trusts anything the assistant
   // says about price/discount/stock for display — see ChatProductCard.
+  // Owner-promoted products outside the latest-50 window are added so they can be recommended.
+  useEffect(() => {
+    const missing = (aiCfg.promoted_product_ids || []).filter((id) => !products.some((p) => p.id === id));
+    if (!missing.length || !products.length) return;
+    Promise.all(missing.map((id) => db.Product.get(id).catch(() => null)))
+      .then((extra) => setProducts((cur) => [...cur, ...extra.filter((p) => p && !cur.some((c) => c.id === p.id))]));
+  }, [promotedKey, products.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const catalogText = products.map((p) => {
     const { final, original, hasDiscount, discountPct } = priceInfo(p, discountPctFor(p.category));
     const stock = Number(p.stock ?? 0);
-    return `ID:${p.id} | ${productName(p, lang)} | ${p.category || ''} | ages ${p.age_range || 'all'} | price ₪${final}${hasDiscount ? ` (was ₪${original}, -${discountPct}%)` : ''} | stock ${stock}${stock <= 0 ? ' OUT OF STOCK' : ''}`;
+    return `ID:${p.id} | ${productName(p, lang)} | ${p.category || ''} | ages ${p.age_range || 'all'} | price ₪${final}${hasDiscount ? ` (was ₪${original}, -${discountPct}%)` : ''} | stock ${stock}${stock <= 0 ? ' OUT OF STOCK' : ''}${isPromoted(p, aiCfg) ? ' | PROMOTED' : ''}`;
   }).join('\n');
 
   useEffect(() => {
@@ -147,6 +160,8 @@ CART: You can add a product to the customer's cart when they explicitly ask (for
 If asked about a specific order's status, tell them to open My Orders (/orders).
 
 ${buildStoreFacts({ ...policy, lang })}
+
+${buildAssistantConfigText(aiCfg, lang)}
 
 Current product catalog (ID | name | category | ages | price | stock):\n${catalogText || 'Loading catalog...'}`;
       const convo = next.map((m) => {
