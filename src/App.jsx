@@ -15,7 +15,6 @@ import ChatWidget from './components/ai/ChatWidget';
 import WhatsAppButton from './components/WhatsAppButton';
 import AdminSidebar from './components/AdminSidebar';
 import ActionRequiredCenter from './components/ActionRequiredCenter';
-import { canAccessStaffArea } from './lib/permissionsCore';
 import AdminMobileMenu from './components/AdminMobileMenu';
 import NewOrderNotifier from './components/orders/NewOrderNotifier';
 // Add page imports here
@@ -177,8 +176,6 @@ function AnimatedRoutes() {
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin, user } = useAuth();
   const isAdmin = user?.role === 'admin';
-  // Customer-facing helpers (assistant, WhatsApp) are hidden for the owner and any staff account.
-  const isStaffUser = canAccessStaffArea(user);
 
   // Show loading spinner while checking app public settings or auth
   if (isLoadingPublicSettings || isLoadingAuth) {
@@ -213,8 +210,8 @@ const AuthenticatedApp = () => {
       <ActionRequiredCenter />
       <AdminMobileMenu />
       <NewOrderNotifier />
-      {!isStaffUser && <ChatWidget />}
-      {!isStaffUser && <WhatsAppButton />}
+      <ChatWidget />
+      {!isAdmin && <WhatsAppButton />}
       </WishlistProvider>
     </CartProvider>
     </CartFlyProvider>
