@@ -10,6 +10,7 @@ import { useFloatingOffset } from '@/hooks/useFloatingOffset';
 import { priceInfo } from '@/lib/pricing';
 import { productName } from '@/lib/bilingual';
 import { detectTextDir } from '@/lib/textDirection';
+import { buildStoreFacts } from '@/lib/assistantPolicy';
 import Logo from '@/components/Logo';
 import ChatMarkdown from './ChatMarkdown';
 import ChatProductCard from './ChatProductCard';
@@ -57,12 +58,21 @@ export default function ChatPanel({ onClose }) {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [products, setProducts] = useState([]);
+  // Live policy sources for the assistant's STORE FACTS (never hardcoded).
+  const [policy, setPolicy] = useState({ reasons: [], cities: [], settings: {} });
   const scrollRef = useRef(null);
 
   useEffect(() => {
     db.Product.list('-created_date', 50)
       .then(setProducts)
       .catch(() => {});
+    Promise.all([
+      db.ReturnReason.filter({ active: true }, 'sort_order', 50).catch(() => []),
+      db.DeliveryCity.filter({ active: true }).catch(() => []),
+      db.Setting.list().catch(() => []),
+    ]).then(([reasons, cities, rows]) => {
+      setPolicy({ reasons: reasons || [], cities: cities || [], settings: Object.fromEntries((rows || []).map((r) => [r.key, r.value])) });
+    });
   }, []);
 
   // Catalog context fed to the assistant so it can reason about real
@@ -115,7 +125,7 @@ export default function ChatPanel({ onClose }) {
       )
     )];
     try {
-      const sys = `You are the HiKids toy store personal shopping assistant. Help customers choose toys and answer questions about ages, categories, pricing, discounts, shipping, loyalty points, returns, and payment (card or cash on delivery). Be warm, friendly and concise — sound like a helpful person, not a database dump.
+      const sys = `You are the HiKids toy store personal shopping assistant. Help customers choose toys and answer questions about ages, categories and product pricing/discounts/availability from the catalog below. For any HiKids policy or business rule (returns, exchanges, delivery, payments, loyalty points, Wallet, Mystery Wheel, orders) rely ONLY on the STORE FACTS below. Be warm, friendly and concise — sound like a helpful person, not a database dump.
 
 LANGUAGE: Reply entirely in ${ar ? 'Arabic' : 'English'} — the customer's current site language. Never mix the two languages in the same reply${ar ? '. Do not include English product names unless the customer explicitly asks for them' : ', using the English product name when one exists'}.
 
@@ -134,7 +144,9 @@ Already shown this conversation (avoid repeating for a "more options" request): 
 
 CART: You can add a product to the customer's cart when they explicitly ask (for example "add this to my cart", "أضفه للسلة", "add it"). Put the product id and quantity in the add_to_cart array and the app will add it and show a View Cart link. Still write a short natural reply confirming what you added.
 
-If asked about a specific order's status, tell them to use the Order Tracking page.
+If asked about a specific order's status, tell them to open My Orders (/orders).
+
+${buildStoreFacts({ ...policy, lang })}
 
 Current product catalog (ID | name | category | ages | price | stock):\n${catalogText || 'Loading catalog...'}`;
       const convo = next.map((m) => {
