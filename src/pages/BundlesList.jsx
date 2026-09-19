@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Package } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Package, ArrowRight } from 'lucide-react';
 import { db } from '@/api/entities';
 import { supabase } from '@/api/supabaseClient';
 import PageHeader from '@/components/PageHeader';
@@ -50,6 +51,9 @@ export default function BundlesList() {
       <main className="max-w-7xl mx-auto px-5 sm:px-8 py-8 md:py-12">
         <h1 className="font-heading font-extrabold text-3xl md:text-5xl">{t('nav.bundles')}</h1>
         <p className="mt-2 text-muted-foreground max-w-lg">{t('bundle.pageSubtitle')}</p>
+        <Link to="/shop" className="mt-4 inline-flex items-center gap-1.5 text-cosmic font-heading font-bold text-sm">
+          {t('bundle.browseAll')} <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+        </Link>
 
         <div className="mt-8">
           {loading ? (
@@ -65,6 +69,9 @@ export default function BundlesList() {
               </div>
               <p className="mt-5 font-heading font-bold text-2xl">{t('bundle.emptyTitle')}</p>
               <p className="mt-2 text-muted-foreground">{t('bundle.emptyDesc')}</p>
+              <Link to="/shop" className="mt-6 inline-flex items-center h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold squish">
+                {t('bundle.browseAll')}
+              </Link>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
