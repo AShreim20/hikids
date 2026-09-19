@@ -1,5 +1,5 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingBag, Heart, Settings as SettingsIcon, Search, MapPin } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
 import { useCart } from '@/context/CartContext';
@@ -13,6 +13,7 @@ import HeaderLoyaltyBalance from '@/components/HeaderLoyaltyBalance';
 import ShopMenu from '@/components/ShopMenu';
 import RewardsMenu from '@/components/RewardsMenu';
 import HeaderToyPattern from '@/components/HeaderToyPattern';
+import { navTriggerClass } from '@/lib/navTriggerClass';
 
 export default function Navbar() {
   const { count } = useCart();
@@ -24,8 +25,11 @@ export default function Navbar() {
   // lifted-single-open-group pattern AdminSidebar/AdminNavGroup already use.
   const [openMenu, setOpenMenu] = useState(null); // null | 'shop' | 'rewards'
   const navigate = useNavigate();
+  const location = useLocation();
   const { t } = useLanguage();
   const { user } = useAuth();
+  const isHome = location.pathname === '/';
+  const isOrders = location.pathname === '/orders';
 
   // The header is fixed so it stays visible; this measured spacer reserves
   // the exact header height in the flow so every page's content starts below
@@ -97,12 +101,12 @@ export default function Navbar() {
               {/* A hash-only link needs a real anchor: React Router's <Link>
                   to a path + hash on a different route doesn't reliably
                   scroll to the fragment. */}
-              <a href="/#categories" className="text-sm font-medium text-white/85 hover:text-accent transition-colors whitespace-nowrap">
+              <a href="/#categories" className={navTriggerClass({ active: isHome })}>
                 {t('nav.home')}
               </a>
               <ShopMenu open={openMenu === 'shop'} onToggle={toggleShop} onClose={closeMenus} />
               {user && (
-                <Link to="/orders" className="text-sm font-medium text-white/85 hover:text-accent transition-colors whitespace-nowrap">
+                <Link to="/orders" className={navTriggerClass({ active: isOrders })}>
                   {t('orders.title')}
                 </Link>
               )}

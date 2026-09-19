@@ -18,4 +18,10 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    // Defaults to 5173 for plain local `npm run dev`, but honors PORT when
+    // set (e.g. the dev harness reassigning the port because 5173 is
+    // already taken by another session's server).
+    port: Number(process.env.PORT) || 5173,
+  },
 });

@@ -4,6 +4,7 @@ import { Gift } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { useAvailableSpins } from '@/lib/useAvailableSpins';
+import { navTriggerClass } from '@/lib/navTriggerClass';
 
 const ROWS = [
   { to: '/challenges', emoji: '🎯', labelKey: 'nav.challenges', descKey: 'nav.rewardsChallengesDesc' },
@@ -82,9 +83,16 @@ export default function RewardsMenu({ open, onToggle, onClose, mobile = false })
     </div>
   );
 
-  const triggerClass = `inline-flex items-center gap-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
-    isActive ? 'text-accent' : 'text-white/85 hover:text-accent'
-  }`;
+  // Mobile keeps the original compact, unpadded trigger (the second nav
+  // line is a tight strip with no room for a hit-box/hover background);
+  // only the desktop trigger adopts the shared Header recipe so Rewards
+  // matches Shop/Home/My Orders exactly (open-state background, focus
+  // ring instead of the browser's default outline, etc).
+  const triggerClass = mobile
+    ? `inline-flex items-center gap-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
+        isActive ? 'text-accent' : 'text-white/85 hover:text-accent'
+      }`
+    : navTriggerClass({ active: isActive, open });
 
   return (
     <div data-nav-dropdown="rewards" className="relative shrink-0">

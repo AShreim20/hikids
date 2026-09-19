@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { LayoutGrid } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { ChooseForKidsMenuDesktop, ChooseForKidsMenuMobile } from '@/components/ChooseForKidsMenu';
+import { navTriggerClass } from '@/lib/navTriggerClass';
 
 // Top-level "Shop" menu — consolidates All Toys / Choose for Kids / Bundles
 // & Packages under one trigger (header cleanup). Open state is owned by the
@@ -88,14 +89,12 @@ export default function ShopMenu({ open, onToggle, onClose, mobile = false }) {
         aria-haspopup="true"
         aria-expanded={open}
         aria-controls="shop-menu-panel"
-        className={`inline-flex items-center gap-1.5 text-sm font-medium transition-colors whitespace-nowrap ${
-          isActive ? 'text-accent' : 'text-white/85 hover:text-accent'
-        }`}
+        className={navTriggerClass({ active: isActive, open })}
       >
         <LayoutGrid className="w-4 h-4" /> {t('nav.shop')}
       </button>
       {open && (
-        <div id="shop-menu-panel" className="absolute start-0 top-full mt-2 z-[60] min-w-[220px] rounded-2xl bg-[#3A2660] border border-white/20 shadow-2xl p-2">
+        <div id="shop-menu-panel" className="absolute start-0 top-full mt-2 z-[60] min-w-[240px] rounded-2xl bg-[#3A2660] border border-white/20 shadow-2xl p-2">
           <Link to="/shop" onClick={onClose} className="block rounded-lg px-3 py-2 text-sm font-heading font-bold text-white hover:bg-white/10">
             {t('nav.allToys')}
           </Link>
