@@ -5,7 +5,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useLocation } from 'react-router-dom';
 import { subscribeChatOpen, getChatOpen, setChatOpen } from '@/lib/chatOpenStore';
 import { useAuth } from '@/lib/AuthContext';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { canAccessStaffArea } from '@/lib/permissionsCore';
 import { useFloatingOffset } from '@/hooks/useFloatingOffset';
 
 // Compact circular floating button — icon-first at every breakpoint (no more
@@ -18,10 +18,9 @@ export default function ChatWidget() {
   const { pathname } = useLocation();
   const open = useSyncExternalStore(subscribeChatOpen, getChatOpen);
   const { user } = useAuth();
-  const isMobile = useIsMobile();
   const { bottom } = useFloatingOffset(0);
   if (pathname === '/checkout') return null;
-  if (isMobile && user?.role === 'admin') return null;
+  if (canAccessStaffArea(user)) return null;
   return (
     <>
       {!open && (
