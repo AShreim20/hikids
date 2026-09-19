@@ -1,19 +1,20 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { isActivePath } from '@/lib/adminNav';
 
 // A sidebar icon that opens a flyout list of child routes. The flyout is
 // rendered through a portal to document.body so it escapes the admin
 // sidebar's stacking context (backdrop-blur creates one) and is never
 // trapped behind page content or pushed off-screen by RTL positioning.
-export default function AdminNavGroup({ group, open, onToggle, onClose, activePaths }) {
+export default function AdminNavGroup({ group, open, onToggle, onClose }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const btnRef = useRef(null);
   const menuRef = useRef(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
-  const anyActive = (group.children || []).some((c) => activePaths?.includes(c.to));
+  const anyActive = (group.children || []).some((c) => isActivePath(pathname, c));
   const Icon = group.icon;
 
   useEffect(() => {
@@ -85,7 +86,7 @@ export default function AdminNavGroup({ group, open, onToggle, onClose, activePa
             {group.label}
           </p>
           {group.children.map((c) => {
-            const active = pathname === c.to;
+            const active = isActivePath(pathname, c);
             const CIcon = c.icon;
             return (
               <button

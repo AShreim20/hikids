@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { getAdminNav } from '@/lib/adminNav';
+import { useActionItems, openActionRequired } from '@/lib/actionRequiredStore';
+import { isOwner } from '@/lib/permissions';
 import AdminNavGroup from '@/components/AdminNavGroup';
 
 // Desktop admin icon rail. Direct links render as simple buttons; merged
@@ -18,12 +20,12 @@ export default function AdminSidebar() {
   const { t } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { pathname } = useLocation();
   const [openGroup, setOpenGroup] = useState(null);
+  const actionCount = useActionItems().length;
 
   if (user?.role !== 'admin') return null;
 
-  const nav = getAdminNav(t);
+  const nav = getAdminNav(t, { isOwner: isOwner(user) });
 
   return (
     <aside className="hidden md:flex fixed left-0 top-28 md:top-34 bottom-0 z-40 flex-col items-center gap-1.5 w-14 border-r border-border/60 bg-background/80 backdrop-blur-xl overflow-visible py-16 px-6">
@@ -32,17 +34,17 @@ export default function AdminSidebar() {
       <AdminNavGroup
         key={item.id}
         group={item}
-        activePaths={item.children.map((c) => c.to)}
         open={openGroup === item.id}
         onToggle={() => setOpenGroup((v) => v === item.id ? null : item.id)}
         onClose={() => setOpenGroup(null)} /> :
 
 
       <NavButton
-        key={item.to}
+        key={item.id || item.to}
         item={item}
-        active={pathname === item.to}
-        onSelect={() => {setOpenGroup(null);navigate(item.to);}} />
+        badge={item.type === 'action' ? actionCount : 0}
+        active={false}
+        onSelect={() => {setOpenGroup(null);if (item.type === 'action') openActionRequired();else navigate(item.to);}} />
 
 
       )}
@@ -50,20 +52,21 @@ export default function AdminSidebar() {
 
 }
 
-function NavButton({ item, active, onSelect }) {
+function NavButton({ item, active, onSelect, badge = 0 }) {
   const Icon = item.icon;
   return (
     <button
       onClick={onSelect}
       title={item.label}
       aria-label={item.label}
-      className={`grid place-items-center w-11 h-11 rounded-xl transition-colors cursor-pointer ${
+      className={`relative grid place-items-center w-11 h-11 rounded-xl transition-colors cursor-pointer ${
       active ?
       'bg-cosmic text-white' :
       'bg-mist text-foreground/70 hover:bg-cosmic hover:text-white'}`
       }>
       
       <Icon className="w-5 h-5" />
+      {badge > 0 && <span className="absolute -top-1 -end-1 min-w-5 h-5 px-1 grid place-items-center rounded-full bg-accent text-white text-[11px] font-bold">{badge}</span>}
     </button>);
 
 }

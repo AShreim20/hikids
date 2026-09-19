@@ -4,7 +4,9 @@ import { ChevronDown, Menu } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
-import { getAdminNav } from '@/lib/adminNav';
+import { getAdminNav, isActivePath } from '@/lib/adminNav';
+import { useActionItems, openActionRequired } from '@/lib/actionRequiredStore';
+import { isOwner } from '@/lib/permissions';
 
 // Admin navigation for phones and tablets: a floating button that opens a
 // bottom-sheet drawer with the grouped management menu.
@@ -20,10 +22,11 @@ export default function AdminMobileMenu() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  const actionCount = useActionItems().length;
 
   if (user?.role !== 'admin') return null;
 
-  const nav = getAdminNav(t);
+  const nav = getAdminNav(t, { isOwner: isOwner(user) });
   const go = (to) => {
     setOpen(false);
     navigate(to);
@@ -49,7 +52,7 @@ export default function AdminMobileMenu() {
               item.type === 'group' ? (
                 <Group key={item.id} group={item} pathname={pathname} go={go} />
               ) : (
-                <Row key={item.to} item={item} active={pathname === item.to} onClick={() => go(item.to)} />
+                <Row key={item.id || item.to} item={item} badge={item.type === 'action' ? actionCount : 0} active={false} onClick={() => { if (item.type === 'action') { setOpen(false); openActionRequired(); } else go(item.to); }} />
               )
             )}
           </div>
@@ -59,7 +62,7 @@ export default function AdminMobileMenu() {
   );
 }
 
-function Row({ item, active, onClick }) {
+function Row({ item, active, onClick, badge = 0 }) {
   const Icon = item.icon;
   return (
     <button
@@ -70,15 +73,16 @@ function Row({ item, active, onClick }) {
       }`}
     >
       <Icon className="w-5 h-5 shrink-0" />
-      <span className="truncate">{item.label}</span>
+      <span className="truncate flex-1">{item.label}</span>
+      {badge > 0 && <span className="min-w-6 h-6 px-1.5 grid place-items-center rounded-full bg-accent text-white text-xs font-bold">{badge}</span>}
     </button>
   );
 }
 
 function Group({ group, pathname, go }) {
-  const [expanded, setExpanded] = useState(() => group.children.some((c) => c.to === pathname));
+  const [expanded, setExpanded] = useState(() => group.children.some((c) => isActivePath(pathname, c)));
   const Icon = group.icon;
-  const anyActive = group.children.some((c) => c.to === pathname);
+  const anyActive = group.children.some((c) => isActivePath(pathname, c));
 
   return (
     <div className="rounded-2xl bg-mist/60 overflow-hidden">
@@ -97,7 +101,7 @@ function Group({ group, pathname, go }) {
         <div className="px-2 pb-2 grid gap-1">
           {group.children.map((c) => {
             const CIcon = c.icon;
-            const active = pathname === c.to;
+            const active = isActivePath(pathname, c);
             return (
               <button
                 key={`${c.to}-${c.label}`}

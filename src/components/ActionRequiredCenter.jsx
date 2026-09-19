@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { BellRing, X } from 'lucide-react';
 import { supabase } from '@/api/supabaseClient';
 import { useAuth } from '@/lib/AuthContext';
+import { publishActionItems, useActionItems } from '@/lib/actionRequiredStore';
 import { useLanguage } from '@/context/LanguageContext';
 
 // One site-wide "Action Required" entry. The list is derived live on the
@@ -22,13 +23,13 @@ export default function ActionRequiredCenter() {
   const { lang } = useLanguage();
   const { pathname } = useLocation();
   const ar = lang === 'ar';
-  const [items, setItems] = useState([]);
+  const items = useActionItems();
   const [open, setOpen] = useState(false);
 
   const load = useCallback(() => {
-    if (!user) { setItems([]); return; }
+    if (!user) { publishActionItems([]); return; }
     supabase.rpc('action_required_items').then(({ data, error }) => {
-      if (!error && Array.isArray(data)) setItems(data);
+      if (!error && Array.isArray(data)) publishActionItems(data);
     });
   }, [user]);
 
@@ -41,8 +42,13 @@ export default function ActionRequiredCenter() {
   }, [load, pathname]);
 
   useEffect(() => { setOpen(false); }, [pathname]);
+  useEffect(() => {
+    const openPanel = () => setOpen(true);
+    window.addEventListener('hikids:open-action-required', openPanel);
+    return () => window.removeEventListener('hikids:open-action-required', openPanel);
+  }, []);
 
-  if (!user || items.length === 0) return null;
+  if (!user || (items.length === 0 && !open)) return null;
 
   const sections = [
     { key: 'admin', title: ar ? 'الإجراءات المطلوبة' : 'Action Required' },
@@ -58,6 +64,7 @@ export default function ActionRequiredCenter() {
             <p className="font-heading font-extrabold">{ar ? 'الإجراءات المطلوبة' : 'Action Required'}</p>
             <button onClick={() => setOpen(false)} aria-label="Close"><X className="w-4 h-4" /></button>
           </div>
+          {items.length === 0 && <p className="mt-3 text-sm text-muted-foreground">{ar ? 'لا توجد إجراءات مطلوبة' : 'Nothing needs your action'}</p>}
           {sections.map((s) => (
             <div key={s.key} className="mt-3">
               {sections.length > 1 && <p className="text-xs text-muted-foreground font-heading font-bold mb-1">{s.title}</p>}

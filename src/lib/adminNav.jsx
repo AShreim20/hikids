@@ -1,70 +1,78 @@
 import {
-  LayoutDashboard, GalleryHorizontal, ShoppingCart, Truck, Layers,
-  Search, ClipboardList, BarChart3, Award, Ticket, Package, Trophy, Sparkles, Gamepad2, Users, FolderTree, Camera, Type, Settings, FileText, Receipt, MessageCircleQuestion, Undo2, LineChart, Inbox,
+  GalleryHorizontal, ShoppingCart, Truck, Layers, ClipboardList, BarChart3, Award, Ticket, Package, Trophy,
+  Sparkles, Users, FolderTree, Camera, Type, Settings, Receipt, MessageCircleQuestion, Undo2, LineChart, Inbox,
+  LayoutDashboard, BellRing, Store, Gift, SlidersHorizontal, ShieldCheck, Wallet,
 } from 'lucide-react';
 
-// Single source of truth for the admin navigation. Top-level entries are
-// either a direct link or a group with children. Groups collapse several
-// management pages under one icon without merging their functionality.
-export function getAdminNav(t) {
+// Single source of truth for the admin navigation: Action Required (standalone
+// shortcut with a live count) followed by six functional groups. Every child
+// points at an existing route -- no route is created or renamed here.
+// `also` lists the detail/editor routes that belong to the same page so the
+// right group/page stays highlighted there.
+export function getAdminNav(t, { isOwner = false } = {}) {
   return [
-    { type: 'link', to: '/admin/carousel', label: t('nav.carousel'), icon: GalleryHorizontal },
+    { type: 'action', id: 'action-required', label: t('nav.actionRequired'), icon: BellRing },
     {
-      type: 'group', id: 'purchasing', label: t('nav.purchasing'), icon: ShoppingCart,
+      type: 'group', id: 'sales', label: t('nav.grpSales'), icon: Store,
+      children: [
+        { to: '/orders-admin', label: t('nav.managementOrders'), icon: ClipboardList },
+        { to: '/admin/return-requests', label: t('nav.returnRequests'), icon: Inbox },
+        { to: '/admin/inquiries', label: t('nav.inquiries'), icon: MessageCircleQuestion },
+        { to: '/delivery', label: t('nav.managementDelivery'), icon: Truck },
+      ],
+    },
+    {
+      type: 'group', id: 'products', label: t('nav.grpProducts'), icon: Package,
+      children: [
+        { to: '/admin', label: t('nav.managementProducts'), icon: LayoutDashboard, also: ['/admin/product'] },
+        { to: '/admin/categories', label: t('nav.categories'), icon: FolderTree },
+        { to: '/admin/bundles', label: t('nav.managementBundles'), icon: Layers, also: ['/admin/bundle'] },
+      ],
+    },
+    {
+      type: 'group', id: 'expenses', label: t('nav.grpExpenses'), icon: Receipt,
       children: [
         { to: '/admin/po', label: t('nav.po'), icon: ShoppingCart },
         { to: '/admin/suppliers', label: t('nav.suppliers'), icon: Truck },
+        { to: '/admin/expenses', label: t('nav.expensesList'), icon: Wallet },
+        { to: '/admin/expense-categories', label: t('nav.expenseCategories'), icon: FolderTree },
       ],
     },
     {
-      type: 'group', id: 'management', label: t('nav.management'), icon: Layers,
+      type: 'group', id: 'reports', label: t('nav.grpReports'), icon: BarChart3,
       children: [
-        { to: '/admin', label: t('nav.managementProducts'), icon: LayoutDashboard },
-        { to: '/delivery', label: t('nav.managementDelivery'), icon: Truck },
-        { to: '/orders-admin', label: t('nav.managementOrders'), icon: ClipboardList },
-        { to: '/admin/bundles', label: t('nav.managementBundles'), icon: Package },
-        { to: '/admin/categories', label: t('nav.categories'), icon: FolderTree },
-        { to: '/admin/return-reasons', label: t('nav.returnReasons'), icon: Undo2 },
-        { to: '/admin/return-requests', label: t('nav.returnRequests'), icon: Inbox },
-        { to: '/admin/users', label: t('nav.users'), icon: Users },
-        { to: '/admin/inquiries', label: t('nav.inquiries'), icon: MessageCircleQuestion },
+        { to: '/admin/reports', label: t('nav.siteReports'), icon: BarChart3 },
+        { to: '/analytics', label: t('nav.googleAnalytics'), icon: LineChart },
       ],
     },
     {
-      type: 'group', id: 'gamification', label: t('nav.gamification'), icon: Gamepad2,
+      type: 'group', id: 'marketing', label: t('nav.grpMarketing'), icon: Gift,
       children: [
+        { to: '/loyalty-admin', label: t('loyalty.nav'), icon: Award },
+        { to: '/discounts', label: t('discount.title'), icon: Ticket },
         { to: '/admin/challenges', label: t('nav.challengesAdmin'), icon: Trophy },
         { to: '/admin/wheel', label: t('nav.wheelAdmin'), icon: Sparkles },
         { to: '/admin/wheel-winners', label: t('nav.wheelWinners'), icon: Users },
         { to: '/admin/photo-reviews', label: t('nav.photoReviews'), icon: Camera },
       ],
     },
-    { type: 'link', to: '/admin/reports', label: t('nav.reports'), icon: BarChart3 },
-    // Moved here from the storefront Navbar (header consolidation) — this is
-    // the only admin nav entry for it now, so an admin can still reach it
-    // via AdminSidebar (desktop) / AdminMobileMenu (mobile), both of which
-    // render globally off this same getAdminNav() array.
-    { type: 'link', to: '/analytics', label: t('nav.insights'), icon: LineChart },
     {
-      type: 'group', id: 'expenses', label: t('nav.expenses'), icon: Receipt,
+      type: 'group', id: 'site', label: t('nav.grpSite'), icon: SlidersHorizontal,
       children: [
-        { to: '/admin/expenses', label: t('nav.expensesList'), icon: Receipt },
-        { to: '/admin/expense-categories', label: t('nav.expenseCategories'), icon: FolderTree },
-      ],
-    },
-    {
-      type: 'group', id: 'content', label: t('nav.content'), icon: FileText,
-      children: [
+        { to: '/admin/carousel', label: t('nav.homepageSlides'), icon: GalleryHorizontal, also: ['/admin/hero-slide-preview'] },
         { to: '/admin/site-content', label: t('nav.siteContent'), icon: Type },
         { to: '/admin/site-settings', label: t('nav.siteSettings'), icon: Settings },
-      ],
-    },
-    {
-      type: 'group', id: 'loyalty', label: t('nav.loyaltyDiscounts'), icon: Award,
-      children: [
-        { to: '/loyalty-admin', label: t('loyalty.nav'), icon: Award },
-        { to: '/discounts', label: t('discount.title'), icon: Ticket },
+        { to: '/admin/users', label: t('nav.users'), icon: Users },
+        { to: '/admin/return-reasons', label: t('nav.returnReasons'), icon: Undo2 },
+        ...(isOwner ? [{ to: '/staff', label: t('staff.nav'), icon: ShieldCheck }] : []),
       ],
     },
   ];
+}
+
+// A child is active on its own route, its sub-routes, or any `also` route.
+export function isActivePath(pathname, child) {
+  if (pathname === child.to) return true;
+  const prefixes = child.to === '/admin' ? (child.also || []) : [child.to, ...(child.also || [])];
+  return prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
