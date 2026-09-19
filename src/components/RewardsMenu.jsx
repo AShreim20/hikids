@@ -55,7 +55,7 @@ export default function RewardsMenu({ open, onToggle, onClose, mobile = false })
 
   if (!user) return null;
 
-  const panelWidthClass = mobile ? 'min-w-[240px] max-w-[calc(100vw-2rem)]' : 'min-w-[260px]';
+  const panelWidthClass = mobile ? 'w-full' : 'min-w-[260px]';
 
   const Panel = (
     <div className={`${panelWidthClass} rounded-2xl bg-[#3A2660] border border-white/20 shadow-2xl p-2`}>
@@ -64,19 +64,19 @@ export default function RewardsMenu({ open, onToggle, onClose, mobile = false })
           key={r.to}
           to={r.to}
           onClick={onClose}
-          className="flex items-start gap-2.5 rounded-lg px-3 py-2 hover:bg-white/10 transition-colors"
+          className={`flex items-start gap-3 rounded-lg px-3 hover:bg-white/10 transition-colors ${mobile ? 'py-3' : 'py-2'}`}
         >
-          <span className="text-lg leading-none mt-0.5">{r.emoji}</span>
+          <span className={`leading-none mt-0.5 ${mobile ? 'text-2xl' : 'text-lg'}`}>{r.emoji}</span>
           <span className="min-w-0 flex-1">
             <span className="flex items-center gap-2">
-              <span className="text-sm font-heading font-bold text-white">{t(r.labelKey)}</span>
+              <span className={`font-heading font-bold text-white ${mobile ? 'text-base' : 'text-sm'}`}>{t(r.labelKey)}</span>
               {r.showSpins && available > 0 && (
                 <span className="inline-flex items-center justify-center min-w-5 h-5 px-1.5 rounded-full bg-highlight text-foreground text-[11px] font-bold leading-none shadow-sm">
                   {available}
                 </span>
               )}
             </span>
-            <span className="block text-xs text-white/60 mt-0.5">{t(r.descKey)}</span>
+            <span className={`block mt-0.5 ${mobile ? 'text-sm text-white/75' : 'text-xs text-white/60'}`}>{t(r.descKey)}</span>
           </span>
         </Link>
       ))}
@@ -95,7 +95,7 @@ export default function RewardsMenu({ open, onToggle, onClose, mobile = false })
     : navTriggerClass({ active: isActive, open });
 
   return (
-    <div data-nav-dropdown="rewards" className="relative shrink-0">
+    <div data-nav-dropdown="rewards" className={mobile ? 'shrink-0' : 'relative shrink-0'}>
       <button
         type="button"
         onClick={onToggle}
@@ -113,7 +113,7 @@ export default function RewardsMenu({ open, onToggle, onClose, mobile = false })
         )}
       </button>
       {open && (
-        <div id={mobile ? 'rewards-menu-mobile-panel' : 'rewards-menu-panel'} className="absolute start-0 top-full mt-2 z-[60]">
+        <div id={mobile ? 'rewards-menu-mobile-panel' : 'rewards-menu-panel'} className={mobile ? 'absolute inset-x-4 top-full mt-1 z-[60]' : 'absolute start-0 top-full mt-2 z-[60]'}>
           {Panel}
         </div>
       )}

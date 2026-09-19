@@ -57,7 +57,7 @@ export default function ActionRequiredCenter() {
   const urgent = items.some((i) => i.priority === 'urgent');
 
   return (
-    <div className="fixed z-50 bottom-20 md:bottom-6 end-4" dir={ar ? 'rtl' : 'ltr'}>
+    <div className="fixed z-50 bottom-24 start-4 md:start-auto md:end-6 md:bottom-44" dir={ar ? 'rtl' : 'ltr'}>
       {open && (
         <div className="mb-3 w-[min(92vw,22rem)] max-h-[70vh] overflow-y-auto rounded-3xl bg-card border border-border/60 shadow-2xl p-4">
           <div className="flex items-center justify-between">

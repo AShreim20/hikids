@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Heart, Settings as SettingsIcon, Search, MapPin } from 'lucide-react';
+import { ShoppingBag, Heart, Settings as SettingsIcon, Search, MapPin, LayoutDashboard } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -71,6 +71,15 @@ export default function Navbar() {
 
             {/* Mobile: search + language + settings inline in the first line */}
             <div className="md:hidden ms-auto flex items-center gap-2">
+              {user?.role === 'admin' && (
+                <button
+                  onClick={() => window.dispatchEvent(new Event('hikids:open-admin-menu'))}
+                  className="grid place-items-center w-11 h-11 rounded-2xl bg-accent text-white transition-colors"
+                  aria-label={t('nav.admin')}
+                >
+                  <LayoutDashboard className="w-5 h-5" />
+                </button>
+              )}
               <button
                 onClick={() => setSearchOpen((v) => !v)}
                 className="grid place-items-center w-11 h-11 rounded-2xl bg-white/15 text-white hover:bg-accent hover:text-white transition-colors"

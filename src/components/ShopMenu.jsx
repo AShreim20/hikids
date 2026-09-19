@@ -50,7 +50,7 @@ export default function ShopMenu({ open, onToggle, onClose, mobile = false }) {
 
   if (mobile) {
     return (
-      <div data-nav-dropdown="shop" className="relative shrink-0">
+      <div data-nav-dropdown="shop" className="shrink-0">
         <button
           type="button"
           onClick={onToggle}
@@ -66,13 +66,13 @@ export default function ShopMenu({ open, onToggle, onClose, mobile = false }) {
         {open && (
           <div
             id="shop-menu-mobile-panel"
-            className="absolute start-0 top-full mt-2 z-[60] min-w-[240px] max-w-[calc(100vw-2rem)] rounded-2xl bg-[#3A2660] border border-white/20 shadow-2xl p-3"
+            className="absolute inset-x-4 top-full mt-1 z-[60] rounded-2xl bg-[#3A2660] border border-white/25 shadow-2xl p-3"
           >
-            <Link to="/shop" onClick={onClose} className="block rounded-lg px-3 py-2 text-sm font-heading font-bold text-white hover:bg-white/10">
+            <Link to="/shop" onClick={onClose} className="block rounded-lg px-3 py-3 text-base font-heading font-bold text-white hover:bg-white/10">
               {t('nav.allToys')}
             </Link>
             <ChooseForKidsMenuMobile onNavigate={onClose} />
-            <Link to="/bundles" onClick={onClose} className="block rounded-lg px-3 py-2 text-sm font-heading font-bold text-white hover:bg-white/10">
+            <Link to="/bundles" onClick={onClose} className="block rounded-lg px-3 py-3 text-base font-heading font-bold text-white hover:bg-white/10">
               {t('nav.bundles')}
             </Link>
           </div>

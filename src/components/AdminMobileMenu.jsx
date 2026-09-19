@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronDown, Menu } from 'lucide-react';
-import { Drawer, DrawerContent, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
+import { ChevronDown } from 'lucide-react';
+import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { getAdminNav, isActivePath } from '@/lib/adminNav';
@@ -24,6 +24,13 @@ export default function AdminMobileMenu() {
   const [open, setOpen] = useState(false);
   const actionCount = useActionItems().length;
 
+  // Opened from the header's admin button (Navbar) via this event.
+  useEffect(() => {
+    const openMenu = () => setOpen(true);
+    window.addEventListener('hikids:open-admin-menu', openMenu);
+    return () => window.removeEventListener('hikids:open-admin-menu', openMenu);
+  }, []);
+
   if (user?.role !== 'admin') return null;
 
   const nav = getAdminNav(t, { isOwner: isOwner(user) });
@@ -34,16 +41,6 @@ export default function AdminMobileMenu() {
 
   return (
     <Drawer open={open} onOpenChange={setOpen}>
-      <DrawerTrigger asChild>
-        <button
-          type="button"
-          aria-label={t('nav.admin')}
-          className="md:hidden fixed z-40 ltr:right-4 rtl:left-4 grid place-items-center w-12 h-12 rounded-full bg-cosmic text-white shadow-lg squish"
-          style={{ bottom: 'calc(5.5rem + env(safe-area-inset-bottom))' }}
-        >
-          <Menu className="w-5 h-5" />
-        </button>
-      </DrawerTrigger>
       <DrawerContent className="max-h-[85vh]">
         <div className="px-4 pt-2 pb-6 safe-bottom max-h-[85vh] overflow-y-auto">
           <DrawerTitle className="px-2 font-heading font-extrabold text-lg">{t('nav.admin')}</DrawerTitle>
