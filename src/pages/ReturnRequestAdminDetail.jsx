@@ -85,7 +85,7 @@ export default function ReturnRequestAdminDetail() {
         // Best-effort cosmetic thumbnail only -- never a source of historical
         // name/price/qty (those always come from return_request_items /
         // order.items, both immutable snapshots).
-        const ids = [...new Set((its || []).map((i) => i.product_id).filter(Boolean))];
+        const ids = [...new Set((its || []).flatMap((i) => [i.product_id, i.replacement_product_id]).filter(Boolean))];
         if (ids.length) {
           const found = await Promise.all(ids.map((pid) => db.Product.get(pid).catch(() => null)));
           setProducts(Object.fromEntries(found.filter(Boolean).map((p) => [p.id, p])));
@@ -605,7 +605,7 @@ export default function ReturnRequestAdminDetail() {
                   <p className="font-heading font-bold text-sm mb-2">{returnItemName(it, lang)} — {ar ? 'الاستبدال' : 'Exchange'}</p>
                   {it.replacement_reserved_at ? (
                     <div className="grid gap-1 text-sm">
-                      <SummaryRow label={ar ? 'المنتج البديل' : 'Replacement product'} value={products[it.replacement_product_id]?.name || it.replacement_product_id} />
+                      <SummaryRow label={ar ? 'المنتج البديل' : 'Replacement product'} value={(ar ? products[it.replacement_product_id]?.name : (products[it.replacement_product_id]?.name_en || products[it.replacement_product_id]?.name)) || it.replacement_product_id} />
                       <SummaryRow label={ar ? 'الكمية' : 'Quantity'} value={it.replacement_quantity} />
                       <SummaryRow label={ar ? 'السعر' : 'Unit price'} value={it.replacement_unit_price?.toFixed?.(2)} dir="ltr" />
                       <SummaryRow

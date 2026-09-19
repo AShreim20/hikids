@@ -8,6 +8,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { statusLabel, statusColor } from '@/lib/orderStatus';
 import { lineItemName } from '@/lib/bilingual';
+import OrderReturnsList from '@/components/orders/OrderReturnsList';
 import { getReturnEligibility, formatTimeRemaining } from '@/lib/returns';
 
 export default function MyOrders() {
@@ -123,6 +124,7 @@ export default function MyOrders() {
                   </div>
                 )}
                 <ReturnEligibilityRow order={o} />
+                <OrderReturnsList orderId={o.id} bare />
               </div>
             ))}
           </div>
