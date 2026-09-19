@@ -1,6 +1,6 @@
 import { priceInfo } from './pricing';
 
-export const HOMEPAGE_DEALS_MAX = 6;
+export const HOMEPAGE_DEALS_MAX = 8;
 export const HOMEPAGE_DEALS_KEY = 'homepage_deals';
 export const HOMEPAGE_DEALS_DEFAULT = { mode: 'auto', product_ids: [] };
 
@@ -12,7 +12,7 @@ export function isEligibleForDeals(product, catPct) {
   return product?.status !== 'draft' && priceInfo(product, catPct).hasDiscount;
 }
 
-// Pure, testable resolver for "which up to 6 products does the homepage
+// Pure, testable resolver for "which up to 8 products does the homepage
 // Deals section show right now" — used by HomepageDealsSection and safe to
 // unit-test in isolation from any fetching/rendering concern.
 //
@@ -24,7 +24,7 @@ export function isEligibleForDeals(product, catPct) {
 // MANUAL mode: the admin's saved product_ids, in that exact order, skipping
 // any that are no longer eligible (deleted, discount expired/removed,
 // unpublished) rather than rendering a broken card — then, only if fewer
-// than 6 remain, backfilling the empty slots AFTER the manual picks with
+// than 8 remain, backfilling the empty slots AFTER the manual picks with
 // the latest eligible auto picks, never duplicating a product already
 // chosen manually.
 export function resolveHomepageDeals({ products = [], discountPctFor = () => 0, config } = {}) {

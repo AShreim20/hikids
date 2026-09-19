@@ -10,7 +10,7 @@ import { queryKeys } from '@/lib/queryKeys';
 import { resolveHomepageDeals, HOMEPAGE_DEALS_KEY, HOMEPAGE_DEALS_DEFAULT } from '@/lib/homepageDeals';
 import ProductCard from '@/components/ProductCard';
 
-// Homepage "Deals & Offers" section — up to 6 currently-discounted products,
+// Homepage "Deals & Offers" section — up to 8 currently-discounted products,
 // either the latest eligible ones or an admin's manual pick (with automatic
 // fallback for any pick that's no longer valid; see resolveHomepageDeals).
 // Renders nothing at all when there are zero eligible products right now
