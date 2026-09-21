@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Heart, Settings as SettingsIcon, Search, MapPin, LayoutDashboard } from 'lucide-react';
+import { ShoppingBag, Heart, Settings as SettingsIcon, MapPin } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -14,12 +14,12 @@ import ShopMenu from '@/components/ShopMenu';
 import RewardsMenu from '@/components/RewardsMenu';
 import HeaderToyPattern from '@/components/HeaderToyPattern';
 import { navTriggerClass } from '@/lib/navTriggerClass';
+import MobileHeader from '@/components/MobileHeader';
 
 export default function Navbar() {
   const { count } = useCart();
   const { count: wishCount } = useWishlist();
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
   // Which of the two consolidated top-level dropdowns is open — shared so
   // opening one always closes the other (never both at once), the same
   // lifted-single-open-group pattern AdminSidebar/AdminNavGroup already use.
@@ -53,6 +53,8 @@ export default function Navbar() {
   return (
     <>
       <header ref={headerRef} className="fixed top-0 left-0 right-0 z-50 bg-[#5D3F85]/90 backdrop-blur-xl border-b border-accent/30 safe-top">
+        <div className="md:hidden"><MobileHeader onOpenSettings={() => setSettingsOpen(true)} /></div>
+        <div className="hidden md:block">
         {/* Playful toy-themed brand pattern — opposite the logo, behind all
             content. Flat vector toys in the logo's palette; fewer/smaller on
             mobile so the header stays clean. */}
@@ -69,33 +71,6 @@ export default function Navbar() {
               <SearchBar className="w-full" />
             </div>
 
-            {/* Mobile: search + language + settings inline in the first line */}
-            <div className="md:hidden ms-auto flex items-center gap-2">
-              {user?.role === 'admin' && (
-                <button
-                  onClick={() => window.dispatchEvent(new Event('hikids:open-admin-menu'))}
-                  className="grid place-items-center w-11 h-11 rounded-2xl bg-accent text-white transition-colors"
-                  aria-label={t('nav.admin')}
-                >
-                  <LayoutDashboard className="w-5 h-5" />
-                </button>
-              )}
-              <button
-                onClick={() => setSearchOpen((v) => !v)}
-                className="grid place-items-center w-11 h-11 rounded-2xl bg-white/15 text-white hover:bg-accent hover:text-white transition-colors"
-                aria-label={t('nav.search')}
-              >
-                <Search className="w-5 h-5" />
-              </button>
-              <LanguageToggle />
-              <button
-                onClick={() => setSettingsOpen(true)}
-                className="grid place-items-center w-11 h-11 rounded-2xl bg-white/15 text-white hover:bg-accent hover:text-white transition-colors"
-                aria-label={t('nav.settings')}
-              >
-                <SettingsIcon className="w-5 h-5" />
-              </button>
-            </div>
           </div>
         </div>
 
@@ -185,35 +160,7 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile second line — mirrors the desktop nav group (Home / Shop /
-            My Orders / Rewards) one-for-one, no separate mobile-only link
-            set and no width-measuring "More" overflow needed now that it's
-            down to 3-4 short items. No overflow-x-auto here: it would make
-            overflow-y a clipping context too (a classic CSS gotcha), which
-            clips the absolutely-positioned Shop/Rewards dropdown panels
-            instead of just scrolling the row. */}
-        <div className="md:hidden relative z-10">
-          <div className="max-w-7xl mx-auto px-6 sm:px-10 h-12 flex items-center">
-            <div className="flex items-center gap-4 shrink-0">
-              <a href="/#categories" className="text-sm font-medium text-white/85 hover:text-accent transition-colors whitespace-nowrap">
-                {t('nav.home')}
-              </a>
-              <ShopMenu mobile open={openMenu === 'shop'} onToggle={toggleShop} onClose={closeMenus} />
-              {user && (
-                <Link to="/orders" className="text-sm font-medium text-white/85 hover:text-accent transition-colors whitespace-nowrap">
-                  {t('orders.title')}
-                </Link>
-              )}
-              <RewardsMenu mobile open={openMenu === 'rewards'} onToggle={toggleRewards} onClose={closeMenus} />
-            </div>
-          </div>
         </div>
-
-        {searchOpen && (
-          <div className="md:hidden relative z-10 border-t border-white/10 px-6 sm:px-10 py-3 max-w-7xl mx-auto">
-            <SearchBar autoFocus className="w-full" onSubmitted={() => setSearchOpen(false)} />
-          </div>
-        )}
         <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
       </header>
       <div aria-hidden className="h-[112px] md:h-[136px]" style={headerH ? { height: `${headerH}px` } : undefined} />

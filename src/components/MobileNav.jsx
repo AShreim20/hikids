@@ -1,48 +1,54 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Home as HomeIcon, Heart, ShoppingBag, Package, Trophy } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { Home as HomeIcon, Grid2x2, ShoppingBag, User } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
-import { useWishlist } from '@/context/WishlistContext';
 import { useLanguage } from '@/context/LanguageContext';
+import { useAuth } from '@/lib/AuthContext';
 
-const tabs = [
-  { to: '/', labelKey: 'nav.home', icon: HomeIcon, exact: true },
-  { to: '/wishlist', labelKey: 'nav.wishlist', icon: Heart, badge: 'wish' },
-  { to: '/cart', labelKey: 'nav.cart', icon: ShoppingBag, badge: 'cart' },
-  { to: '/challenges', labelKey: 'nav.challenges', icon: Trophy },
-  { to: '/orders', labelKey: 'nav.orders', icon: Package },
-];
+// Mobile (<768px) bottom navigation: exactly Home / Shop / Cart / Account.
+// Account opens Login when signed out, otherwise the account area (My Orders,
+// which links on to addresses, returns and wallet). The page body already
+// reserves bottom space for this bar (see index.css).
+const startsWithAny = (path, prefixes) => prefixes.some((p) => path === p || path.startsWith(`${p}/`));
+const SHOP_PATHS = ['/shop', '/bundles', '/product', '/wishlist'];
+const ACCOUNT_PATHS = ['/orders', '/returns', '/wallet', '/addresses', '/loyalty', '/wheel-rewards', '/login', '/register'];
 
 export default function MobileNav() {
   const { count: cartCount } = useCart();
-  const { count: wishCount } = useWishlist();
   const { t } = useLanguage();
-  const counts = { cart: cartCount, wish: wishCount };
+  const { user } = useAuth();
+  const { pathname } = useLocation();
+
+  const tabs = [
+    { to: '/', label: t('nav.home'), icon: HomeIcon, active: pathname === '/' },
+    { to: '/shop', label: t('nav.shop'), icon: Grid2x2, active: startsWithAny(pathname, SHOP_PATHS) },
+    { to: '/cart', label: t('nav.cart'), icon: ShoppingBag, active: startsWithAny(pathname, ['/cart', '/checkout']), cart: true },
+    { to: user ? '/orders' : '/login', label: t('mnav.account'), icon: User, active: startsWithAny(pathname, ACCOUNT_PATHS) },
+  ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border/60 safe-bottom">
-      <div className="grid grid-cols-5">
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 bg-background/95 backdrop-blur-xl border-t border-border/60 safe-bottom" aria-label="Primary">
+      <div className="grid grid-cols-4">
         {tabs.map((tab) => (
-          <NavLink
-            key={tab.to}
+          <Link
+            key={tab.label}
             to={tab.to}
-            end={tab.exact}
-            className={({ isActive }) =>
-              `relative flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] font-medium transition-colors no-select ${
-                isActive ? 'text-cosmic' : 'text-muted-foreground'
-              }`
-            }
+            aria-current={tab.active ? 'page' : undefined}
+            className={`relative flex flex-col items-center justify-center gap-1 py-2.5 text-[11px] no-select transition-colors ${
+              tab.active ? 'text-cosmic font-bold' : 'text-muted-foreground font-medium'
+            }`}
           >
+            {tab.active && <span className="absolute top-0 h-0.5 w-8 rounded-full bg-cosmic" />}
             <span className="relative">
-              <tab.icon className="w-6 h-6" {...(tab.badge === 'cart' ? { 'data-cart-anchor': '' } : {})} />
-              {tab.badge && counts[tab.badge] > 0 && (
-                <span className="absolute -top-1.5 -right-2 min-w-4 h-4 px-1 grid place-items-center rounded-full bg-accent text-white text-[9px] font-bold">
-                  {counts[tab.badge]}
+              <tab.icon className="w-6 h-6" {...(tab.cart ? { 'data-cart-anchor': '' } : {})} />
+              {tab.cart && cartCount > 0 && (
+                <span className="absolute -top-1.5 -end-2 min-w-4 h-4 px-1 grid place-items-center rounded-full bg-accent text-white text-[9px] font-bold">
+                  {cartCount}
                 </span>
               )}
             </span>
-            {t(tab.labelKey)}
-          </NavLink>
+            {tab.label}
+          </Link>
         ))}
       </div>
     </nav>
