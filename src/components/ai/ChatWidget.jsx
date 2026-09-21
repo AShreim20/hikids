@@ -25,7 +25,7 @@ export default function ChatWidget() {
           title={t('ai.title')}
           aria-label={t('ai.title')}
           style={{ bottom }}
-          className="fixed z-50 end-4 md:end-6 hidden md:grid place-items-center w-14 h-14 rounded-full bg-cosmic text-white shadow-lg shadow-cosmic/30 squish hover:bg-primary transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cosmic/40"
+          className="fixed z-50 end-4 md:end-6 grid place-items-center w-14 h-14 rounded-full bg-cosmic text-white shadow-lg shadow-cosmic/30 squish hover:bg-primary transition-colors focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-cosmic/40"
         >
           <AiAssistantIcon className="w-6 h-6 shrink-0" />
         </button>
