@@ -1,20 +1,19 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Home as HomeIcon, Grid2x2, ShoppingBag, User } from 'lucide-react';
-import { useCart } from '@/context/CartContext';
+import { Home as HomeIcon, Grid2x2, Gift, User } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 
-// Mobile (<768px) bottom navigation: exactly Home / Shop / Cart / Account.
-// Account opens Login when signed out, otherwise the account area (My Orders,
-// which links on to addresses, returns and wallet). The page body already
+// Mobile (<768px) bottom navigation: exactly Home / Shop / My Rewards / Account.
+// Cart lives in the mobile header. Account opens Login (returning to /account)
+// when signed out, otherwise the /account dashboard. The page body already
 // reserves bottom space for this bar (see index.css).
 const startsWithAny = (path, prefixes) => prefixes.some((p) => path === p || path.startsWith(`${p}/`));
 const SHOP_PATHS = ['/shop', '/bundles', '/product', '/wishlist'];
-const ACCOUNT_PATHS = ['/orders', '/returns', '/wallet', '/addresses', '/loyalty', '/wheel-rewards', '/login', '/register'];
+const REWARD_PATHS = ['/wallet', '/loyalty', '/wheel', '/wheel-rewards', '/challenges', '/rewards'];
+const ACCOUNT_PATHS = ['/account', '/orders', '/returns', '/addresses', '/login', '/register'];
 
 export default function MobileNav() {
-  const { count: cartCount } = useCart();
   const { t } = useLanguage();
   const { user } = useAuth();
   const { pathname } = useLocation();
@@ -22,8 +21,8 @@ export default function MobileNav() {
   const tabs = [
     { to: '/', label: t('nav.home'), icon: HomeIcon, active: pathname === '/' },
     { to: '/shop', label: t('nav.shop'), icon: Grid2x2, active: startsWithAny(pathname, SHOP_PATHS) },
-    { to: '/cart', label: t('nav.cart'), icon: ShoppingBag, active: startsWithAny(pathname, ['/cart', '/checkout']), cart: true },
-    { to: user ? '/orders' : '/login', label: t('mnav.account'), icon: User, active: startsWithAny(pathname, ACCOUNT_PATHS) },
+    { to: '/wallet', label: t('mnav.rewards'), icon: Gift, active: startsWithAny(pathname, REWARD_PATHS) },
+    { to: user ? '/account' : `/login?returnTo=${encodeURIComponent('/account')}`, label: t('mnav.account'), icon: User, active: startsWithAny(pathname, ACCOUNT_PATHS) },
   ];
 
   return (
@@ -40,12 +39,7 @@ export default function MobileNav() {
           >
             {tab.active && <span className="absolute top-0 h-0.5 w-8 rounded-full bg-cosmic" />}
             <span className="relative">
-              <tab.icon className="w-6 h-6" {...(tab.cart ? { 'data-cart-anchor': '' } : {})} />
-              {tab.cart && cartCount > 0 && (
-                <span className="absolute -top-1.5 -end-2 min-w-4 h-4 px-1 grid place-items-center rounded-full bg-accent text-white text-[9px] font-bold">
-                  {cartCount}
-                </span>
-              )}
+              <tab.icon className="w-6 h-6" />
             </span>
             {tab.label}
           </Link>

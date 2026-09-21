@@ -9,7 +9,7 @@ const AuthContext = createContext();
 // "is this the same user, unchanged" — used to avoid handing out a new
 // `user` object reference (see setStableUser below) when nothing in it
 // actually changed.
-const USER_FIELDS = ['id', 'email', 'phone', 'full_name', 'role', 'permissions'];
+const USER_FIELDS = ['id', 'email', 'phone', 'full_name', 'role', 'permissions', 'avatar_url'];
 function sameUser(a, b) {
   if (a === b) return true;
   if (!a || !b) return false;
@@ -31,6 +31,7 @@ async function loadUser(session) {
     email: session.user.email,
     phone: profile?.phone ?? session.user.user_metadata?.phone ?? null,
     full_name: profile?.full_name ?? null,
+    avatar_url: profile?.avatar_url ?? null,
     role: profile?.role ?? 'user',
     permissions: profile?.permissions ?? [],
   };
