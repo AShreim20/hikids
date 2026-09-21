@@ -11,7 +11,7 @@ import { useLanguage } from '@/context/LanguageContext';
 
 export default function MyAddresses() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const { toast } = useToast();
   const [addresses, setAddresses] = useState([]);
   const [cities, setCities] = useState([]);
@@ -170,8 +170,9 @@ export default function MyAddresses() {
                   placeholder={t('checkout.selectCity')}
                   label={t('address.city')}
                   required
+                  searchable
                   className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic"
-                  options={cities.map((c) => ({ value: c.name, label: c.name }))}
+                  options={[...cities].sort((a, b) => String(a.name).localeCompare(String(b.name), lang === 'ar' ? 'ar' : 'en', { sensitivity: 'base' })).map((c) => ({ value: c.name, label: c.name }))}
                 />
               </label>
               <label className="block">

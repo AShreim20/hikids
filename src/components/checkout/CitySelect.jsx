@@ -3,7 +3,9 @@ import SheetSelect from '@/components/ui/SheetSelect';
 import { useLanguage } from '@/context/LanguageContext';
 
 export default function CitySelect({ cities, value, onChange }) {
-  const { t, formatPrice } = useLanguage();
+  const { t, formatPrice, lang } = useLanguage();
+  // Always alphabetical (locale-aware), regardless of how the list was stored.
+  const sorted = [...cities].sort((a, b) => String(a.name).localeCompare(String(b.name), lang === 'ar' ? 'ar' : 'en', { sensitivity: 'base' }));
   const selected = cities.find((c) => c.id === value);
   return (
     <div>
@@ -17,8 +19,9 @@ export default function CitySelect({ cities, value, onChange }) {
           placeholder={t('checkout.selectCity')}
           label={t('checkout.city')}
           required
+          searchable
           className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic"
-          options={cities.map((c) => ({ value: c.id, label: `${c.name} — ${formatPrice(c.price)}` }))}
+          options={sorted.map((c) => ({ value: c.id, label: `${c.name} — ${formatPrice(c.price)}` }))}
         />
       </label>
       {selected && (
