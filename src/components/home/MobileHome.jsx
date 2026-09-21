@@ -6,6 +6,7 @@ import HeroCarousel from '@/components/HeroCarousel';
 import Recommendations from '@/components/Recommendations';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
+import { useSiteContent } from '@/context/SiteContentContext';
 import { useAuth } from '@/lib/AuthContext';
 import { AGE_OPTIONS } from '@/lib/ages';
 import { categoryName } from '@/lib/bilingual';
@@ -41,10 +42,16 @@ function AgeChips() {
 function CategoryScroller() {
   const { t, lang } = useLanguage();
   const { categories } = useCategories();
-  const list = useMemo(
-    () => [...categories].filter((c) => c.active !== false).sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0)),
-    [categories]
-  );
+  const { content } = useSiteContent();
+  // Max 6, same rule as the desktop "World of Play": the admin's picks if any,
+  // otherwise the first active categories by sort order.
+  const list = useMemo(() => {
+    const active = categories.filter((c) => c.active !== false);
+    const picked = (content('world_of_play', { category_ids: [] }).category_ids || [])
+      .map((id) => active.find((c) => c.id === id)).filter(Boolean);
+    const base = picked.length ? picked : [...active].sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0));
+    return base.slice(0, 6);
+  }, [categories, content]);
   if (!list.length) return null;
   return (
     <section className="mb-5">
