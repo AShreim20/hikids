@@ -105,7 +105,7 @@ export default function ProductCard({ product, large = false, avgRating = 0, rev
         )}
         <button
           onClick={handleWish}
-          className={`absolute squish grid place-items-center rounded-full backdrop-blur-md transition-all duration-300 ${compact ? 'top-2 left-2 w-9 h-9' : 'top-4 left-4 w-11 h-11'} ${
+          className={`absolute squish grid place-items-center rounded-full backdrop-blur-md transition-all duration-300 ${compact ? "top-2 left-2 w-9 h-9 after:absolute after:-inset-2 after:content-['']" : 'top-4 left-4 w-11 h-11'} ${
             saved ? 'bg-accent text-white' : 'bg-card/85 text-foreground hover:bg-card'
           }`}
           aria-label={t('pd.saveWishlist')}
@@ -115,7 +115,8 @@ export default function ProductCard({ product, large = false, avgRating = 0, rev
         <button
           onClick={handleAdd}
           disabled={outOfStock}
-          className={`absolute squish grid place-items-center gap-2 rounded-full shadow-lg transition-all duration-300 ${compact ? 'bottom-2 right-2' : 'bottom-4 right-4'} ${
+          aria-label={t('common.addToCart')}
+          className={`absolute squish grid place-items-center gap-2 rounded-full shadow-lg transition-all duration-300 ${compact ? "bottom-2 right-2 after:absolute after:-inset-2 after:content-['']" : 'bottom-4 right-4'} ${
             outOfStock
               ? `bg-card/60 text-muted-foreground cursor-not-allowed ${compact ? 'w-10 h-10' : 'w-12 h-12'}`
               : added

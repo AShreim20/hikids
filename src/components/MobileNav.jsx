@@ -18,8 +18,8 @@ export default function MobileNav() {
   const { user } = useAuth();
   const { pathname } = useLocation();
 
-  // A product page shows its own sticky purchase bar; hide this bar there so two fixed bars never overlap.
-  if (pathname.startsWith('/product/')) return null;
+  // Product, Cart and Checkout pages have their own sticky action bar; hide this bar there so two fixed bars never overlap.
+  if (pathname.startsWith('/product/') || pathname === '/cart' || pathname === '/checkout') return null;
 
   const tabs = [
     { to: '/', label: t('nav.home'), icon: HomeIcon, active: pathname === '/' },

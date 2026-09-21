@@ -52,7 +52,7 @@ export default function MobileProductView({
     } catch { /* user cancelled */ }
   };
 
-  const icon = 'grid place-items-center w-10 h-10 rounded-full bg-mist';
+  const icon = "relative grid place-items-center w-10 h-10 rounded-full bg-mist after:absolute after:-inset-2 after:content-['']";
 
   return (
     <div className="min-h-screen bg-background">
@@ -149,11 +149,11 @@ export default function MobileProductView({
       <div ref={stickyBarRef} className="fixed bottom-0 inset-x-0 z-50 border-t border-border/60 bg-background/95 backdrop-blur-xl safe-bottom">
         <div className="flex items-center gap-2 px-3 py-2.5">
           <div className="flex items-center rounded-full bg-mist">
-            <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1} className="grid place-items-center w-10 h-11 rounded-full disabled:opacity-40" aria-label="Decrease">
+            <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1} className="relative grid place-items-center w-10 h-11 rounded-full disabled:opacity-40 after:absolute after:-inset-2 after:content-['']" aria-label={ar ? 'تقليل الكمية' : 'Decrease quantity'}>
               <Minus className="w-4 h-4" />
             </button>
             <span className="w-7 text-center font-heading font-bold">{qty}</span>
-            <button type="button" onClick={() => setQty((q) => Math.min(Math.max(1, stock), q + 1))} disabled={!canBuy || qty >= stock} className="grid place-items-center w-10 h-11 rounded-full disabled:opacity-40" aria-label="Increase">
+            <button type="button" onClick={() => setQty((q) => Math.min(Math.max(1, stock), q + 1))} disabled={!canBuy || qty >= stock} className="relative grid place-items-center w-10 h-11 rounded-full disabled:opacity-40 after:absolute after:-inset-2 after:content-['']" aria-label={ar ? 'زيادة الكمية' : 'Increase quantity'}>
               <Plus className="w-4 h-4" />
             </button>
           </div>

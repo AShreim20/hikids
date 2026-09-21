@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Logo from '@/components/Logo';
@@ -9,7 +9,10 @@ import { useLanguage } from '@/context/LanguageContext';
 // translated screen title and a back button (history-aware) + home logo.
 export default function PageHeader({ title }) {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { t } = useLanguage();
+  // Top-level pages (Home, Shop, Rewards, Account) have nothing to go back to.
+  const isTopLevel = ['/', '/shop', '/wallet', '/account'].includes(pathname);
 
   const handleBack = () => {
     if (window.history.length > 1) navigate(-1);
@@ -22,14 +25,14 @@ export default function PageHeader({ title }) {
         <Navbar />
       </div>
       <header className="md:hidden sticky top-0 z-50 bg-background/90 backdrop-blur-xl border-b border-border/60 safe-top">
-        <div className="flex items-center gap-2 h-14 px-3">
-          <button
+        <div className="flex items-center gap-2 h-14 px-4">
+          {isTopLevel ? <span className="w-10 h-10 shrink-0" aria-hidden /> : <button
             onClick={handleBack}
-            className="squish grid place-items-center w-10 h-10 rounded-full bg-mist text-foreground shrink-0"
+            className="squish relative grid place-items-center w-10 h-10 rounded-full bg-mist text-foreground shrink-0 after:absolute after:-inset-2 after:content-['']"
             aria-label={t('common.back')}
           >
             <ArrowLeft className="w-5 h-5 rtl:rotate-180" />
-          </button>
+          </button>}
           <h1 className="flex-1 text-center font-heading font-bold text-base truncate px-1">{title}</h1>
           <Link
             to="/"

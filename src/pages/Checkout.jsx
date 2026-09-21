@@ -20,6 +20,7 @@ import { finalizeWheelRewards } from '@/lib/wheelFunctions';
 import { getSetting } from '@/lib/storeSettings';
 import { lineItemName } from '@/lib/bilingual';
 import { resolveCheckoutItems, cartLineTotal } from '@/lib/cartSelection';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -37,6 +38,7 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const ar = lang === 'ar';
+  const isMobile = useIsMobile();
 
   const lineIdOf = (i) => i.lineId || i.id;
   // Only the lines the customer selected in the cart go into this order —
@@ -93,6 +95,7 @@ export default function Checkout() {
   const loyaltyShort = payment === 'loyalty' && grandTotal > 0 && loyaltyBalance < requiredPoints;
 
   const fullPhone = `${dialFor(phoneCountry)} ${form.phone}`.trim();
+  const addressComplete = !!(selectedCity && form.name && form.address && (form.phone || '').replace(/\D/g, '').length >= 7);
 
   useEffect(() => {
     db.DeliveryCity.filter({ active: true }).then(setCities).catch(() => {});
@@ -139,6 +142,14 @@ export default function Checkout() {
     });
     return () => { active = false; };
   }, []);
+
+  // Phone: pre-fill the saved default address (customer can still pick another / edit the fields).
+  useEffect(() => {
+    if (!isMobile || savedId || !addresses.length || form.address) return;
+    const def = addresses.find((a) => a.is_default) || addresses[0];
+    if (def) applySavedAddress(def.id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isMobile, addresses, cities]);
 
   const applySavedAddress = (id) => {
     setSavedId(id);
@@ -411,13 +422,23 @@ export default function Checkout() {
           <p className="mt-3 text-sm text-muted-foreground">
             {t('track.orderNo')}: {orderId?.slice(-8).toUpperCase()}
           </p>
-          <Link to="/orders" className="mt-6 inline-flex items-center gap-2 text-cosmic font-heading font-bold">
-            {t('nav.orders')} →
-          </Link>
-          <div>
-            <Link to="/" className="mt-8 inline-flex items-center gap-2 h-14 px-8 rounded-full bg-cosmic text-white font-heading font-bold squish">
-              {t('checkout.back')}
+          <div className="md:hidden mt-8 grid gap-3">
+            <Link to="/orders" className="h-14 grid place-items-center rounded-full bg-cosmic text-white font-heading font-bold squish">
+              {ar ? 'عرض الطلب' : 'View Order'}
             </Link>
+            <Link to="/shop" className="h-14 grid place-items-center rounded-full bg-mist font-heading font-bold squish">
+              {ar ? 'متابعة التسوّق' : 'Continue Shopping'}
+            </Link>
+          </div>
+          <div className="hidden md:block">
+            <Link to="/orders" className="mt-6 inline-flex items-center gap-2 text-cosmic font-heading font-bold">
+              {t('nav.orders')} →
+            </Link>
+            <div>
+              <Link to="/" className="mt-8 inline-flex items-center gap-2 h-14 px-8 rounded-full bg-cosmic text-white font-heading font-bold squish">
+                {t('checkout.back')}
+              </Link>
+            </div>
           </div>
         </div>
         <Footer />
@@ -459,8 +480,9 @@ export default function Checkout() {
           <ArrowLeft className="w-4 h-4 ltr:rotate-180 rtl:rotate-0" /> {t('common.back')}
         </Link>
         <h1 className="mt-6 font-heading font-extrabold text-4xl md:text-5xl">{t('checkout.title')}</h1>
+        <CheckoutSteps step={confirmOpen ? 3 : addressComplete ? 2 : 1} ar={ar} />
 
-        <form onSubmit={openConfirm} className="mt-10 grid lg:grid-cols-3 gap-10">
+        <form onSubmit={openConfirm} className="mt-10 grid lg:grid-cols-3 gap-10 max-md:mt-5 max-md:pb-28">
           <div className="lg:col-span-2 space-y-8">
             {/* Contact & delivery */}
             <div className="rounded-3xl bg-card border border-border/60 p-6 md:p-8">
@@ -479,6 +501,15 @@ export default function Checkout() {
                 <div className="sm:col-span-2">
                   <Field label={t('checkout.address')} required value={form.address} onChange={set('address')} placeholder={t('checkout.addressPlaceholder')} />
                 </div>
+                {selectedCity && (
+                  <div className="md:hidden sm:col-span-2 rounded-2xl bg-mist px-4 py-3 text-sm">
+                    <div className="flex justify-between gap-3">
+                      <span className="text-muted-foreground">{selectedCity.name} · {t('common.delivery')}</span>
+                      <span className="font-heading font-bold text-cosmic">{deliveryCost === 0 ? t('common.free') : formatPrice(deliveryCost)}</span>
+                    </div>
+                    <p className="mt-1 text-xs text-muted-foreground">{ar ? 'التوصيل المتوقع: 1–3 أيام عمل' : 'Estimated delivery: 1–3 working days'}</p>
+                  </div>
+                )}
               </div>
               {user && (
                 <label className="mt-4 flex items-center gap-2 text-sm text-foreground/80 cursor-pointer">
@@ -697,9 +728,20 @@ export default function Checkout() {
             <button
               type="submit"
               disabled={placing || loyaltyShort}
-              className="squish mt-6 w-full h-14 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-primary transition-colors disabled:opacity-60"
+              className="max-md:hidden squish mt-6 w-full h-14 rounded-full bg-cosmic text-white font-heading font-bold inline-flex items-center justify-center gap-2 hover:bg-primary transition-colors disabled:opacity-60"
             >
               {placing ? t('checkout.placing') : t('checkout.placeOrder')}
+            </button>
+          </div>
+
+          {/* Phone: the one sticky primary action (opens the exact-amount confirmation dialog). */}
+          <div className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-border/60 bg-background/95 backdrop-blur-xl px-4 pt-3 pb-3 safe-bottom">
+            <button
+              type="submit"
+              disabled={placing || loyaltyShort}
+              className="squish w-full h-14 rounded-full bg-cosmic text-white font-heading font-bold disabled:opacity-60"
+            >
+              {placing ? t('checkout.placing') : `${ar ? 'تأكيد الطلب' : 'Confirm Order'} — ${formatPrice(grandTotal)}`}
             </button>
           </div>
         </form>
@@ -723,6 +765,21 @@ export default function Checkout() {
 
       <Footer />
     </div>
+  );
+}
+
+// Compact Address -> Payment -> Confirmation indicator (phones only).
+function CheckoutSteps({ step, ar }) {
+  const labels = ar ? ['العنوان', 'الدفع', 'التأكيد'] : ['Address', 'Payment', 'Confirmation'];
+  return (
+    <ol className="md:hidden mt-4 flex items-center gap-2" aria-label={ar ? 'خطوات الطلب' : 'Checkout steps'}>
+      {labels.map((l, i) => (
+        <li key={l} className="flex flex-1 items-center gap-2" aria-current={step === i + 1 ? 'step' : undefined}>
+          <span className={`grid place-items-center w-6 h-6 shrink-0 rounded-full text-xs font-heading font-bold ${step >= i + 1 ? 'bg-cosmic text-white' : 'bg-mist text-muted-foreground'}`}>{i + 1}</span>
+          <span className={`text-xs font-heading font-bold truncate ${step === i + 1 ? 'text-foreground' : 'text-muted-foreground'}`}>{l}</span>
+        </li>
+      ))}
+    </ol>
   );
 }
 

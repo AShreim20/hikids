@@ -16,7 +16,7 @@ export default function MobileHeader({ onOpenSettings }) {
   const { count: wishCount } = useWishlist();
   const { t } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
-  const btn = 'relative grid place-items-center w-11 h-11 rounded-2xl bg-white/15 text-white active:bg-accent transition-colors';
+  const btn = "relative grid place-items-center w-11 h-11 rounded-2xl bg-white/15 text-white active:bg-accent transition-colors after:absolute after:-inset-2 after:content-['']";
 
   return (
     <div className="relative z-10 px-4 pt-2 pb-3">

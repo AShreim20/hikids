@@ -21,7 +21,7 @@ export default function FilterSheet({ open, onClose, onApply, current, ...sectio
       <SheetContent side="bottom" className="flex max-h-[88vh] flex-col rounded-t-3xl p-0 [&>button]:hidden">
         <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-5 py-4">
           <SheetTitle className="font-heading font-bold text-lg">{t('plp.filters')}</SheetTitle>
-          <button type="button" onClick={onClose} className="squish grid place-items-center w-10 h-10 rounded-full bg-mist" aria-label={t('plp.close')}>
+          <button type="button" onClick={onClose} className="squish relative grid place-items-center w-10 h-10 rounded-full bg-mist after:absolute after:-inset-2 after:content-['']" aria-label={t('plp.close')}>
             <X className="w-5 h-5" />
           </button>
         </div>

@@ -12,6 +12,8 @@ import ShareCartButton from '@/components/cart/ShareCartButton';
 import TrustStrip from '@/components/TrustStrip';
 import { resolveCheckoutItems, cartLineTotal } from '@/lib/cartSelection';
 import { Checkbox } from '@/components/ui/checkbox';
+import MobileCartView from '@/components/cart/MobileCartView';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel,
   AlertDialogContent, AlertDialogDescription, AlertDialogFooter,
@@ -25,6 +27,7 @@ export default function Cart() {
   const navigate = useNavigate();
   const { t, formatPrice, lang } = useLanguage();
   const ar = lang === 'ar';
+  const isMobile = useIsMobile();
   const { toast } = useToast();
 
   // Per-line selection (a Set of lineIds) for the bulk delete actions and for
@@ -155,6 +158,18 @@ export default function Cart() {
         </div>
         <Footer />
       </div>
+    );
+  }
+
+  // Phone (<768px): compact cards + sticky checkout bar; tablet/desktop render the original page below.
+  if (isMobile) {
+    return (
+      <MobileCartView
+        items={items} selected={selected} allSelected={allSelected} availIds={availIds}
+        toggleOne={toggleOne} toggleAll={toggleAll} inc={inc}
+        dec={(id, qty) => updateQty(id, qty - 1)}
+        removeItem={removeItem} clearCart={deleteAll} goCheckout={goCheckout}
+      />
     );
   }
 
