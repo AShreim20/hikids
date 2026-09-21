@@ -25,7 +25,7 @@ function badgeFor(p, t) {
   return null;
 }
 
-export default function Recommendations() {
+export default function Recommendations({ limit = 4, alwaysShowBrowse = false }) {
   const { addItem } = useCart();
   const { flyToCart } = useCartFly();
   const { toggle, isSaved } = useWishlist();
@@ -101,18 +101,18 @@ export default function Recommendations() {
         });
 
         let recs = scored.filter((x) => x.eligible).sort((a, b) => b.score - a.score);
-        if (recs.length < 4) {
+        if (recs.length < limit) {
           const have = new Set(recs.map((r) => r.id));
           const fill = scored.filter((x) => !have.has(x.id)).sort((a, b) => b.score - a.score);
-          recs = [...recs, ...fill].slice(0, 4);
+          recs = [...recs, ...fill].slice(0, limit);
         } else {
-          recs = recs.slice(0, 4);
+          recs = recs.slice(0, limit);
         }
         setItems(recs);
       })
       .catch(() => setItems([]))
       .finally(() => setLoading(false));
-  }, [productsLoaded, recentProducts]);
+  }, [productsLoaded, recentProducts, limit]);
 
   const quickAdd = (p, originEl) => {
     flyToCart(originEl);
@@ -135,7 +135,7 @@ export default function Recommendations() {
             {t('rec.subtitle')}
           </p>
         </div>
-        <Link to="/shop" className="text-cosmic font-heading font-bold hover:underline hidden sm:inline-flex items-center gap-1">
+        <Link to="/shop" className={`text-cosmic font-heading font-bold hover:underline items-center gap-1 ${alwaysShowBrowse ? 'inline-flex' : 'hidden sm:inline-flex'}`}>
           {t('rec.browse')} <ArrowRight className="w-4 h-4" />
         </Link>
       </div>

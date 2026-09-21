@@ -7,6 +7,7 @@ import { isSlidePubliclyVisible } from '@/lib/heroVisibility';
 import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import HeroSlideMedia from '@/components/HeroSlideMedia';
 import HeroSlideContent from '@/components/HeroSlideContent';
+import HeroSlideTextCompact from '@/components/HeroSlideTextCompact';
 
 // Large framed Hero carousel. Reuses the existing hero_slides table/entity —
 // no second slide system — and the existing "no active slides → fall back to
@@ -21,7 +22,7 @@ const FALLBACK_SLIDE_DEFAULTS = {
 
 const isMobileViewportNow = () => typeof window !== 'undefined' && window.innerWidth < 768;
 
-export default function HeroCarousel() {
+export default function HeroCarousel({ compact = false }) {
   const { t, lang } = useLanguage();
   const ar = lang === 'ar';
   const [rawSlides, setRawSlides] = useState([]);
@@ -131,6 +132,9 @@ export default function HeroCarousel() {
     return () => clearTimeout(id);
   }, [index, current, paused, reducedMotion, isAutoVideo, activeSlides.length, goTo]);
 
+  if (!activeSlides.length && compact) {
+    return <div className="mx-4 mt-3 mb-5 aspect-[16/10] rounded-3xl bg-mist animate-pulse" />;
+  }
   if (!activeSlides.length) {
     return (
       <div className="px-2 sm:px-3 md:px-4 mt-3 sm:mt-4 md:mt-6 mb-6 sm:mb-8 md:mb-10">
@@ -157,6 +161,38 @@ export default function HeroCarousel() {
     if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy)) return;
     if (dx < 0) next(); else prev();
   };
+
+  // Mobile homepage: one compact slide (artwork uncropped) with its copy
+  // BELOW it, so text never covers the artwork.
+  if (compact) {
+    return (
+      <section className="px-4 mt-3 mb-5" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+        <div className="relative w-full aspect-[16/10] rounded-3xl overflow-hidden bg-mist shadow-[0_16px_40px_-24px_rgba(93,63,133,0.5)]">
+          <AnimatePresence initial={false} custom={dir} mode="popLayout">
+            <motion.div
+              key={s.id ?? index}
+              className="absolute inset-0"
+              initial={reducedMotion ? false : { opacity: 0, x: dir * 24 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={reducedMotion ? { opacity: 0 } : { opacity: 0, x: -dir * 24 }}
+              transition={{ duration: reducedMotion ? 0.2 : 0.5, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <HeroSlideMedia slide={s} isMobileViewport={isMobileViewport} eager={index === 0} contain onVideoEnded={isAutoVideo ? next : undefined} />
+            </motion.div>
+          </AnimatePresence>
+          {activeSlides.length > 1 && (
+            <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5">
+              {activeSlides.map((_, i) => (
+                <button key={i} onClick={() => goTo(i)} aria-label={ar ? `الانتقال إلى الشريحة ${i + 1}` : `Go to slide ${i + 1}`}
+                  className={`h-1.5 rounded-full transition-all shadow-sm ${i === index ? 'w-6 bg-white' : 'w-1.5 bg-white/50'}`} />
+              ))}
+            </div>
+          )}
+        </div>
+        <HeroSlideTextCompact slide={s} exploreCtaLabel={t('hero.exploreCta')} />
+      </section>
+    );
+  }
 
   return (
     <section

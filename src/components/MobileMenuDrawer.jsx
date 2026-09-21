@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
-  ShoppingBag, Heart, Package, MapPin, Undo2, Wallet, Sparkles, Trophy, Gift,
+  ShoppingBag, Package, MapPin, Undo2, Wallet, Sparkles, Trophy, Gift,
   Settings as SettingsIcon, Phone, LogOut, LayoutDashboard, Grid2x2, Layers,
 } from 'lucide-react';
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
@@ -55,7 +55,6 @@ export default function MobileMenuDrawer({ open, onOpenChange, onOpenSettings })
           <Item to="/shop" icon={Grid2x2} label={t('nav.allToys')} onClick={close} />
           <div className="[&_*]:text-base"><ChooseForKidsMenuMobile onNavigate={close} /></div>
           <Item to="/bundles" icon={Layers} label={t('nav.bundles')} onClick={close} />
-          <Item to="/wishlist" icon={Heart} label={t('nav.wishlist')} onClick={close} />
         </Group>
 
         {user && (

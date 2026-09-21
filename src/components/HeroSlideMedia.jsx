@@ -27,7 +27,7 @@ const autoplayRef = (el) => {
 // shared <Image> component optimizes for, so it always takes that
 // component's plain-<img> fallback path — which doesn't add object-fit
 // itself, hence the explicit `object-cover` class here.
-export default function HeroSlideMedia({ slide, isMobileViewport, eager, onVideoEnded }) {
+export default function HeroSlideMedia({ slide, isMobileViewport, eager, onVideoEnded, contain = false }) {
   const [videoFailed, setVideoFailed] = useState(false);
   const hasMobileMedia = !!slide.mobile_image_url;
   const useMobile = isMobileViewport && hasMobileMedia;
@@ -83,6 +83,16 @@ export default function HeroSlideMedia({ slide, isMobileViewport, eager, onVideo
           onError={() => setVideoFailed(true)}
           onEnded={onVideoEnded}
         />
+      </div>
+    );
+  }
+
+  if (contain && url && !videoFailed) {
+    // Whole artwork visible (no cropping), over a blurred cover of itself.
+    return (
+      <div className="absolute inset-0 overflow-hidden">
+        <Image src={url} alt="" fittingType="fill" className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl brightness-75" />
+        <Image key={url} src={url} alt={slide.title || ''} fittingType="fill" className="absolute inset-0 w-full h-full object-contain" loading={eager ? 'eager' : 'lazy'} fetchpriority={eager ? 'high' : undefined} />
       </div>
     );
   }
