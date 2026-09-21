@@ -35,7 +35,7 @@ export default function MobileHeader({ onOpenSettings }) {
             )}
           </Link>
           <Link to="/cart" className={btn} aria-label={t('nav.cart')}>
-            <ShoppingBag className="w-6 h-6" />
+            <ShoppingBag className="w-6 h-6" data-cart-anchor />
             {count > 0 && (
               <span className="absolute -top-1 -end-1 min-w-5 h-5 px-1 grid place-items-center rounded-full bg-accent text-white text-[11px] font-bold">{count}</span>
             )}
