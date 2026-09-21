@@ -246,7 +246,7 @@ Current product catalog (ID | name | category | ages | price | stock):\n${catalo
           type="button"
           onClick={onClose}
           aria-label={ar ? 'إغلاق' : 'Close'}
-          className="shrink-0 squish grid place-items-center w-8 h-8 rounded-full hover:bg-white/15 transition-colors"
+          className="relative shrink-0 squish grid place-items-center w-8 h-8 rounded-full hover:bg-white/15 transition-colors max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
         >
           <X className="w-5 h-5" />
         </button>

@@ -64,7 +64,7 @@ export default function ReplacementProductPicker({ onSelect, onClose }) {
       <div className="relative w-full max-w-2xl max-h-[85vh] flex flex-col rounded-3xl bg-card shadow-2xl overflow-hidden">
         <div className="flex items-center justify-between p-5 pb-3 shrink-0">
           <h2 className="font-heading font-extrabold text-xl">{ar ? 'اختر منتجاً بديلاً' : 'Choose a Replacement Product'}</h2>
-          <button onClick={onClose} className="grid place-items-center w-10 h-10 rounded-full bg-mist"><X className="w-5 h-5" /></button>
+          <button onClick={onClose} aria-label={ar ? 'إغلاق' : 'Close'} className="relative grid place-items-center w-10 h-10 rounded-full bg-mist max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"><X className="w-5 h-5" /></button>
         </div>
 
         {picked ? (

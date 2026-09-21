@@ -25,7 +25,7 @@ export default function EvidenceLightbox({ urls, index, onClose, onNavigate }) {
       onClick={onClose}
     >
       <button
-        className="absolute top-5 end-5 grid place-items-center w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+        className="absolute top-5 end-5 grid place-items-center w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
         onClick={(e) => { e.stopPropagation(); onClose(); }}
         aria-label="Close"
       >
@@ -34,14 +34,14 @@ export default function EvidenceLightbox({ urls, index, onClose, onNavigate }) {
       {urls.length > 1 && (
         <>
           <button
-            className="absolute start-3 top-1/2 -translate-y-1/2 grid place-items-center w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            className="absolute start-3 top-1/2 -translate-y-1/2 grid place-items-center w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
             onClick={(e) => { e.stopPropagation(); onNavigate((index - 1 + urls.length) % urls.length); }}
             aria-label="Previous"
           >
             <ChevronLeft className="w-6 h-6 rtl:rotate-180" />
           </button>
           <button
-            className="absolute end-3 top-1/2 -translate-y-1/2 grid place-items-center w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            className="absolute end-3 top-1/2 -translate-y-1/2 grid place-items-center w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
             onClick={(e) => { e.stopPropagation(); onNavigate((index + 1) % urls.length); }}
             aria-label="Next"
           >

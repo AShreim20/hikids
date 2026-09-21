@@ -435,7 +435,7 @@ export default function Shop() {
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="squish grid place-items-center w-9 h-9 rounded-full bg-mist disabled:opacity-40 disabled:pointer-events-none"
+                  className="relative squish grid place-items-center w-9 h-9 rounded-full bg-mist disabled:opacity-40 disabled:pointer-events-none max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
                   aria-label={ar ? 'السابق' : 'Previous'}
                 >
                   <ChevronLeft className="w-5 h-5 rtl:rotate-180" />
@@ -448,7 +448,7 @@ export default function Shop() {
                 <button
                   onClick={() => setPage((p) => p + 1)}
                   disabled={nextDisabled}
-                  className="squish grid place-items-center w-9 h-9 rounded-full bg-mist disabled:opacity-40 disabled:pointer-events-none"
+                  className="relative squish grid place-items-center w-9 h-9 rounded-full bg-mist disabled:opacity-40 disabled:pointer-events-none max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
                   aria-label={ar ? 'التالي' : 'Next'}
                 >
                   <ChevronRight className="w-5 h-5 rtl:rotate-180" />

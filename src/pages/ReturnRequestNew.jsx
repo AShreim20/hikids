@@ -316,7 +316,8 @@ function StepSelectItems({ order, remaining, selected, toggleItem, setQty, lang,
                   type="button"
                   disabled={max === 0}
                   onClick={() => toggleItem(idx, max)}
-                  className={`grid place-items-center w-6 h-6 rounded-lg border-2 shrink-0 mt-0.5 ${isSelected ? 'bg-cosmic border-cosmic text-white' : 'border-border'}`}
+                  aria-label={ar ? 'تحديد المنتج' : 'Select item'}
+                  className={`relative grid place-items-center w-6 h-6 rounded-lg border-2 shrink-0 mt-0.5 max-md:after:absolute max-md:after:-inset-3 max-md:after:content-[''] ${isSelected ? 'bg-cosmic border-cosmic text-white' : 'border-border'}`}
                 >
                   {isSelected && <Check className="w-4 h-4" />}
                 </button>
@@ -333,9 +334,9 @@ function StepSelectItems({ order, remaining, selected, toggleItem, setQty, lang,
                 <div className="mt-3 flex items-center gap-3 ps-9">
                   <span className="text-sm font-medium">{t('returns.selectQuantity')}</span>
                   <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => setQty(idx, (selected[idx] || 1) - 1, max)} className="w-8 h-8 rounded-full bg-mist font-heading font-bold">-</button>
+                    <button type="button" onClick={() => setQty(idx, (selected[idx] || 1) - 1, max)} aria-label={ar ? 'تقليل الكمية' : 'Decrease quantity'} className="relative w-8 h-8 rounded-full bg-mist font-heading font-bold max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']">-</button>
                     <span className="w-6 text-center font-heading font-bold">{selected[idx]}</span>
-                    <button type="button" onClick={() => setQty(idx, (selected[idx] || 1) + 1, max)} className="w-8 h-8 rounded-full bg-mist font-heading font-bold">+</button>
+                    <button type="button" onClick={() => setQty(idx, (selected[idx] || 1) + 1, max)} aria-label={ar ? 'زيادة الكمية' : 'Increase quantity'} className="relative w-8 h-8 rounded-full bg-mist font-heading font-bold max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']">+</button>
                   </div>
                 </div>
               )}
@@ -424,7 +425,7 @@ function StepEvidence({ selectedReason, evidenceFiles, addPhotos, removePhoto, e
           <div key={i} className="relative aspect-square rounded-2xl overflow-hidden bg-mist">
             <img src={f.preview} alt="" className="w-full h-full object-cover" />
             {f.uploading && <div className="absolute inset-0 grid place-items-center bg-black/40"><Loader2 className="w-5 h-5 animate-spin text-white" /></div>}
-            <button type="button" onClick={() => removePhoto(f)} className="absolute top-1 end-1 grid place-items-center w-6 h-6 rounded-full bg-black/60 text-white">
+            <button type="button" onClick={() => removePhoto(f)} aria-label={ar ? 'حذف الصورة' : 'Remove photo'} className="absolute top-1 end-1 grid place-items-center w-6 h-6 rounded-full bg-black/60 text-white max-md:after:absolute max-md:after:-inset-3 max-md:after:content-['']">
               <X className="w-3.5 h-3.5" />
             </button>
           </div>

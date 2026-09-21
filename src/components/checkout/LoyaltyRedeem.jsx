@@ -54,7 +54,7 @@ export default function LoyaltyRedeem({ subtotal, deliveryCost = 0, discountAmou
             <span className="font-heading font-bold">{applied.points.toLocaleString()} {t('loyalty.points')}</span>
             <span className="text-muted-foreground">−{formatPrice(applied.amount)}</span>
           </div>
-          <button type="button" onClick={onRemoved} className="grid place-items-center w-8 h-8 rounded-full hover:bg-accent/10 shrink-0" aria-label={t('loyalty.cancel')}>
+          <button type="button" onClick={onRemoved} className="relative grid place-items-center w-8 h-8 rounded-full hover:bg-accent/10 shrink-0 max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']" aria-label={t('loyalty.cancel')}>
             <X className="w-4 h-4" />
           </button>
         </div>

@@ -102,7 +102,7 @@ export default function ProductGallery({ product, images, square = false }) {
           onClick={() => setLightbox(null)}
         >
           <button
-            className="absolute top-5 right-5 grid place-items-center w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            className="absolute top-5 right-5 grid place-items-center w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
             onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
             aria-label="Close"
           >

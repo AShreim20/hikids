@@ -169,7 +169,7 @@ export default function Recommendations({ limit = 4, alwaysShowBrowse = false })
                 ) : null}
                 <button
                   onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggle(p); }}
-                  className={`absolute top-4 right-4 z-10 squish grid place-items-center w-10 h-10 rounded-full backdrop-blur-md transition-all duration-300 ${isSaved(p.id) ? 'bg-accent text-white' : 'bg-card/85 text-foreground hover:bg-card'}`}
+                  className={`absolute top-4 right-4 z-10 squish grid place-items-center w-10 h-10 rounded-full max-md:after:absolute max-md:after:-inset-2 max-md:after:content-[''] backdrop-blur-md transition-all duration-300 ${isSaved(p.id) ? 'bg-accent text-white' : 'bg-card/85 text-foreground hover:bg-card'}`}
                   aria-label="Toggle wishlist"
                 >
                   <Heart className={`w-5 h-5 ${isSaved(p.id) ? 'fill-current' : ''}`} />
@@ -210,7 +210,7 @@ export default function Recommendations({ limit = 4, alwaysShowBrowse = false })
                     />
                     <button
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); quickAdd(p, e.currentTarget); }}
-                      className="squish grid place-items-center w-10 h-10 rounded-full bg-cosmic text-white hover:bg-primary transition-colors"
+                      className="relative squish grid place-items-center w-10 h-10 rounded-full bg-cosmic text-white hover:bg-primary transition-colors max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
                       aria-label={t('common.addToCart')}
                     >
                       {added[p.id] ? <Check className="w-5 h-5" /> : <Plus className="w-5 h-5" />}

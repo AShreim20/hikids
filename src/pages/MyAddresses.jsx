@@ -147,7 +147,7 @@ export default function MyAddresses() {
           <form onClick={(e) => e.stopPropagation()} onSubmit={save} className="w-full max-w-md rounded-3xl bg-card border border-border p-6 shadow-2xl float-in max-h-[90vh] overflow-auto">
             <div className="flex items-center justify-between">
               <h3 className="font-heading font-extrabold text-xl">{editing === 'new' ? t('address.add') : t('admin.edit')}</h3>
-              <button type="button" onClick={close} className="grid place-items-center w-9 h-9 rounded-full hover:bg-mist"><X className="w-5 h-5" /></button>
+              <button type="button" onClick={close} aria-label={t('plp.close')} className="relative grid place-items-center w-9 h-9 rounded-full hover:bg-mist max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"><X className="w-5 h-5" /></button>
             </div>
             <div className="mt-5 space-y-4">
               <label className="block">

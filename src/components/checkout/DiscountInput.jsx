@@ -36,7 +36,7 @@ export default function DiscountInput({ subtotal, applied, onApplied, onRemoved 
           <span className="font-heading font-bold">{applied.code}</span>
           <span className="text-muted-foreground">−{formatPrice(applied.amount)}</span>
         </div>
-        <button type="button" onClick={onRemoved} className="grid place-items-center w-8 h-8 rounded-full hover:bg-cosmic/10" aria-label="Remove">
+        <button type="button" onClick={onRemoved} className="relative grid place-items-center w-8 h-8 rounded-full hover:bg-cosmic/10 max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']" aria-label="Remove">
           <X className="w-4 h-4" />
         </button>
       </div>

@@ -105,7 +105,7 @@ export default function ProductCard({ product, large = false, avgRating = 0, rev
         )}
         <button
           onClick={handleWish}
-          className={`absolute squish grid place-items-center rounded-full backdrop-blur-md transition-all duration-300 ${compact ? "top-2 left-2 w-9 h-9 after:absolute after:-inset-2 after:content-['']" : 'top-4 left-4 w-11 h-11'} ${
+          className={`absolute squish grid place-items-center rounded-full backdrop-blur-md transition-all duration-300 ${compact ? "top-2 left-2 w-9 h-9 after:absolute after:-inset-2 after:content-['']" : "top-4 left-4 w-11 h-11 max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"} ${
             saved ? 'bg-accent text-white' : 'bg-card/85 text-foreground hover:bg-card'
           }`}
           aria-label={t('pd.saveWishlist')}

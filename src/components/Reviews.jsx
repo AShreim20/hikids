@@ -260,7 +260,7 @@ export default function Reviews({ productId, onStats }) {
                       onClick={() => setRating(val)}
                       onMouseEnter={() => setHover(val)}
                       onMouseLeave={() => setHover(0)}
-                      className="p-1"
+                      className="relative p-1 max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
                       aria-label={`${val} star`}
                     >
                       <Star
@@ -325,7 +325,7 @@ export default function Reviews({ productId, onStats }) {
                   <button
                     type="button"
                     onClick={clearPhoto}
-                    className="absolute top-2 right-2 grid place-items-center w-8 h-8 rounded-full bg-black/55 text-white"
+                    className="absolute top-2 right-2 grid place-items-center w-8 h-8 rounded-full bg-black/55 text-white max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
                     aria-label="Remove photo"
                   >
                     <X className="w-4 h-4" />
@@ -354,7 +354,7 @@ export default function Reviews({ productId, onStats }) {
           onClick={() => setLightbox(null)}
         >
           <button
-            className="absolute top-5 end-5 grid place-items-center w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors"
+            className="absolute top-5 end-5 grid place-items-center w-11 h-11 rounded-full bg-white/10 text-white hover:bg-white/20 transition-colors max-md:after:absolute max-md:after:-inset-2 max-md:after:content-['']"
             onClick={(e) => { e.stopPropagation(); setLightbox(null); }}
             aria-label="Close"
           >
