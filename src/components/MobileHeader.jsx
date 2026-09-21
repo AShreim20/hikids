@@ -20,12 +20,12 @@ export default function MobileHeader({ onOpenSettings }) {
 
   return (
     <div className="relative z-10 px-4 pt-2 pb-3">
-      <div className="relative flex h-14 items-center justify-between">
+      <div className="relative flex h-16 items-center justify-between">
         <button type="button" onClick={() => setMenuOpen(true)} className={btn} aria-label={t('mnav.menu')} aria-haspopup="dialog">
           <Menu className="w-6 h-6" />
         </button>
         <Link to="/" className="absolute inset-x-0 mx-auto flex w-fit items-center" aria-label="HiKids">
-          <Logo className="h-12 w-auto" />
+          <Logo className="h-16 w-auto" />
         </Link>
         <div className="flex items-center gap-2">
           <Link to="/wishlist" className={btn} aria-label={t('nav.wishlist')}>
