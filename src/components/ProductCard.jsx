@@ -32,7 +32,7 @@ const CAT_LABEL = {
 // label shows, so a product with zero published reviews is never displayed
 // as a fake 0-star item (see lib/reviews.js for the approved-review rule
 // this count is expected to already reflect).
-export default function ProductCard({ product, large = false, avgRating = 0, reviewCount }) {
+export default function ProductCard({ product, large = false, avgRating = 0, reviewCount, compact = false }) {
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { flyToCart } = useCartFly();
@@ -81,22 +81,20 @@ export default function ProductCard({ product, large = false, avgRating = 0, rev
   return (
     <Link to={`/product/${product.id}`} className="group block float-in">
       <div
-        className={`relative overflow-hidden rounded-[2rem] bg-mist ${
-          large ? 'aspect-[4/5] md:aspect-[4/4.5]' : 'aspect-[4/5]'
-        } shadow-[0_18px_50px_-20px_rgba(26,26,30,0.25)] ring-1 ring-black/0 transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-[0_30px_70px_-24px_rgba(26,26,30,0.4)] group-hover:ring-black/5`}
+        className={`relative overflow-hidden ${compact ? 'rounded-2xl aspect-square' : `rounded-[2rem] ${large ? 'aspect-[4/5] md:aspect-[4/4.5]' : 'aspect-[4/5]'}`} bg-mist shadow-[0_18px_50px_-20px_rgba(26,26,30,0.25)] ring-1 ring-black/0 transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-[0_30px_70px_-24px_rgba(26,26,30,0.4)] group-hover:ring-black/5`}
       >
         <Image
           src={product.image_url}
           alt={productName(product, lang)}
           fittingType="fill"
-          className="w-full h-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.07]"
+          className={`w-full h-full ${compact ? 'object-contain' : 'object-cover'} transition-transform duration-[900ms] ease-out group-hover:scale-[1.07]`}
         />
         {/* Top-right stack: the sale badge and the out-of-stock badge share
             this corner (opposite the wishlist heart) — stacked vertically,
             never overlapping, so a discounted-but-sold-out product shows
             both without collision. */}
         {(hasDiscount || outOfStock) && (
-          <div className="absolute top-4 right-4 z-10 flex flex-col items-end gap-2">
+          <div className={`absolute z-10 flex flex-col items-end gap-2 ${compact ? 'top-2 right-2' : 'top-4 right-4'}`}>
             {hasDiscount && <SaleBadge percentage={discountPct} />}
             {outOfStock && (
               <span className="px-3 py-1.5 rounded-full bg-destructive text-white text-[11px] font-heading font-bold shadow-lg">
@@ -107,7 +105,7 @@ export default function ProductCard({ product, large = false, avgRating = 0, rev
         )}
         <button
           onClick={handleWish}
-          className={`absolute top-4 left-4 squish grid place-items-center w-11 h-11 rounded-full backdrop-blur-md transition-all duration-300 ${
+          className={`absolute squish grid place-items-center rounded-full backdrop-blur-md transition-all duration-300 ${compact ? 'top-2 left-2 w-9 h-9' : 'top-4 left-4 w-11 h-11'} ${
             saved ? 'bg-accent text-white' : 'bg-card/85 text-foreground hover:bg-card'
           }`}
           aria-label={t('pd.saveWishlist')}
@@ -117,12 +115,12 @@ export default function ProductCard({ product, large = false, avgRating = 0, rev
         <button
           onClick={handleAdd}
           disabled={outOfStock}
-          className={`absolute bottom-4 right-4 squish grid place-items-center gap-2 rounded-full shadow-lg transition-all duration-300 ${
+          className={`absolute squish grid place-items-center gap-2 rounded-full shadow-lg transition-all duration-300 ${compact ? 'bottom-2 right-2' : 'bottom-4 right-4'} ${
             outOfStock
-              ? 'bg-card/60 text-muted-foreground w-12 h-12 cursor-not-allowed'
+              ? `bg-card/60 text-muted-foreground cursor-not-allowed ${compact ? 'w-10 h-10' : 'w-12 h-12'}`
               : added
-              ? 'bg-accent text-white w-auto px-5'
-              : 'bg-card text-foreground w-12 h-12 hover:bg-cosmic hover:text-white'
+              ? `bg-accent text-white w-auto ${compact ? 'px-3 h-10' : 'px-5'}`
+              : `bg-card text-foreground hover:bg-cosmic hover:text-white ${compact ? 'w-10 h-10' : 'w-12 h-12'}`
           }`}
         >
           {added ? (
@@ -133,15 +131,15 @@ export default function ProductCard({ product, large = false, avgRating = 0, rev
         </button>
       </div>
 
-      <div className="px-1 pt-4">
-        <p className="text-xs uppercase tracking-widest text-muted-foreground font-medium">
+      <div className={compact ? 'px-0.5 pt-2' : 'px-1 pt-4'}>
+        <p className={`text-xs uppercase tracking-widest text-muted-foreground font-medium ${compact ? 'hidden' : ''}`}>
           {(() => {
             const cat = byName(product.category);
             if (cat) return categoryName(cat, lang);
             return t(CAT_LABEL[product.category] || product.category);
           })()}
         </p>
-        <h3 className="mt-1 font-display font-semibold text-xl leading-tight tracking-tight">
+        <h3 className={`mt-1 font-display font-semibold leading-tight tracking-tight ${compact ? 'text-sm line-clamp-2' : 'text-xl'}`}>
           {productName(product, lang)}
         </h3>
         {typeof reviewCount === 'number' && (
@@ -160,7 +158,7 @@ export default function ProductCard({ product, large = false, avgRating = 0, rev
             )}
           </div>
         )}
-        <p className="mt-1 text-sm text-muted-foreground">{t('pd.ages')} {ageLabels(product, t)}</p>
+        <p className={`mt-1 text-muted-foreground ${compact ? 'text-xs truncate' : 'text-sm'}`}>{compact ? '' : `${t('pd.ages')} `}{ageLabels(product, t)}</p>
         <DiscountPriceDisplay
           original={original}
           final={final}

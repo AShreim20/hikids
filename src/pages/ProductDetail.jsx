@@ -32,6 +32,8 @@ import {
 import { useProductCommercial } from '@/hooks/useProductCommercial';
 import { useReportStickyBarHeight } from '@/hooks/useReportStickyBarHeight';
 import { getStickyBarHeight, subscribeStickyBarHeight } from '@/lib/stickyBarStore';
+import MobileProductView from '@/components/product/MobileProductView';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // `preview` renders this exact page from an in-memory admin snapshot instead
 // of a DB fetch — see ProductEditor.jsx's preview() handler and
@@ -58,6 +60,7 @@ export default function ProductDetail({ preview = false }) {
   const { toast } = useToast();
   const { discountPctFor, byName, categoryName } = useCategories();
   const [reviewStats, setReviewStats] = useState({ count: 0, average: 0 });
+  const isMobile = useIsMobile();
   // Publishes this page's sticky purchase bar's real rendered height (0 when
   // it isn't shown, e.g. below md:) so the floating assistant/WhatsApp
   // buttons and the assistant panel can clear it exactly instead of using a
@@ -241,6 +244,37 @@ export default function ProductDetail({ preview = false }) {
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   };
+
+  const buyNow = () => {
+    const res = addItem(liveProduct, qty, variant, price);
+    if (res.capped) {
+      toast({
+        title: res.available != null
+          ? (ar ? `متوفر ${res.available} فقط` : `Only ${res.available} available`)
+          : (ar ? 'لا يمكن إضافة المزيد' : 'No more available'),
+        variant: 'destructive',
+      });
+    }
+    navigate('/checkout');
+  };
+
+  // Phone (<768px): simplified layout. Tablet/desktop render the original page below.
+  if (isMobile && !preview) {
+    const cat = byName(product.category);
+    return (
+      <MobileProductView
+        product={product} liveProduct={liveProduct} galleryImages={galleryImages}
+        variant={variant} selection={selection} selectValue={selectValue}
+        price={price} compareOriginal={compareOriginal} stock={stock} canBuy={canBuy}
+        qty={qty} setQty={setQty} added={added} onAdd={addToCart} onBuyNow={buyNow}
+        features={features} materialText={materialText}
+        reviewStats={reviewStats} setReviewStats={setReviewStats}
+        favorited={isSaved(product.id)} onToggleFavorite={() => toggle(liveProduct)}
+        stickyBarRef={stickyBarRef} stickyBarHeight={stickyBarHeight}
+        categoryLabel={cat ? categoryName(cat, lang) : product.category}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">

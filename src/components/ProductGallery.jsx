@@ -5,7 +5,7 @@ import { ZoomIn, X } from 'lucide-react';
 // Renders a product's cover image, additional gallery images, and video as a
 // single gallery with a thumbnail strip. Images support a hover magnifier on
 // desktop and a tap-to-zoom lightbox on every device.
-export default function ProductGallery({ product, images }) {
+export default function ProductGallery({ product, images, square = false }) {
   const override = Array.isArray(images) ? images.filter(Boolean) : null;
   const items = [
     ...(override && override.length > 0
@@ -46,14 +46,14 @@ export default function ProductGallery({ product, images }) {
           became reachable. sm:aspect-square restores the original
           square-friendly presentation as soon as there's room for it. */}
       <div
-        className="relative aspect-[4/3] sm:aspect-square rounded-[2.5rem] overflow-hidden bg-mist shadow-[0_30px_70px_-30px_rgba(26,26,30,0.3)] float-in group"
+        className={`relative ${square ? 'aspect-square rounded-3xl' : 'aspect-[4/3] sm:aspect-square rounded-[2.5rem]'} overflow-hidden bg-mist shadow-[0_30px_70px_-30px_rgba(26,26,30,0.3)] float-in group`}
         onMouseEnter={() => isImage && setZoom(true)}
         onMouseLeave={() => setZoom(false)}
         onMouseMove={handleMove}
         onClick={() => isImage && setLightbox(current.url)}
       >
         {current.type === 'video' ? (
-          <video src={current.url} controls playsInline className="w-full h-full object-cover" />
+          <video src={current.url} controls playsInline className={`w-full h-full ${square ? 'object-contain' : 'object-cover'}`} />
         ) : (
           <Image
             src={current.url}
@@ -65,7 +65,7 @@ export default function ProductGallery({ product, images }) {
             // other Image use gets (thumbnails below stay lazy).
             loading="eager"
             fetchpriority="high"
-            className={`w-full h-full object-cover transition-transform duration-300 ease-out cursor-zoom-in ${zoom ? 'scale-[1.8]' : 'scale-100'}`}
+            className={`w-full h-full ${square ? 'object-contain' : 'object-cover'} transition-transform duration-300 ease-out cursor-zoom-in ${zoom ? 'scale-[1.8]' : 'scale-100'}`}
             style={{ transformOrigin: `${origin.x}% ${origin.y}%` }}
           />
         )}

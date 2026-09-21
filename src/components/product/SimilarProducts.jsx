@@ -171,7 +171,7 @@ function nameKey(name) {
 // Shop.jsx (per-product live commercial data is reserved for the single
 // active Product Detail page via useProductCommercial, not every card in a
 // list — this section intentionally doesn't subscribe per card).
-export default function SimilarProducts({ product }) {
+export default function SimilarProducts({ product, horizontal = false }) {
   const { t, lang } = useLanguage();
   const ar = lang === 'ar';
   const { discountPctFor } = useCategories();
@@ -264,7 +264,7 @@ export default function SimilarProducts({ product }) {
             {ar ? 'منتجات مشابهة' : 'Similar products'}
           </h2>
         </div>
-        <Link to="/shop" className="text-cosmic font-heading font-bold hover:underline hidden sm:inline-flex items-center gap-1">
+        <Link to="/shop" className={`text-cosmic font-heading font-bold hover:underline items-center gap-1 ${horizontal ? 'inline-flex' : 'hidden sm:inline-flex'}`}>
           {t('rec.browse')} <ArrowRight className="w-4 h-4" />
         </Link>
       </div>
@@ -276,16 +276,18 @@ export default function SimilarProducts({ product }) {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-6 lg:gap-8">
+        <div className={horizontal ? 'flex gap-3 overflow-x-auto pb-2 [scrollbar-width:none]' : 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 md:gap-6 lg:gap-8'}>
           {items.map((p) => {
             const r = ratingMap[p.id];
             return (
+              <div key={p.id} className={horizontal ? 'w-40 shrink-0' : 'contents'}>
               <ProductCard
-                key={p.id}
+                compact={horizontal}
                 product={p}
                 avgRating={r ? r.sum / r.count : 0}
                 reviewCount={r ? r.count : 0}
               />
+              </div>
             );
           })}
         </div>

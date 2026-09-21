@@ -12,6 +12,8 @@ import ProductCard from '@/components/ProductCard';
 import BundleCard from '@/components/bundles/BundleCard';
 import FilterPopover from '@/components/shop/FilterPopover';
 import FilterDrawer from '@/components/shop/FilterDrawer';
+import FilterSheet from '@/components/shop/FilterSheet';
+import { useIsMobile } from '@/hooks/use-mobile';
 import {
   AGE_OPTIONS, CategorySection, PriceSection, GenderSection, AgeSection,
 } from '@/components/shop/ProductFilters';
@@ -47,6 +49,7 @@ function CountBadge({ children }) {
 export default function Shop() {
   const { t, lang } = useLanguage();
   const ar = lang === 'ar';
+  const isMobile = useIsMobile();
   const { categories } = useCategories();
   // Canonical always points at the bare /shop URL regardless of active
   // filters — avoids indexing a separate "page" per category/age/gender/
@@ -194,6 +197,24 @@ export default function Shop() {
   const onSetPrice = (v) => { setPrice(v); setPage(1); };
   const onPerPage = (v) => { setPerPage(v); setPage(1); };
 
+  // Mobile filter sheet: apply the whole draft in ONE URL update (separate
+  // functional setSearchParams calls in the same tick would overwrite each other).
+  const applyMobileFilters = (d) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      const put = (k, v) => {
+        if (v == null || v === '' || (Array.isArray(v) && v.length === 0)) next.delete(k);
+        else next.set(k, Array.isArray(v) ? v.join(',') : v);
+      };
+      put('age', d.ages); put('gender', d.gender); put('onSale', d.onSale ? 'true' : null);
+      return next;
+    });
+    setCats(d.cats);
+    setPrice(d.price);
+    setPage(1);
+    setDrawerOpen(false);
+  };
+
   const clearAll = () => {
     setCats([]);
     setPrice(null);
@@ -244,7 +265,7 @@ export default function Shop() {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title={t('plp.title')} />
+      {isMobile ? <Navbar /> : <PageHeader title={t('plp.title')} />}
       <main className="max-w-7xl mx-auto px-5 sm:px-8 py-8 md:py-12">
         <div className="flex items-end justify-between flex-wrap gap-3">
           <div>
@@ -257,7 +278,7 @@ export default function Shop() {
         {/* ── Product toolbar: search, quick filters, Filters drawer, sort,
             per-page — replaces the old permanent sidebar entirely. */}
         <div className="mt-5 rounded-3xl bg-mist/60 p-3 sm:p-4 space-y-3">
-          <div className="relative">
+          <div className="relative hidden md:block">
             <Search className="absolute top-1/2 -translate-y-1/2 start-4 w-4 h-4 text-muted-foreground pointer-events-none" />
             <input
               value={searchInput}
@@ -308,21 +329,21 @@ export default function Shop() {
             </FilterPopover>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center">
             <button
               onClick={() => setDrawerOpen(true)}
-              className="squish inline-flex items-center gap-2 h-11 px-4 rounded-full bg-mist font-heading font-bold text-sm hover:bg-accent/20 transition-colors"
+              className="squish inline-flex items-center justify-center gap-2 h-11 px-4 rounded-full bg-mist font-heading font-bold text-sm hover:bg-accent/20 transition-colors md:justify-start"
             >
               <SlidersHorizontal className="w-4 h-4" /> {t('plp.filters')}
               {activeCount > 0 && <CountBadge>{activeCount}</CountBadge>}
             </button>
 
-            <div className="flex items-center gap-2 flex-wrap ms-auto">
+            <div className="contents md:flex md:items-center md:gap-2 md:flex-wrap md:ms-auto">
               <select
                 value={sort}
                 onChange={(e) => onSortChange(e.target.value)}
                 aria-label={t('plp.sort')}
-                className="h-11 rounded-full bg-card border border-border/70 px-4 text-sm font-medium focus:outline-none"
+                className="w-full md:w-auto h-11 rounded-full bg-card border border-border/70 px-4 text-sm font-medium focus:outline-none"
               >
                 {SORTS.map((s) => (
                   <option key={s.id} value={s.id}>{t(s.label)}</option>
@@ -332,7 +353,7 @@ export default function Shop() {
                 value={perPage}
                 onChange={(e) => onPerPage(Number(e.target.value))}
                 aria-label={ar ? 'عدد المنتجات في الصفحة' : 'Products per page'}
-                className="h-11 rounded-full bg-card border border-border/70 px-4 text-sm font-medium focus:outline-none"
+                className="hidden md:block h-11 rounded-full bg-card border border-border/70 px-4 text-sm font-medium focus:outline-none"
               >
                 {PER_PAGE_OPTIONS.map((n) => (
                   <option key={n} value={n}>{ar ? `عرض ${n}` : `Show ${n}`}</option>
@@ -404,9 +425,9 @@ export default function Shop() {
             <>
               {/* Recovered sidebar width → an extra column at lg/xl versus the
                   old 3-column max next to the permanent sidebar. */}
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-8">
                 {pageData.items.map((p) => (
-                  <ProductCard key={p.id} product={p} />
+                  <ProductCard key={p.id} product={p} compact={isMobile} />
                 ))}
               </div>
 
@@ -439,15 +460,27 @@ export default function Shop() {
       </main>
       <Footer />
 
-      <FilterDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        activeCount={activeCount}
-        resultCount={totalItems != null ? totalItems : pageData.items.length}
-        onClear={clearAll}
-        hasActive={hasActive}
-        {...filterSectionProps}
-      />
+      {isMobile ? (
+        <FilterSheet
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          onApply={applyMobileFilters}
+          current={{ cats, ages, gender, onSale, price }}
+          priceBounds={priceBounds}
+          extraCategories={categories}
+          usedCategoryNames={usedCategoryNames}
+        />
+      ) : (
+        <FilterDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+          activeCount={activeCount}
+          resultCount={totalItems != null ? totalItems : pageData.items.length}
+          onClear={clearAll}
+          hasActive={hasActive}
+          {...filterSectionProps}
+        />
+      )}
     </div>
   );
 }
