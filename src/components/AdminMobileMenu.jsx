@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, X } from 'lucide-react';
 import { Drawer, DrawerContent, DrawerTitle } from '@/components/ui/drawer';
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
 import { getAdminNav, isActivePath } from '@/lib/adminNav';
@@ -17,11 +18,16 @@ import { isOwner } from '@/lib/permissions';
 // the fixed bottom-right button can overlap ProductDetail's Buy Now / Add
 // to Cart controls; reverted here.
 export default function AdminMobileMenu() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const ar = lang === 'ar';
   const { user } = useAuth();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(false);
+  // Its own trigger stays visible in the still-open admin drawer, so pressing
+  // it again toggles this side panel closed (in addition to the sheet's own
+  // overlay/X close).
+  const [actionsOpen, setActionsOpen] = useState(false);
   const actionItems = useActionItems();
 
   // Opened from the header's admin button (Navbar) via this event.
@@ -40,6 +46,7 @@ export default function AdminMobileMenu() {
   };
 
   return (
+    <>
     <Drawer open={open} onOpenChange={setOpen}>
       <DrawerContent className="max-h-[85vh]">
         <div className="px-4 pt-2 pb-6 safe-bottom max-h-[85vh] overflow-y-auto">
@@ -50,7 +57,7 @@ export default function AdminMobileMenu() {
                 <Group key={item.id} group={item} pathname={pathname} go={go} />
               ) : (
                 item.type === 'action' ? (
-                  <ActionAccordion key={item.id} item={item} items={actionItems} go={go} />
+                  <ActionTrigger key={item.id} item={item} count={actionItems.length} onClick={() => setActionsOpen((v) => !v)} />
                 ) : (
                   <Row key={item.id || item.to} item={item} active={pathname === item.to} onClick={() => go(item.to)} />
                 )
@@ -60,38 +67,27 @@ export default function AdminMobileMenu() {
         </div>
       </DrawerContent>
     </Drawer>
-  );
-}
 
-// "Required Actions": expands in place under the menu item (no popup).
-function ActionAccordion({ item, items, go }) {
-  const { lang } = useLanguage();
-  const ar = lang === 'ar';
-  const [expanded, setExpanded] = useState(false);
-  const Icon = item.icon;
-  return (
-    <div className="rounded-2xl bg-mist/60 overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        aria-expanded={expanded}
-        className="w-full flex items-center gap-3 h-14 px-4 text-start font-heading font-bold"
-      >
-        <Icon className="w-5 h-5 shrink-0" />
-        <span className="truncate flex-1">{item.label}</span>
-        {items.length > 0 && <span className="min-w-6 h-6 px-1.5 grid place-items-center rounded-full bg-accent text-white text-xs font-bold">{items.length}</span>}
-        <ChevronDown className={`w-4 h-4 transition-transform ${expanded ? 'rotate-180' : ''}`} />
-      </button>
-      {expanded && (
-        <div className="px-2 pb-2 grid gap-1">
-          {items.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-muted-foreground">{ar ? 'لا توجد إجراءات مطلوبة' : 'No required actions'}</p>
-          ) : items.map((i, idx) => (
+    {/* "Required Actions": a side panel (not a bottom sheet) stacked above the
+        still-open admin drawer -- its own trigger button stays reachable, so
+        tapping it again toggles this panel closed. */}
+    <Sheet open={actionsOpen} onOpenChange={setActionsOpen}>
+      <SheetContent side={ar ? 'right' : 'left'} className="w-[85vw] max-w-sm p-0 flex flex-col">
+        <div className="shrink-0 flex items-center justify-between px-5 py-4 border-b border-border/60">
+          <SheetTitle className="font-heading font-extrabold text-lg">{t('nav.actionRequired')}</SheetTitle>
+          <button type="button" onClick={() => setActionsOpen(false)} aria-label={ar ? 'إغلاق' : 'Close'} className="relative grid place-items-center w-9 h-9 rounded-full bg-mist after:absolute after:-inset-2 after:content-['']">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto px-4 py-3 grid gap-1.5">
+          {actionItems.length === 0 ? (
+            <p className="px-2 py-6 text-center text-sm text-muted-foreground">{ar ? 'لا توجد إجراءات مطلوبة' : 'No required actions'}</p>
+          ) : actionItems.map((i, idx) => (
             <button
               key={`${i.route}-${i.ref}-${idx}`}
               type="button"
-              onClick={() => go(i.route)}
-              className={`flex items-center gap-2 min-h-12 px-4 py-2 rounded-2xl text-start bg-card ${i.priority === 'urgent' ? 'border border-destructive/40' : ''}`}
+              onClick={() => { setActionsOpen(false); navigate(i.route); }}
+              className={`flex items-center gap-2 min-h-12 px-4 py-2 rounded-2xl text-start bg-mist/60 ${i.priority === 'urgent' ? 'border border-destructive/40' : ''}`}
             >
               <span className="flex-1 min-w-0">
                 <span className="block text-sm font-heading font-bold truncate">{ar ? i.title_ar : i.title_en}</span>
@@ -101,8 +97,26 @@ function ActionAccordion({ item, items, go }) {
             </button>
           ))}
         </div>
-      )}
-    </div>
+      </SheetContent>
+    </Sheet>
+    </>
+  );
+}
+
+// Menu row that toggles the Required Actions side panel (does not expand
+// in place, and does not navigate).
+function ActionTrigger({ item, count, onClick }) {
+  const Icon = item.icon;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="w-full flex items-center gap-3 h-14 px-4 rounded-2xl text-start font-heading font-bold bg-mist text-foreground"
+    >
+      <Icon className="w-5 h-5 shrink-0" />
+      <span className="truncate flex-1">{item.label}</span>
+      {count > 0 && <span className="min-w-6 h-6 px-1.5 grid place-items-center rounded-full bg-accent text-white text-xs font-bold">{count}</span>}
+    </button>
   );
 }
 
