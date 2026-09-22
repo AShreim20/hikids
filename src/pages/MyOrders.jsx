@@ -1,21 +1,24 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Package, Undo2, ListChecks, Wallet } from 'lucide-react';
+import { Package, Undo2, ListChecks, Wallet, ChevronRight } from 'lucide-react';
 import { db } from '@/api/entities';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
-import { statusLabel, statusColor } from '@/lib/orderStatus';
+import { statusLabel, statusColor, orderRef, orderItemCount } from '@/lib/orderStatus';
 import { lineItemName } from '@/lib/bilingual';
 import OrderReturnsList from '@/components/orders/OrderReturnsList';
 import { getReturnEligibility, formatTimeRemaining } from '@/lib/returns';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 export default function MyOrders() {
   const { t, formatPrice, lang } = useLanguage();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -24,7 +27,7 @@ export default function MyOrders() {
     }
     db.Order.list('-created_date', 50)
       .then(setOrders)
-      .catch(() => setOrders([]))
+      .catch(() => { setOrders([]); setError(true); })
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -75,8 +78,13 @@ export default function MyOrders() {
         {loading ? (
           <div className="mt-10 grid gap-4">
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="h-40 rounded-3xl bg-mist animate-pulse" />
+              <div key={i} className={`rounded-3xl bg-mist animate-pulse ${isMobile ? 'h-32' : 'h-40'}`} />
             ))}
+          </div>
+        ) : error ? (
+          <div className="mt-16 text-center">
+            <p className="font-heading font-bold text-xl">{lang === 'ar' ? 'تعذّر تحميل طلباتك' : 'Could not load your orders'}</p>
+            <p className="mt-2 text-muted-foreground">{lang === 'ar' ? 'تحقق من الاتصال وحاول مجددًا' : 'Check your connection and try again'}</p>
           </div>
         ) : orders.length === 0 ? (
           <div className="mt-16 text-center">
@@ -88,6 +96,36 @@ export default function MyOrders() {
             <Link to="/" className="mt-6 inline-flex items-center gap-2 text-cosmic font-heading font-bold">
               {t('nav.explore')}
             </Link>
+          </div>
+        ) : isMobile ? (
+          <div className="mt-8 grid gap-3">
+            {orders.map((o) => (
+              <Link
+                key={o.id}
+                to={`/orders/${o.id}`}
+                className="block rounded-3xl bg-card border border-border/60 p-4 active:border-cosmic/40 transition-colors"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <p className="font-heading font-bold" dir="ltr">{orderRef(o)}</p>
+                  <span className={`px-2.5 py-1 rounded-full text-[11px] font-heading font-bold whitespace-nowrap ${statusColor(o.status)}`}>
+                    {statusLabel(o.status, lang)}
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {new Date(o.created_date).toLocaleDateString(lang === 'ar' ? 'ar-u-nu-latn' : 'en')}
+                </p>
+                <div className="mt-3 flex items-center justify-between">
+                  <div className="text-sm">
+                    <span className="text-muted-foreground">{orderItemCount(o)} {t('cart.items')}</span>
+                    <span className="mx-1.5 text-muted-foreground">·</span>
+                    <span className="font-heading font-extrabold">{formatPrice(o.total)}</span>
+                  </div>
+                  <span className="inline-flex items-center gap-1 text-cosmic text-sm font-heading font-bold">
+                    {t('common.viewDetails')} <ChevronRight className="w-4 h-4 rtl:rotate-180" />
+                  </span>
+                </div>
+              </Link>
+            ))}
           </div>
         ) : (
           <div className="mt-10 grid gap-4">

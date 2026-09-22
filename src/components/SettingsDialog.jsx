@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Trash2, Loader2, Check, Sun, Moon, Monitor, LogOut, User as UserIcon, Globe } from 'lucide-react';
@@ -24,7 +24,15 @@ export default function SettingsDialog({ open, onOpenChange }) {
   const [signingOut, setSigningOut] = useState(false);
   const [error, setError] = useState(null);
   const [name, setName] = useState(user?.full_name || '');
+  const [phone, setPhone] = useState(user?.phone || '');
   const [savedName, setSavedName] = useState(false);
+
+  // Re-sync the editable fields with the real profile every time the dialog
+  // opens (it stays mounted, so a stale value from a previous session would
+  // otherwise linger and get resubmitted).
+  useEffect(() => {
+    if (open) { setName(user?.full_name || ''); setPhone(user?.phone || ''); }
+  }, [open, user]);
 
   const reset = () => {
     setConfirming(false);
@@ -37,7 +45,7 @@ export default function SettingsDialog({ open, onOpenChange }) {
     setBusy(true);
     setError(null);
     try {
-      const { error: updateError } = await supabase.from('profiles').update({ full_name: name }).eq('id', user.id);
+      const { error: updateError } = await supabase.from('profiles').update({ full_name: name, phone: phone || null }).eq('id', user.id);
       if (updateError) throw updateError;
       setSavedName(true);
       setTimeout(() => setSavedName(false), 2000);
@@ -141,6 +149,16 @@ export default function SettingsDialog({ open, onOpenChange }) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={t('settings.name')}
+                  className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic"
+                />
+              </label>
+              <label className="block mt-3">
+                <span className="text-sm font-medium text-foreground/80">{t('checkout.phone')}</span>
+                <input
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder={t('checkout.phone')}
+                  dir="ltr"
                   className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-background border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic"
                 />
               </label>

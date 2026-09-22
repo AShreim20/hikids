@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Lock, Wallet as WalletIcon, Award } from 'lucide-react';
+import { Loader2, Lock, Wallet as WalletIcon, Award, RotateCw, Sparkles, Trophy, History, ChevronRight, AlertTriangle } from 'lucide-react';
 import { db } from '@/api/entities';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
@@ -9,6 +9,7 @@ import { useAuth } from '@/lib/AuthContext';
 import { walletTxTypeLabel } from '@/lib/returns';
 import { myPendingRewards } from '@/lib/loyaltyFunctions';
 import { wheelState } from '@/lib/wheelFunctions';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // محفظتي / My Wallet -- the monetary ₪ balance (Phase 5), shown clearly
 // separate from Loyalty Points (section 17/72): different card, different
@@ -17,6 +18,7 @@ export default function MyWallet() {
   const { t, lang, formatPrice } = useLanguage();
   const { user } = useAuth();
   const ar = lang === 'ar';
+  const isMobile = useIsMobile();
 
   const [wallet, setWallet] = useState(null);
   const [transactions, setTransactions] = useState([]);
@@ -24,6 +26,7 @@ export default function MyWallet() {
   const [pending, setPending] = useState(null);
   const [spins, setSpins] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [rewardsError, setRewardsError] = useState(false);
 
   useEffect(() => {
     if (!user) { setLoading(false); return; }
@@ -34,8 +37,12 @@ export default function MyWallet() {
           db.Wallet.filter({ user_id: user.id }).catch(() => []),
           db.LoyaltyAccount.filter({ user_id: user.id }).catch(() => []),
         ]);
-        setPending(await myPendingRewards().catch(() => null));
-        setSpins(await wheelState().catch(() => null));
+        const [pend, wheel] = await Promise.all([
+          myPendingRewards().catch(() => { setRewardsError(true); return null; }),
+          wheelState().catch(() => { setRewardsError(true); return null; }),
+        ]);
+        setPending(pend);
+        setSpins(wheel);
         const w = wallets?.[0] || null;
         setWallet(w);
         setLoyalty(loyaltyAccounts?.[0] || null);
@@ -56,7 +63,54 @@ export default function MyWallet() {
         <div className="max-w-md mx-auto px-5 py-24 text-center">
           <div className="mx-auto grid place-items-center w-16 h-16 rounded-full bg-mist"><Lock className="w-8 h-8 text-muted-foreground" /></div>
           <h1 className="mt-6 font-heading font-extrabold text-2xl">{t('orders.signIn')}</h1>
-          <Link to="/login" className="mt-6 inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold">{t('settings.signIn')}</Link>
+          <Link to={`/login?returnTo=${encodeURIComponent('/wallet')}`} className="mt-6 inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold">{t('settings.signIn')}</Link>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Phone (<768px): the Rewards Hub reached from the "My Rewards" bottom-nav
+  // tab -- available/pending points+spins up top, then cards into the
+  // existing Wheel/Challenges/History pages (never duplicating their own
+  // data here). Tablet/desktop render the original wallet page below,
+  // unchanged.
+  if (isMobile) {
+    const holdOn = !!(pending?.return_hold || spins?.return_hold);
+    return (
+      <div className="min-h-screen bg-background">
+        <PageHeader title={ar ? 'مكافآتي' : 'My Rewards'} />
+        <div className="px-4 py-6">
+          {loading ? (
+            <div className="grid grid-cols-2 gap-2.5">
+              {Array.from({ length: 4 }).map((_, i) => <div key={i} className="h-[68px] rounded-2xl bg-mist animate-pulse" />)}
+            </div>
+          ) : rewardsError ? (
+            <div className="rounded-2xl bg-mist p-4 flex items-center gap-2.5 text-sm text-muted-foreground">
+              <AlertTriangle className="w-4 h-4 shrink-0" /> {ar ? 'تعذّر تحميل مكافآتك الآن' : 'Could not load your rewards right now'}
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-2.5">
+                <RewardStat icon={Award} label={ar ? 'نقاط متاحة' : 'Points available'} value={loyalty?.balance ?? 0} />
+                <RewardStat icon={Award} label={ar ? 'نقاط معلّقة' : 'Points pending'} value={pending?.pending_points ?? 0} tone="text-muted-foreground" />
+                <RewardStat icon={RotateCw} label={ar ? 'دورات متاحة' : 'Spins available'} value={spins?.active ? (spins.available ?? 0) : '—'} tone="text-accent" />
+                <RewardStat icon={RotateCw} label={ar ? 'دورات معلّقة' : 'Spins pending'} value={spins?.active ? (spins.pending_spins ?? 0) : '—'} tone="text-muted-foreground" />
+              </div>
+              {holdOn && <p className="mt-2 text-xs text-accent text-center">بانتظار اكتمال طلب الإرجاع</p>}
+            </>
+          )}
+
+          <div className="mt-3 flex items-center justify-between rounded-2xl bg-mist px-4 py-3">
+            <span className="inline-flex items-center gap-2 text-sm font-heading font-bold"><WalletIcon className="w-4 h-4 text-cosmic" /> {ar ? 'رصيد المحفظة' : 'Wallet balance'}</span>
+            <span className="font-heading font-extrabold">{formatPrice(wallet?.balance || 0)}</span>
+          </div>
+
+          <div className="mt-5 grid gap-2.5">
+            <RewardCard to="/wheel" icon={Sparkles} title={ar ? 'عجلة الحظ' : 'Mystery Wheel'} desc={ar ? 'أدر العجلة واربح مكافآت' : 'Spin the wheel and win rewards'} />
+            <RewardCard to="/challenges" icon={Trophy} title={ar ? 'التحديات' : 'Challenges'} desc={ar ? 'أكمل التحديات واكسب المزيد' : 'Complete challenges to earn more'} />
+            <RewardCard to="/rewards" icon={History} title={ar ? 'سجل المكافآت' : 'Rewards & redemption history'} desc={ar ? 'كل ما ربحته سابقًا' : 'Everything you have earned so far'} />
+          </div>
         </div>
         <Footer />
       </div>
@@ -120,5 +174,29 @@ export default function MyWallet() {
       </div>
       <Footer />
     </div>
+  );
+}
+
+function RewardStat({ icon: Icon, label, value, tone = 'text-cosmic' }) {
+  return (
+    <div className="rounded-2xl bg-card border border-border/60 px-3 py-3">
+      <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Icon className={`w-3.5 h-3.5 ${tone}`} /> {label}
+      </div>
+      <p className="mt-1 font-heading font-extrabold text-lg">{value}</p>
+    </div>
+  );
+}
+
+function RewardCard({ to, icon: Icon, title, desc }) {
+  return (
+    <Link to={to} className="flex items-center gap-3 rounded-2xl bg-card border border-border/60 p-4">
+      <div className="grid place-items-center w-11 h-11 rounded-xl bg-cosmic/10 text-cosmic shrink-0"><Icon className="w-5 h-5" /></div>
+      <div className="min-w-0 flex-1">
+        <p className="font-heading font-bold">{title}</p>
+        <p className="text-xs text-muted-foreground truncate">{desc}</p>
+      </div>
+      <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0 rtl:rotate-180" />
+    </Link>
   );
 }
