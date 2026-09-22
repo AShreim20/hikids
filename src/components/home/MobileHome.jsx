@@ -4,6 +4,7 @@ import { Sparkles, MessageCircle, Award, RotateCw } from 'lucide-react';
 import { Image } from '@/components/ui/image';
 import HeroCarousel from '@/components/HeroCarousel';
 import Recommendations from '@/components/Recommendations';
+import Newsletter from '@/components/Newsletter';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import { useSiteContent } from '@/context/SiteContentContext';
@@ -119,6 +120,7 @@ export default function MobileHome() {
       <AssistantCard />
       <Recommendations limit={6} alwaysShowBrowse />
       <RewardsStrip />
+      <Newsletter />
     </>
   );
 }

@@ -96,25 +96,25 @@ function DesktopFooter({ t, settings, sections }) {
 function MobileFooter({ t, settings, sections }) {
   return (
     <footer className="md:hidden bg-cosmic text-white">
-      <div className="max-w-7xl mx-auto px-5 py-8 space-y-6">
+      <div className="max-w-7xl mx-auto px-5 py-5 space-y-4">
         {/* Brand + social */}
         <div className="flex items-center justify-between gap-4">
           <Link to="/" className="inline-flex items-center shrink-0">
-            <Logo className="h-16 w-auto" />
+            <Logo className="h-12 w-auto" />
           </Link>
           <SocialLinks settings={settings} />
         </div>
 
         {/* Link sections — clean vertical stack, each fully visible (no
             content hidden or squeezed just because the screen is small). */}
-        <div className="space-y-5">
+        <div className="grid grid-cols-3 gap-3">
           {sections.map((s) => (
             <div key={s.title}>
               <h4 className="font-heading font-bold text-xs uppercase tracking-wider text-white/50">{s.title}</h4>
-              <ul className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+              <ul className="mt-1.5 flex flex-col">
                 {s.links.map((l) => (
                   <li key={l.label}>
-                    <Link to={l.to} className="inline-block py-1 text-sm text-white/75 hover:text-white transition-colors">{l.label}</Link>
+                    <Link to={l.to} className="inline-block py-1.5 text-[13px] leading-snug text-white/75 hover:text-white transition-colors">{l.label}</Link>
                   </li>
                 ))}
               </ul>
@@ -122,7 +122,7 @@ function MobileFooter({ t, settings, sections }) {
           ))}
         </div>
 
-        <div className="pt-4 border-t border-white/15 text-xs text-white/50">
+        <div className="pt-3 border-t border-white/15 text-xs text-white/50">
           <p>© {new Date().getFullYear()} {t('footer.rights')}</p>
         </div>
       </div>
