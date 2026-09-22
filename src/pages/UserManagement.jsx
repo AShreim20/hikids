@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Lock, Search, Crown, ShieldCheck, UserCog, ArrowUpCircle, ArrowDownCircle } from 'lucide-react';
+import { Loader2, Lock, Search, Crown, ShieldCheck, UserCog, ArrowUpCircle, ArrowDownCircle, Trash2, ShoppingBag, Award, Wallet as WalletIcon, Clock } from 'lucide-react';
 import { db } from '@/api/entities';
+import { supabase } from '@/api/supabaseClient';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -54,15 +55,38 @@ function RoleBadge({ role, t }) {
   );
 }
 
+function activityLabel(r, t, ar) {
+  if (!r || !r.last_activity_at) return t('users.noActivity');
+  const kind = r.last_activity_type === 'order' ? t('users.activity.order')
+    : r.last_activity_type === 'loyalty' ? t('users.activity.loyalty')
+    : r.last_activity_type === 'wallet' ? t('users.activity.wallet') : '';
+  return `${kind} · ${new Date(r.last_activity_at).toLocaleDateString(ar ? 'ar-u-nu-latn' : 'en')}`;
+}
+
+// Compact per-user quick report: purchases total + count, points, wallet
+// balance, last activity — shown inline (list + delete confirmation) so an
+// admin never has to open a separate page to see it before acting.
+function UserReport({ report, t, formatPrice, ar }) {
+  return (
+    <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+      <span className="inline-flex items-center gap-1"><ShoppingBag className="w-3.5 h-3.5" /> {formatPrice(report?.total_spent || 0)} · {report?.total_orders || 0} {t('cart.items')}</span>
+      <span className="inline-flex items-center gap-1"><Award className="w-3.5 h-3.5" /> {report?.points_balance ?? 0} {t('users.points')}</span>
+      <span className="inline-flex items-center gap-1"><WalletIcon className="w-3.5 h-3.5" /> {formatPrice(report?.wallet_balance || 0)}</span>
+      <span className="inline-flex items-center gap-1"><Clock className="w-3.5 h-3.5" /> {activityLabel(report, t, ar)}</span>
+    </div>
+  );
+}
+
 export default function UserManagement() {
   const { user } = useAuth();
-  const { t, lang } = useLanguage();
+  const { t, lang, formatPrice } = useLanguage();
   const ar = lang === 'ar';
   const { toast } = useToast();
   const [users, setUsers] = useState([]);
+  const [reports, setReports] = useState({}); // user_id -> { total_orders, total_spent, points_balance, wallet_balance, last_activity_at, last_activity_type }
   const [loading, setLoading] = useState(true);
   const [q, setQ] = useState('');
-  const [pending, setPending] = useState(null); // { u, action: 'promote' | 'demote' }
+  const [pending, setPending] = useState(null); // { u, action: 'promote' | 'demote' | 'delete' }
   const [busyId, setBusyId] = useState(null);
 
   const isOwnerAdmin = user?.role === 'admin';
@@ -70,7 +94,12 @@ export default function UserManagement() {
   const load = async () => {
     setLoading(true);
     try {
-      setUsers(await db.Profile.list('-created_at', 200));
+      const [list, res] = await Promise.all([
+        db.Profile.list('-created_at', 200),
+        supabase.rpc('admin_user_reports').catch(() => ({ data: [] })),
+      ]);
+      setUsers(list);
+      setReports(Object.fromEntries((res.data || []).map((r) => [r.user_id, r])));
     } catch {
       setUsers([]);
     } finally {
@@ -164,6 +193,14 @@ export default function UserManagement() {
     const { u, action } = pending;
     setBusyId(u.id);
     try {
+      if (action === 'delete') {
+        const { data, error } = await supabase.rpc('admin_delete_user_account', { p_user_id: u.id });
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.message || 'Error');
+        toast({ title: t('users.deleted') });
+        await load();
+        return;
+      }
       const newRole = action === 'promote' ? 'admin' : 'user';
       // Updates the user's actual authorization role — promoted admins gain
       // full Owner-level access (isOwner/can) immediately on their next auth.
@@ -184,6 +221,7 @@ export default function UserManagement() {
     }
   };
 
+
   const ActionButton = ({ u }) => {
     const r = u._role;
     if (!canActOn(u))
@@ -194,20 +232,32 @@ export default function UserManagement() {
       );
     const promote = r === USER;
     return (
-      <button
-        onClick={() => setPending({ u, action: promote ? 'promote' : 'demote' })}
-        className="squish h-9 px-4 rounded-full bg-mist font-heading font-bold text-sm inline-flex items-center gap-2"
-      >
-        {promote ? (
-          <>
-            <ArrowUpCircle className="w-4 h-4" /> {t('users.promote')}
-          </>
-        ) : (
-          <>
-            <ArrowDownCircle className="w-4 h-4" /> {t('users.demote')}
-          </>
+      <div className="flex items-center gap-2 flex-wrap justify-end">
+        <button
+          onClick={() => setPending({ u, action: promote ? 'promote' : 'demote' })}
+          className="squish h-9 px-4 rounded-full bg-mist font-heading font-bold text-sm inline-flex items-center gap-2"
+        >
+          {promote ? (
+            <>
+              <ArrowUpCircle className="w-4 h-4" /> {t('users.promote')}
+            </>
+          ) : (
+            <>
+              <ArrowDownCircle className="w-4 h-4" /> {t('users.demote')}
+            </>
+          )}
+        </button>
+        {/* Delete is only ever offered for a plain customer account — an
+            admin/owner must be demoted first (server enforces this too). */}
+        {r === USER && (
+          <button
+            onClick={() => setPending({ u, action: 'delete' })}
+            className="squish h-9 px-4 rounded-full bg-destructive/10 text-destructive font-heading font-bold text-sm inline-flex items-center gap-2"
+          >
+            <Trash2 className="w-4 h-4" /> {t('users.delete')}
+          </button>
         )}
-      </button>
+      </div>
     );
   };
 
@@ -279,6 +329,7 @@ export default function UserManagement() {
                               )}
                             </p>
                             <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                            <UserReport report={reports[u.id]} t={t} formatPrice={formatPrice} ar={ar} />
                           </div>
                         </div>
                       </td>
@@ -314,7 +365,8 @@ export default function UserManagement() {
                     </div>
                     <RoleBadge role={u._role} t={t} />
                   </div>
-                  <div className="mt-3 flex items-center justify-between gap-2">
+                  <UserReport report={reports[u.id]} t={t} formatPrice={formatPrice} ar={ar} />
+                  <div className="mt-3 flex items-center justify-between gap-2 flex-wrap">
                     <span className="text-xs text-muted-foreground">
                       {u.created_date ? new Date(u.created_date).toLocaleDateString() : '—'}
                     </span>
@@ -331,14 +383,19 @@ export default function UserManagement() {
       <AlertDialog open={!!pending} onOpenChange={(o) => !o && !busyId && setPending(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('users.confirmTitle')}</AlertDialogTitle>
+            <AlertDialogTitle>
+              {pending?.action === 'delete' ? t('users.deleteConfirmTitle') : t('users.confirmTitle')}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              {pending?.action === 'promote' ? t('users.promoteConfirm') : t('users.demoteConfirm')}
+              {pending?.action === 'promote' ? t('users.promoteConfirm')
+                : pending?.action === 'demote' ? t('users.demoteConfirm')
+                : t('users.deleteConfirmDesc')}
             </AlertDialogDescription>
             {pending && (
               <div className="mt-2 rounded-2xl bg-mist p-3 text-sm">
                 <p className="font-heading font-bold">{pending.u.full_name || pending.u.email}</p>
                 <p className="text-muted-foreground">{pending.u.email}</p>
+                {pending.action === 'delete' && <UserReport report={reports[pending.u.id]} t={t} formatPrice={formatPrice} ar={ar} />}
               </div>
             )}
           </AlertDialogHeader>
@@ -348,12 +405,12 @@ export default function UserManagement() {
               onClick={confirmChange}
               disabled={!!busyId}
               className={
-                pending?.action === 'demote'
-                  ? 'bg-destructive text-destructive-foreground hover:bg-destructive'
-                  : 'bg-cosmic text-white hover:bg-cosmic'
+                pending?.action === 'promote'
+                  ? 'bg-cosmic text-white hover:bg-cosmic'
+                  : 'bg-destructive text-destructive-foreground hover:bg-destructive'
               }
             >
-              {busyId ? <Loader2 className="w-4 h-4 animate-spin" /> : t('users.confirm')}
+              {busyId ? <Loader2 className="w-4 h-4 animate-spin" /> : pending?.action === 'delete' ? t('users.delete') : t('users.confirm')}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
