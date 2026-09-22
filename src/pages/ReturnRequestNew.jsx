@@ -214,9 +214,9 @@ export default function ReturnRequestNew() {
   const remainingLabel = eligibility.deadline ? formatTimeRemaining(eligibility.deadline, lang) : null;
 
   return (
-    <div className="min-h-screen bg-background pb-32">
+    <div className="min-h-screen bg-background pb-32 max-md:pb-28">
       <PageHeader title={t('returns.startAction')} />
-      <div className="max-w-2xl mx-auto px-5 sm:px-8 py-10">
+      <div className="max-w-2xl mx-auto px-5 sm:px-8 py-10 max-md:py-6">
         {step < 5 && (
           <div className="mb-6">
             <p className="text-sm text-muted-foreground">
@@ -265,11 +265,11 @@ export default function ReturnRequestNew() {
         )}
 
         {step < 5 && (
-          <div className="mt-8 flex items-center gap-3">
+          <div className="mt-8 flex items-center gap-3 max-md:mt-0 max-md:fixed max-md:inset-x-0 max-md:bottom-0 max-md:z-50 max-md:border-t max-md:border-border/60 max-md:bg-background/95 max-md:backdrop-blur-xl max-md:px-4 max-md:pt-3 max-md:pb-3 max-md:safe-bottom">
             {step > 1 && (
               <button
                 onClick={() => setStep((s) => s - 1)}
-                className="h-12 px-6 rounded-full bg-mist font-heading font-bold inline-flex items-center gap-2"
+                className="h-12 px-6 rounded-full bg-mist font-heading font-bold inline-flex items-center gap-2 shrink-0"
               >
                 {ar ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />} {t('returns.back')}
               </button>
@@ -302,6 +302,7 @@ export default function ReturnRequestNew() {
 }
 
 function StepSelectItems({ order, remaining, selected, toggleItem, setQty, lang, formatPrice, t }) {
+  const ar = lang === 'ar';
   return (
     <div>
       <h2 className="font-heading font-extrabold text-2xl">{t('returns.step1Title')}</h2>

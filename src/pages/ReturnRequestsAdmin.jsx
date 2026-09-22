@@ -39,6 +39,14 @@ export default function ReturnRequestsAdmin() {
   const [statusTab, setStatusTab] = useState('all');
   const [typeFilter, setTypeFilter] = useState('');
   const [q, setQ] = useState('');
+  // Deep link from User Management's "View Details" drawer: a request's
+  // order.customer_email/phone can be blank, so match the reliable
+  // created_by_id on the linked order instead of free-text search.
+  const [filterUser, setFilterUser] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('u');
+    return id ? { id, name: params.get('name') || id } : null;
+  });
 
   const load = async () => {
     setLoading(true);
@@ -65,6 +73,7 @@ export default function ReturnRequestsAdmin() {
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
     return requests
+      .filter((r) => !filterUser || ordersById[r.order_id]?.created_by_id === filterUser.id)
       .filter((r) => statusTab === 'all' || r.status === statusTab)
       .filter((r) => !typeFilter || r.request_type === typeFilter)
       .filter((r) => {
@@ -76,7 +85,7 @@ export default function ReturnRequestsAdmin() {
         ].filter(Boolean).join(' ').toLowerCase();
         return haystack.includes(term);
       });
-  }, [requests, statusTab, typeFilter, q, ordersById]);
+  }, [requests, statusTab, typeFilter, q, ordersById, filterUser]);
 
   const Chevron = ar ? ChevronLeft : ChevronRight;
 
@@ -103,6 +112,15 @@ export default function ReturnRequestsAdmin() {
           <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">{ar ? 'المرتجعات والاستبدال' : 'Returns & Exchanges'}</p>
           <h1 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl">{ar ? 'طلبات الإرجاع والاستبدال' : 'Return & Exchange Requests'}</h1>
         </div>
+
+        {filterUser && (
+          <div className="mt-5 flex items-center gap-2 flex-wrap px-4 py-2.5 rounded-2xl bg-cosmic/10 text-cosmic text-sm font-heading font-bold">
+            {ar ? `تصفية حسب: ${filterUser.name}` : `Filtered to: ${filterUser.name}`}
+            <button type="button" onClick={() => setFilterUser(null)} className="underline underline-offset-2 font-normal">
+              {ar ? 'إزالة التصفية' : 'Clear filter'}
+            </button>
+          </div>
+        )}
 
         <div className="mt-6 flex gap-2 overflow-x-auto pb-1">
           {ADMIN_STATUS_TABS.map((s) => (

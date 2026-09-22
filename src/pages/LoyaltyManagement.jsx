@@ -18,7 +18,16 @@ export default function LoyaltyManagement() {
   const { can } = usePermissions();
   const [accounts, setAccounts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState('');
+  // Deep link from User Management's "View Details" drawer: loyalty_accounts
+  // has a direct user_id column (unlike orders' nullable customer_email), so
+  // seeding the existing search box with the id is already a reliable match
+  // (a.user_id is one of the fields the search below checks).
+  const [filterUser] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('u');
+    return id ? { id, name: params.get('name') || id } : null;
+  });
+  const [query, setQuery] = useState(() => filterUser?.id || '');
   const [redeemRate, setRedeemRate] = useState(0.1);
 
   const canView = can('loyalty.view');
@@ -116,6 +125,15 @@ export default function LoyaltyManagement() {
           <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">{t('wallet.adminSubtitle')}</p>
           <h1 className="mt-2 font-heading font-extrabold text-4xl md:text-5xl">{t('wallet.adminTitle')}</h1>
         </div>
+
+        {filterUser && query === filterUser.id && (
+          <div className="mt-5 flex items-center gap-2 flex-wrap px-4 py-2.5 rounded-2xl bg-cosmic/10 text-cosmic text-sm font-heading font-bold">
+            {ar ? `تصفية حسب: ${filterUser.name}` : `Filtered to: ${filterUser.name}`}
+            <button type="button" onClick={() => setQuery('')} className="underline underline-offset-2 font-normal">
+              {ar ? 'إزالة التصفية' : 'Clear filter'}
+            </button>
+          </div>
+        )}
 
         <div className="mt-8">
           <WalletDashboard />

@@ -171,7 +171,7 @@ export default function ReturnRequestDetail() {
         <div className="flex items-start justify-between flex-wrap gap-4">
           <div>
             <p className="text-sm text-muted-foreground">{t('returns.requestCode')}</p>
-            <h1 className="font-heading font-extrabold text-3xl" dir="ltr">{request.request_code}</h1>
+            <h1 className="font-heading font-extrabold text-2xl sm:text-3xl break-all" dir="ltr">{request.request_code}</h1>
           </div>
           <span className="px-3 py-1.5 rounded-full text-sm font-heading font-bold bg-cosmic/10 text-cosmic whitespace-nowrap">
             {returnRequestStatusLabel(request.status, lang)}
@@ -302,7 +302,7 @@ export default function ReturnRequestDetail() {
           {items.some((it) => (it.evidence_urls || []).length > 0) && (
             <div>
               <p className="text-xs text-muted-foreground mb-2">{t('returns.photos')}</p>
-              <div className="grid grid-cols-4 gap-2">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
                 {items.flatMap((it) => it.evidence_urls || []).map((url, i) => (
                   <a key={i} href={url} target="_blank" rel="noreferrer" className="aspect-square rounded-xl overflow-hidden bg-mist block">
                     <img src={url} alt="" className="w-full h-full object-cover" />
@@ -335,7 +335,7 @@ export default function ReturnRequestDetail() {
           </div>
         )}
 
-        <div className="mt-8 flex items-center gap-3">
+        <div className="mt-8 flex items-center gap-3 flex-wrap">
           <Link to="/returns" className="h-12 px-6 rounded-full bg-mist font-heading font-bold inline-flex items-center">
             {t('returns.myRequests')}
           </Link>

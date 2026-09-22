@@ -31,6 +31,15 @@ export default function OrdersManagement() {
   const [filters, setFilters] = useState({
     q: '', city: '', payment: '', paymentStatus: '', from: '', to: '', sort: 'newest',
   });
+  // Deep link from User Management's "View Details" drawer: filters to one
+  // customer's orders by their stable id, not by email/phone text search —
+  // customer_email is often blank on an order (checkout doesn't always
+  // collect a separate one), so an id match is the only reliable link.
+  const [filterUser, setFilterUser] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('u');
+    return id ? { id, name: params.get('name') || id } : null;
+  });
 
   const allowed = can('orders.manage');
 
@@ -56,6 +65,7 @@ export default function OrdersManagement() {
   const visible = useMemo(() => {
     const q = filters.q.trim().toLowerCase();
     let list = orders.filter((o) => {
+      if (filterUser && o.created_by_id !== filterUser.id) return false;
       const s = normalizeStatus(o.status);
       if (tab === 'returns' && !RETURN_STATUSES.includes(s)) return false;
       if (tab !== 'all' && tab !== 'returns' && s !== tab) return false;
@@ -86,7 +96,7 @@ export default function OrdersManagement() {
       customer: (a, b) => String(a.customer_name || '').localeCompare(String(b.customer_name || '')),
     };
     return [...list].sort(by[filters.sort] || by.newest);
-  }, [orders, tab, filters]);
+  }, [orders, tab, filters, filterUser]);
 
   // ── Excel export ──────────────────────────────────────────────────────
   // Two sheets (task §6, preferred over one summarized row): Orders, and
@@ -229,6 +239,15 @@ export default function OrdersManagement() {
           </div>
           <PreviewInvoiceButton />
         </div>
+
+        {filterUser && (
+          <div className="mt-5 flex items-center gap-2 flex-wrap px-4 py-2.5 rounded-2xl bg-cosmic/10 text-cosmic text-sm font-heading font-bold">
+            {ar ? `تصفية حسب: ${filterUser.name}` : `Filtered to: ${filterUser.name}`}
+            <button type="button" onClick={() => setFilterUser(null)} className="underline underline-offset-2 font-normal">
+              {ar ? 'إزالة التصفية' : 'Clear filter'}
+            </button>
+          </div>
+        )}
 
         <div className="mt-8">
           <OrderStatsCards orders={orders} active={tab} onPick={setTab} />
