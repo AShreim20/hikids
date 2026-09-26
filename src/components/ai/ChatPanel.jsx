@@ -4,15 +4,12 @@ import { Send, Loader2, ArrowUpRight, ShoppingCart, X } from 'lucide-react';
 import { db } from '@/api/entities';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useLanguage } from '@/context/LanguageContext';
-import { useCategories } from '@/context/CategoryContext';
 import { useCart } from '@/context/CartContext';
 import { useFloatingOffset } from '@/hooks/useFloatingOffset';
-import { priceInfo } from '@/lib/pricing';
 import { productName } from '@/lib/bilingual';
 import { detectTextDir } from '@/lib/textDirection';
-import { buildStoreFacts } from '@/lib/assistantPolicy';
 import { useSiteContent } from '@/context/SiteContentContext';
-import { ASSISTANT_CONFIG_KEY, ASSISTANT_CONFIG_DEFAULT, isPromoted, buildAssistantConfigText } from '@/lib/assistantConfig';
+import { ASSISTANT_CONFIG_KEY, ASSISTANT_CONFIG_DEFAULT } from '@/lib/assistantConfig';
 import Logo from '@/components/Logo';
 import ChatMarkdown from './ChatMarkdown';
 import ChatProductCard from './ChatProductCard';
@@ -26,7 +23,6 @@ export default function ChatPanel({ onClose }) {
   const { t, lang } = useLanguage();
   const ar = lang === 'ar';
   const { addItem } = useCart();
-  const { discountPctFor } = useCategories();
   const { content } = useSiteContent();
   const aiCfg = { ...ASSISTANT_CONFIG_DEFAULT, ...content(ASSISTANT_CONFIG_KEY, ASSISTANT_CONFIG_DEFAULT) };
   const promotedKey = (aiCfg.promoted_product_ids || []).join(',');
@@ -63,31 +59,14 @@ export default function ChatPanel({ onClose }) {
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
   const [products, setProducts] = useState([]);
-  // Live policy sources for the assistant's STORE FACTS (never hardcoded).
-  const [policy, setPolicy] = useState({ reasons: [], cities: [], settings: {} });
   const scrollRef = useRef(null);
 
   useEffect(() => {
     db.Product.list('-created_date', 50)
       .then(setProducts)
       .catch(() => {});
-    Promise.all([
-      db.ReturnReason.filter({ active: true }, 'sort_order', 50).catch(() => []),
-      db.DeliveryCity.filter({ active: true }).catch(() => []),
-      db.Setting.list().catch(() => []),
-    ]).then(([reasons, cities, rows]) => {
-      setPolicy({ reasons: reasons || [], cities: cities || [], settings: Object.fromEntries((rows || []).map((r) => [r.key, r.value])) });
-    });
   }, []);
 
-  // Catalog context fed to the assistant so it can reason about real
-  // prices, discounts, stock and age suitability, and recommend only
-  // products that actually exist in the store — using the exact same
-  // pricing helper (priceInfo + discountPctFor) the storefront's own
-  // ProductCard uses, so a category-level discount is reflected here too
-  // (a plain sale_price check would silently miss it). The app never shows
-  // this text to the customer, and never trusts anything the assistant
-  // says about price/discount/stock for display — see ChatProductCard.
   // Owner-promoted products outside the latest-50 window are added so they can be recommended.
   useEffect(() => {
     const missing = (aiCfg.promoted_product_ids || []).filter((id) => !products.some((p) => p.id === id));
@@ -95,12 +74,6 @@ export default function ChatPanel({ onClose }) {
     Promise.all(missing.map((id) => db.Product.get(id).catch(() => null)))
       .then((extra) => setProducts((cur) => [...cur, ...extra.filter((p) => p && !cur.some((c) => c.id === p.id))]));
   }, [promotedKey, products.length]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const catalogText = products.map((p) => {
-    const { final, original, hasDiscount, discountPct } = priceInfo(p, discountPctFor(p.category));
-    const stock = Number(p.stock ?? 0);
-    return `ID:${p.id} | ${productName(p, lang)} | ${p.category || ''} | ages ${p.age_range || 'all'} | price ₪${final}${hasDiscount ? ` (was ₪${original}, -${discountPct}%)` : ''} | stock ${stock}${stock <= 0 ? ' OUT OF STOCK' : ''}${isPromoted(p, aiCfg) ? ' | PROMOTED' : ''}`;
-  }).join('\n');
 
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' });
@@ -116,7 +89,7 @@ export default function ChatPanel({ onClose }) {
   }, [messages]);
 
   const send = async (text) => {
-    const content = text.trim();
+    const content = text.trim().slice(0, 1000);
     if (!content || busy) return;
     const next = [...messages, { role: 'user', content }];
     setMessages(next);
@@ -138,39 +111,16 @@ export default function ChatPanel({ onClose }) {
       )
     )];
     try {
-      const sys = `You are the HiKids toy store personal shopping assistant. Help customers choose toys and answer questions about ages, categories and product pricing/discounts/availability from the catalog below. For any HiKids policy or business rule (returns, exchanges, delivery, payments, loyalty points, Wallet, Mystery Wheel, orders) rely ONLY on the STORE FACTS below. Be warm, friendly and concise — sound like a helpful person, not a database dump.
-
-LANGUAGE: Reply entirely in ${ar ? 'Arabic' : 'English'} — the customer's current site language. Never mix the two languages in the same reply${ar ? '. Do not include English product names unless the customer explicitly asks for them' : ', using the English product name when one exists'}.
-
-FORMATTING: Keep the conversational part short — one or two sentences introducing what you found, and optionally one short closing sentence at the end (for example, offering to narrow the search further by category). You may use **bold**, short paragraphs, or lists for general questions (shipping, policies, loyalty, etc.), but when recommending products:
-- Do NOT list product names, prices, discounts, or stock status in the reply text — the app renders each recommended product as its own card directly below your message, straight from the database.
-- Do NOT write a numbered or bulleted list of products in the reply.
-- Refer to them only generically ("a few options below", "some picks that fit").
-
-PRODUCTS: For every product you recommend or specifically discuss, add one entry to the "products" array with that product's id and a short one-sentence "reason" it fits — never its price, discount, or stock; the card already shows the real, current data for that. Only use ids that exist in the catalog below — never invent a product, price, discount, or availability. Exactly how many to include is set by RECOMMENDATION COUNT below.
-
-RECOMMENDATION COUNT: By default, recommend exactly 3 products — never more, even when many products match. If the customer explicitly asks for a specific number (for example "اعطيني خيارين" = 2, "اعطيني 5 خيارات" = 5, "خيار واحد" = 1, "three options"), recommend exactly that many instead, but never more than 6 in a single response even if they ask for more or for the whole catalog ("كل المنتجات"). If they ask for everything or an unreasonably large number, pick your best 3-6 matches and mention in the reply, in words only (no link), that they can browse the full Shop page for more.
-
-MORE OPTIONS: If the customer asks to see other options for the SAME request (e.g. "غيرهم", "كمان", "خيارات ثانية", "ورجيني غيرهم", "في غيرهم؟", "عروض ثانية", "show me more", "other options"), keep the same filters as that request (age, gender, category, budget, etc.) and recommend DIFFERENT products than every id listed under "Already shown" below — never repeat one of them unless there are truly no other matching products left, in which case say so naturally instead of repeating or inventing products. If instead the customer's newest message describes a new or different search (different age, gender, category, or budget than before), treat it as a brand-new recommendation and ignore the "Already shown" list — pick freely from the full catalog again.
-
-Already shown this conversation (avoid repeating for a "more options" request): ${shownProductIds.length ? shownProductIds.join(', ') : 'none yet'}
-
-CART: You can add a product to the customer's cart when they explicitly ask (for example "add this to my cart", "أضفه للسلة", "add it"). Put the product id and quantity in the add_to_cart array and the app will add it and show a View Cart link. Still write a short natural reply confirming what you added.
-
-If asked about a specific order's status, tell them to open My Orders (/orders).
-
-${buildStoreFacts({ ...policy, lang })}
-
-${buildAssistantConfigText(aiCfg, lang)}
-
-Current product catalog (ID | name | category | ages | price | stock):\n${catalogText || 'Loading catalog...'}`;
-      const convo = next.map((m) => {
-        const c = typeof m.content === 'string' ? m.content : m.content.text;
-        return `${m.role === 'user' ? 'Customer' : 'Assistant'}: ${c}`;
-      }).join('\n');
+      // The server owns the system prompt and builds the store facts/catalog
+      // itself — the client sends only the conversation, language and the
+      // already-shown product ids.
       const data = (await invokeFunction('chatAssistant', {
-        system: sys,
-        prompt: `${convo}\nAssistant:`,
+        messages: next.slice(-12).map((m) => ({
+          role: m.role === 'user' ? 'user' : 'assistant',
+          content: (typeof m.content === 'string' ? m.content : m.content.text || '').slice(0, m.role === 'user' ? 1000 : 2000),
+        })).filter((m) => m.content.trim()),
+        lang: ar ? 'ar' : 'en',
+        shown_product_ids: shownProductIds.slice(-50),
       })) || {};
       // Strip any stray raw URLs from the reply as a safety net — links are
       // rendered from the products array instead.
@@ -204,7 +154,9 @@ Current product catalog (ID | name | category | ages | price | stock):\n${catalo
         content: { text: reply, products: mentioned, showCart: added.length > 0 },
       }]);
     } catch (err) {
-      setMessages((m) => [...m, { role: 'assistant', content: t('ai.error') }]);
+      // Rate-limit / validation messages come from the server already localized.
+      const friendly = err?.code === 'rate_limited' || err?.code === 'bad_request' || err?.code === 'too_large' ? err.message : t('ai.error');
+      setMessages((m) => [...m, { role: 'assistant', content: friendly }]);
     } finally {
       setBusy(false);
     }

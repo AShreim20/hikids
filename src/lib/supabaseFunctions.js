@@ -8,13 +8,17 @@ export async function invokeFunction(name, body) {
   const { data, error } = await supabase.functions.invoke(name, { body });
   if (error) {
     let message = error.message;
+    let code;
     try {
       const payload = await error.context?.json();
       message = payload?.message || payload?.error || message;
+      code = payload?.code;
     } catch {
       /* keep default message */
     }
-    throw new Error(message);
+    const err = new Error(message);
+    if (code) err.code = code;
+    throw err;
   }
   return data;
 }
