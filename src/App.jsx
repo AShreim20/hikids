@@ -28,6 +28,7 @@ const Wishlist = lazy(() => import('./pages/Wishlist'));
 const About = lazy(() => import('./pages/About'));
 const FAQ = lazy(() => import('./pages/FAQ'));
 const Contact = lazy(() => import('./pages/Contact'));
+const TrackOrder = lazy(() => import('./pages/TrackOrder'));
 const Admin = lazy(() => import('./pages/Admin'));
 const ProductEditor = lazy(() => import('./pages/ProductEditor'));
 const HeroSlides = lazy(() => import('./pages/HeroSlides'));
@@ -108,6 +109,7 @@ function AnimatedRoutes() {
       <Route path="/about" element={<About />} />
       <Route path="/faq" element={<FAQ />} />
       <Route path="/contact" element={<Contact />} />
+      <Route path="/track-order" element={<TrackOrder />} />
       <Route path="/admin" element={<Admin />} />
       <Route path="/admin/carousel" element={<HeroSlides />} />
       <Route path="/admin/hero-slide-preview/:id" element={<HeroSlidePreview />} />

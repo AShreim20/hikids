@@ -10,6 +10,7 @@ export const PRIVATE_PATH_PREFIXES = [
   '/wishlist',
   '/orders',
   '/orders-admin',
+  '/track-order',
   '/addresses',
   '/loyalty',
   '/loyalty-admin',

@@ -27,6 +27,7 @@ function footerSections(t) {
       links: [
         { label: t('footer.faq'), to: '/faq' },
         { label: t('footer.contact'), to: '/contact' },
+        { label: t('footer.trackOrder'), to: '/track-order' },
       ],
     },
     {

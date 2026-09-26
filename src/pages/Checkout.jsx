@@ -8,6 +8,7 @@ import Footer from '@/components/Footer';
 import { useCart } from '@/context/CartContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useAuth } from '@/lib/AuthContext';
+import { orderRef } from '@/lib/orderStatus';
 import CitySelect from '@/components/checkout/CitySelect';
 import SavedAddressPicker from '@/components/checkout/SavedAddressPicker';
 import DiscountInput from '@/components/checkout/DiscountInput';
@@ -436,21 +437,39 @@ export default function Checkout() {
           </div>
           <h1 className="mt-6 font-heading font-extrabold text-4xl md:text-5xl">{t('checkout.success')}</h1>
           <p className="mt-4 text-muted-foreground text-lg">{t('checkout.successDesc')}</p>
+          <div className="mt-5 inline-block rounded-2xl bg-mist px-6 py-3">
+            <p className="text-xs text-muted-foreground">{ar ? 'رقم الطلب' : 'Order number'}</p>
+            <p className="font-heading font-extrabold text-2xl" dir="ltr">{orderRef({ id: orderId })}</p>
+          </div>
           <p className="mt-3 text-sm text-muted-foreground">
-            {t('track.orderNo')}: {orderId?.slice(-8).toUpperCase()}
+            {ar
+              ? 'احتفظ برقم الطلب — ستحتاجه مع رقم هاتفك لتتبع طلبك لاحقًا.'
+              : 'Keep this order number — you will need it with your phone number to track your order later.'}
           </p>
           <div className="md:hidden mt-8 grid gap-3">
-            <Link to="/orders" className="h-14 grid place-items-center rounded-full bg-cosmic text-white font-heading font-bold squish">
-              {ar ? 'عرض الطلب' : 'View Order'}
-            </Link>
+            {user ? (
+              <Link to="/orders" className="h-14 grid place-items-center rounded-full bg-cosmic text-white font-heading font-bold squish">
+                {ar ? 'عرض الطلب' : 'View Order'}
+              </Link>
+            ) : (
+              <Link to={`/track-order?ref=${orderRef({ id: orderId })}`} className="h-14 grid place-items-center rounded-full bg-cosmic text-white font-heading font-bold squish">
+                {ar ? 'تتبع الطلب' : 'Track Order'}
+              </Link>
+            )}
             <Link to="/shop" className="h-14 grid place-items-center rounded-full bg-mist font-heading font-bold squish">
               {ar ? 'متابعة التسوّق' : 'Continue Shopping'}
             </Link>
           </div>
           <div className="hidden md:block">
-            <Link to="/orders" className="mt-6 inline-flex items-center gap-2 text-cosmic font-heading font-bold">
-              {t('nav.orders')} →
-            </Link>
+            {user ? (
+              <Link to="/orders" className="mt-6 inline-flex items-center gap-2 text-cosmic font-heading font-bold">
+                {t('nav.orders')} →
+              </Link>
+            ) : (
+              <Link to={`/track-order?ref=${orderRef({ id: orderId })}`} className="mt-6 inline-flex items-center gap-2 text-cosmic font-heading font-bold">
+                {ar ? 'تتبع الطلب' : 'Track Order'} →
+              </Link>
+            )}
             <div>
               <Link to="/" className="mt-8 inline-flex items-center gap-2 h-14 px-8 rounded-full bg-cosmic text-white font-heading font-bold squish">
                 {t('checkout.back')}
