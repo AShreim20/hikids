@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Lock, Plus, Pencil, Trash2, X, Search } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
@@ -20,21 +22,21 @@ export default function DeliveryManagement() {
   const [saving, setSaving] = useState(false);
   const [q, setQ] = useState('');
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = async () => {
     setLoading(true);
-    try {
-      setCities(await db.DeliveryCity.list('-created_date', 200));
-    } catch {
-      setCities([]);
-    } finally {
-      setLoading(false);
-    }
+    const rows = await guard(() => db.DeliveryCity.list('-created_date', 200));
+    if (rows) setCities(rows);
+    setLoading(false);
   };
 
   useEffect(() => {
     if (isOwner) load();
     else setLoading(false);
   }, [isOwner]);
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (!isOwner) {
     return (

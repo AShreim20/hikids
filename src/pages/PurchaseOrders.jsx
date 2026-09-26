@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Lock, Loader2, Pencil, Trash2, Send, Ban, Search, FileSpreadsheet } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
@@ -34,14 +36,15 @@ export default function PurchaseOrders() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = () => {
     setLoading(true);
-    Promise.all([
+    return guard(() => Promise.all([
       db.PurchaseOrder.list('-created_date', 500),
       db.Supplier.list('name', 200),
-    ])
-      .then(([list, s]) => { setPos(list || []); setSuppliers(s || []); })
-      .catch(() => { setPos([]); setSuppliers([]); })
+    ]))
+      .then((res) => { if (res) { const [list, s] = res; setPos(list || []); setSuppliers(s || []); } })
       .finally(() => setLoading(false));
   };
 
@@ -80,6 +83,8 @@ export default function PurchaseOrders() {
       return true;
     };
   }, [q, fSupplier, fPay, fStatus, from, to]);
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (user?.role !== 'admin') {
     return (

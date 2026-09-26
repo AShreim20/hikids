@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Lock, Loader2, FileSpreadsheet } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -28,15 +30,16 @@ export default function Suppliers() {
   const [detailId, setDetailId] = useState(null);
   const [exportOpen, setExportOpen] = useState(false);
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = () => {
     setLoading(true);
-    Promise.all([
+    return guard(() => Promise.all([
       db.Supplier.list('name', 500),
       db.SupplierTransaction.list('-created_date', 500),
       db.PurchaseOrder.list('-created_date', 500),
-    ])
-      .then(([s, tx, po]) => { setSuppliers(s || []); setTxs(tx || []); setPos(po || []); })
-      .catch(() => { setSuppliers([]); setTxs([]); setPos([]); })
+    ]))
+      .then((res) => { if (res) { const [s, tx, po] = res; setSuppliers(s || []); setTxs(tx || []); setPos(po || []); } })
       .finally(() => setLoading(false));
   };
 
@@ -48,6 +51,8 @@ export default function Suppliers() {
   const balances = useMemo(() => balancesBySupplier(txs), [txs]);
   const detailSupplier = suppliers.find((s) => s.id === detailId) || null;
   const detailTxs = txs.filter((x) => x.supplier_id === detailId);
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (user?.role !== 'admin') {
     return (

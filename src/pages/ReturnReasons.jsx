@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Loader2, Lock, Search, Undo2, X, ChevronUp, ChevronDown } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -24,11 +26,14 @@ export default function ReturnReasons() {
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = async () => {
     setLoading(true);
     try {
-      const list = await db.ReturnReason.list('sort_order', 200);
-      setReasons(list || []);
+      const list = await guard(() => db.ReturnReason.list('sort_order', 200));
+      if (!list) return;
+      setReasons(list);
       // Best-effort: return_request_items may not be readable yet if this
       // profile only has returns.manage via a narrower future grant — a
       // failure here should never block the reasons list itself, it only
@@ -39,8 +44,6 @@ export default function ReturnReasons() {
       } catch {
         setUsedReasonIds(new Set());
       }
-    } catch {
-      setReasons([]);
     } finally {
       setLoading(false);
     }
@@ -57,6 +60,8 @@ export default function ReturnReasons() {
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || String(a.name).localeCompare(String(b.name)))
       .filter((r) => !term || String(r.name).toLowerCase().includes(term) || String(r.name_en || '').toLowerCase().includes(term));
   }, [reasons, q]);
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (!allowed) {
     return (

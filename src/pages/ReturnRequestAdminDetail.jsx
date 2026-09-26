@@ -5,6 +5,8 @@ import {
   MessageCircleQuestion, ImageIcon, PackageCheck, Search as SearchIcon, Camera, X,
 } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { useToast } from '@/components/ui/use-toast';
 import { uploadFile } from '@/lib/uploadFile';
 import Navbar from '@/components/Navbar';
@@ -68,17 +70,27 @@ export default function ReturnRequestAdminDetail() {
   const [refundDialog, setRefundDialog] = useState(null); // 'complete' | 'fail' | null
   const [refundActionBusy, setRefundActionBusy] = useState(false);
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = async () => {
     setLoading(true);
     try {
-      const r = await db.ReturnRequest.get(id);
+      // undefined = the load failed (expired session / error); null = genuinely
+      // not found, which keeps the existing "Request not found" screen.
+      const r = await guard(() => db.ReturnRequest.get(id));
+      if (r === undefined) return;
       setRequest(r);
       if (r) {
-        const [its, o, ns] = await Promise.all([
-          db.ReturnRequestItem.filter({ return_request_id: r.id }).catch(() => []),
-          db.Order.get(r.order_id).catch(() => null),
-          db.ReturnRequestNote.filter({ return_request_id: r.id }).catch(() => []),
-        ]);
+        // Items, order, notes and settlement are primary request data (they drive
+        // the available actions and refund figures), so a failed fetch fails the load.
+        const core = await guard(() => Promise.all([
+          db.ReturnRequestItem.filter({ return_request_id: r.id }),
+          db.Order.get(r.order_id),
+          db.ReturnRequestNote.filter({ return_request_id: r.id }),
+          db.ReturnSettlement.filter({ return_request_id: r.id }),
+        ]));
+        if (!core) return;
+        const [its, o, ns, settlementRows] = core;
         setItems(its || []);
         setOrder(o);
         setNotes((ns || []).sort((a, b) => new Date(b.created_date) - new Date(a.created_date)));
@@ -99,7 +111,7 @@ export default function ReturnRequestAdminDetail() {
         setReceipts(rcs.flat());
         setInspections(ins.flat());
 
-        let s = await db.ReturnSettlement.filter({ return_request_id: r.id }).then((rows) => rows?.[0] || null).catch(() => null);
+        let s = settlementRows?.[0] || null;
         // Auto-calculate the settlement preview once the request is ready --
         // read-only/idempotent, so silently retrying on every load is safe;
         // the RPC itself rejects (silently ignored here) if not ready yet.
@@ -113,7 +125,8 @@ export default function ReturnRequestAdminDetail() {
         }
         setSettlement(s);
         if (s?.return_refund_id) {
-          const rf = await db.ReturnRefund.get(s.return_refund_id).catch(() => null);
+          const rf = await guard(() => db.ReturnRefund.get(s.return_refund_id));
+          if (rf === undefined) return;
           setRefund(rf);
         } else {
           setRefund(null);
@@ -312,6 +325,8 @@ export default function ReturnRequestAdminDetail() {
       setSettingResolutionItemId(null);
     }
   };
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (!allowed) {
     return (

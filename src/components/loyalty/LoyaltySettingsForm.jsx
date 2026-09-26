@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Loader2 } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
@@ -53,15 +55,19 @@ export default function LoyaltySettingsForm({ canEdit }) {
   const [settings, setSettings] = useState(DEFAULTS);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    db.Setting.list()
-      .then((rows) => {
-        const map = { ...DEFAULTS };
-        (rows || []).forEach((r) => { if (r.key in map) map[r.key] = r.value; });
-        setSettings(map);
-      })
-      .catch(() => {});
-  }, []);
+  const { failure, guard } = useAdminLoadGuard();
+
+  // A failed load must not show defaults as if they were the saved settings
+  // (saving would overwrite them), so the form is replaced by the notice.
+  const loadSettings = async () => {
+    const rows = await guard(() => db.Setting.list());
+    if (!rows) return;
+    const map = { ...DEFAULTS };
+    rows.forEach((r) => { if (r.key in map) map[r.key] = r.value; });
+    setSettings(map);
+  };
+
+  useEffect(() => { loadSettings(); }, []);
 
   const save = async () => {
     setSaving(true);
@@ -84,6 +90,8 @@ export default function LoyaltySettingsForm({ canEdit }) {
       setSaving(false);
     }
   };
+
+  if (failure) return <AdminLoadFailed inline failure={failure} onRetry={loadSettings} />;
 
   return (
     <div className="rounded-3xl bg-card border border-border/60 p-5 md:p-6">

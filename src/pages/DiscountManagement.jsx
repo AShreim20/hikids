@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Lock, Plus, Pencil, Trash2, X } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import PageHeader from '@/components/PageHeader';
@@ -20,21 +22,21 @@ export default function DiscountManagement() {
   const [form, setForm] = useState({ code: '', description: '', type: 'percent', value: '', min_subtotal: 0, usage_limit: '', expires_at: '', active: true });
   const [saving, setSaving] = useState(false);
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = async () => {
     setLoading(true);
-    try {
-      setCodes(await db.DiscountCode.list('-created_date', 200));
-    } catch {
-      setCodes([]);
-    } finally {
-      setLoading(false);
-    }
+    const rows = await guard(() => db.DiscountCode.list('-created_date', 200));
+    if (rows) setCodes(rows);
+    setLoading(false);
   };
 
   useEffect(() => {
     if (isOwner) load();
     else setLoading(false);
   }, [isOwner]);
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (!isOwner) {
     return (

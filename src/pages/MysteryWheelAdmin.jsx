@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Loader2, Lock, Sparkles, Save } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -33,23 +35,34 @@ export default function MysteryWheelAdmin() {
   const [history, setHistory] = useState([]);
   const [editingReward, setEditingReward] = useState(null);
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = async () => {
     setLoading(true);
-    try {
+    // Rewards are the primary fetch: if it fails the whole load fails. The
+    // config/spins/history lists stay best-effort.
+    const res = await guard(async () => {
       const [cfgs, rw, sp, h] = await Promise.allSettled([
         db.WheelConfig.list('-created_date', 50),
         db.WheelReward.list('-created_date', 100),
         db.WheelSpin.list('-created_date', 500),
         db.RewardHistory.filter({ source: 'wheel' }),
       ]);
-      const cfgList = cfgs.status === 'fulfilled' ? cfgs.value || [] : [];
+      if (rw.status === 'rejected') throw rw.reason;
+      return [cfgs, rw, sp, h].map((r) => (r.status === 'fulfilled' ? r.value || [] : []));
+    });
+    if (res) {
+      const [cfgList, rewardList, spinList, historyList] = res;
       if (cfgList[0]) { setConfig({ ...emptyConfig, ...cfgList[0] }); setConfigId(cfgList[0].id); }
-      setRewards(rw.status === 'fulfilled' ? rw.value || [] : []);
-      setSpins(sp.status === 'fulfilled' ? sp.value || [] : []);
-      setHistory(h.status === 'fulfilled' ? h.value || [] : []);
-    } catch {} finally { setLoading(false); }
+      setRewards(rewardList);
+      setSpins(spinList);
+      setHistory(historyList);
+    }
+    setLoading(false);
   };
   useEffect(() => { if (user?.role === 'admin') load(); else setLoading(false); }, [user]);
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (user?.role !== 'admin') {
     return (

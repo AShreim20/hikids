@@ -1,9 +1,11 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Loader2, Sparkles } from 'lucide-react';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import { useSiteContent } from '@/context/SiteContentContext';
 import { upsertContent, loadContentRecord } from '@/lib/siteContent';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { useToast } from '@/components/ui/use-toast';
 import { categoryName } from '@/lib/bilingual';
 
@@ -24,17 +26,25 @@ export default function WorldOfPlaySelector() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
+  const { failure, guard } = useAdminLoadGuard();
+  const aliveRef = useRef(true);
+
+  // A failed load must not show an empty selection as the saved one (saving
+  // would overwrite it), so the selector is replaced by the notice.
+  const loadSelection = async () => {
+    setLoading(true);
+    const rec = await guard(() => loadContentRecord(KEY));
+    if (!aliveRef.current) return;
+    if (rec !== undefined) {
+      setSelected((rec?.data?.category_ids || []).filter((id) => categories.some((c) => c.id === id)));
+    }
+    setLoading(false);
+  };
+
   useEffect(() => {
-    let alive = true;
-    loadContentRecord(KEY)
-      .then((rec) => {
-        if (!alive) return;
-        setSelected((rec?.data?.category_ids || []).filter((id) => categories.some((c) => c.id === id)));
-      })
-      .catch(() => {})
-      .finally(() => { if (alive) setLoading(false); });
-    return () => { alive = false; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    aliveRef.current = true;
+    loadSelection();
+    return () => { aliveRef.current = false; };
   }, [categories]);
 
   const sorted = useMemo(
@@ -67,6 +77,8 @@ export default function WorldOfPlaySelector() {
   };
 
   if (!categories.length) return null;
+
+  if (failure) return <AdminLoadFailed inline failure={failure} onRetry={loadSelection} />;
 
   return (
     <div className="mt-8 rounded-3xl bg-card border border-border/60 p-5 sm:p-6">

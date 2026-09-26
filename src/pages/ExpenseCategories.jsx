@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Loader2, Lock, Search, Tag, X } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
@@ -23,21 +25,20 @@ export default function ExpenseCategories() {
   const [editing, setEditing] = useState(null);
   const [open, setOpen] = useState(false);
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = async () => {
     setLoading(true);
-    try {
-      const [cats, exp] = await Promise.all([
-        db.ExpenseCategory.list('sort_order', 200),
-        db.Expense.list('-expense_date', 500, 0, ['category_id']),
-      ]);
+    const res = await guard(() => Promise.all([
+      db.ExpenseCategory.list('sort_order', 200),
+      db.Expense.list('-expense_date', 500, 0, ['category_id']),
+    ]));
+    if (res) {
+      const [cats, exp] = res;
       setCategories(cats || []);
       setExpenses(exp || []);
-    } catch {
-      setCategories([]);
-      setExpenses([]);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -60,6 +61,8 @@ export default function ExpenseCategories() {
       .sort((a, b) => (a.sort_order || 0) - (b.sort_order || 0) || String(a.name).localeCompare(String(b.name)))
       .filter((c) => !term || String(c.name).toLowerCase().includes(term) || String(c.name_en || '').toLowerCase().includes(term));
   }, [categories, q]);
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (!allowed) {
     return (

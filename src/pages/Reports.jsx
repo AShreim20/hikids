@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lock, Loader2, BarChart3, Receipt, CreditCard, ShoppingCart, TrendingUp } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
@@ -39,27 +41,37 @@ export default function Reports() {
   const [expenseCategories, setExpenseCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user?.role !== 'admin') { setLoading(false); return; }
-    // allSettled: one failing list (e.g. an RLS/permission hiccup on a
-    // single entity) shouldn't blank out the rest of the report.
-    Promise.allSettled([
+  const { failure, guard } = useAdminLoadGuard();
+
+  const load = async () => {
+    setLoading(true);
+    // Every list feeds a displayed financial number (sales, COGS, payments,
+    // purchases, expenses), so all are required: any failure fails the whole
+    // load (expired session / error state) instead of a silently wrong report.
+    const res = await guard(() => Promise.all([
       db.Order.list('-created_date', 500),
       db.Product.list('-updated_date', 500),
       db.PurchaseOrder.list('-created_date', 500),
       db.SupplierTransaction.list('-created_date', 500),
       db.Expense.list('-expense_date', 500),
       db.ExpenseCategory.list('sort_order', 200),
-    ])
-      .then(([o, p, po, tx, exp, cat]) => {
-        setOrders(o.status === 'fulfilled' ? o.value || [] : []);
-        setProducts(p.status === 'fulfilled' ? p.value || [] : []);
-        setPos(po.status === 'fulfilled' ? po.value || [] : []);
-        setTxs(tx.status === 'fulfilled' ? tx.value || [] : []);
-        setExpenses(exp.status === 'fulfilled' ? exp.value || [] : []);
-        setExpenseCategories(cat.status === 'fulfilled' ? cat.value || [] : []);
-      })
-      .finally(() => setLoading(false));
+    ]));
+    if (res) {
+      const [o, p, po, tx, exp, cat] = res;
+      setOrders(o || []);
+      setProducts(p || []);
+      setPos(po || []);
+      setTxs(tx || []);
+      setExpenses(exp || []);
+      setExpenseCategories(cat || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    if (user?.role !== 'admin') { setLoading(false); return; }
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const productMap = useMemo(() => buildProductMap(products), [products]);
@@ -228,6 +240,8 @@ export default function Reports() {
       fileName: `purchases_${stamp}.xlsx`,
     };
   };
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (user?.role !== 'admin') {
     return (

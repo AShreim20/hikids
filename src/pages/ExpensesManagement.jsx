@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Loader2, Lock, Search, Receipt, X, Eye, FolderTree, FileSpreadsheet } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
@@ -48,13 +50,17 @@ export default function ExpensesManagement() {
   const [viewing, setViewing] = useState(null); // expense row | null (read-only)
   const [exportOpen, setExportOpen] = useState(false);
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = async () => {
     setLoading(true);
     try {
-      const [exp, cats] = await Promise.all([
+      const res = await guard(() => Promise.all([
         db.Expense.list('-expense_date', 500),
         db.ExpenseCategory.list('sort_order', 200),
-      ]);
+      ]));
+      if (!res) return;
+      const [exp, cats] = res;
       setExpenses(exp || []);
       setCategories(cats || []);
       // Best-effort: a non-admin staff member with only expenses.manage can't
@@ -65,9 +71,6 @@ export default function ExpensesManagement() {
       } catch {
         setProfiles([]);
       }
-    } catch {
-      setExpenses([]);
-      setCategories([]);
     } finally {
       setLoading(false);
     }
@@ -124,6 +127,8 @@ export default function ExpensesManagement() {
   }, [expenses, range, categoryFilter, q, categoryMap, sort]);
 
   const total = useMemo(() => filtered.reduce((s, e) => s + (Number(e.amount) || 0), 0), [filtered]);
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (!canView) {
     return (

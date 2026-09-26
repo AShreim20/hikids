@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Loader2, Lock, LayoutGrid, List, Copy, X, Link2, Search, EyeOff, FileSpreadsheet, Upload } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
@@ -52,12 +54,13 @@ export default function Admin() {
     localStorage.setItem('admin_products_view', v);
   };
 
-  const load = () => {
+  const { failure, guard } = useAdminLoadGuard();
+
+  const load = async () => {
     setLoading(true);
-    db.Product.list('-updated_date', 500)
-      .then(setProducts)
-      .catch(() => setProducts([]))
-      .finally(() => setLoading(false));
+    const rows = await guard(() => db.Product.list('-updated_date', 500));
+    if (rows) setProducts(rows);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -65,19 +68,28 @@ export default function Admin() {
     else setLoading(false);
   }, [user]);
 
-  useEffect(() => {
-    if (user?.role !== 'admin') { setFinLoading(false); return; }
-    Promise.allSettled([
+  // All three lists feed the displayed profit figures, so all are required: a
+  // failed one shows the load-failed screen instead of a wrong P&L.
+  const loadFinance = async () => {
+    setFinLoading(true);
+    const res = await guard(() => Promise.all([
       db.Order.list('-created_date', 500),
       db.Expense.list('-expense_date', 500),
       db.ExpenseCategory.list('sort_order', 200),
-    ])
-      .then(([o, exp, cat]) => {
-        setOrders(o.status === 'fulfilled' ? o.value || [] : []);
-        setExpenses(exp.status === 'fulfilled' ? exp.value || [] : []);
-        setExpenseCategories(cat.status === 'fulfilled' ? cat.value || [] : []);
-      })
-      .finally(() => setFinLoading(false));
+    ]));
+    if (res) {
+      const [o, exp, cat] = res;
+      setOrders(o || []);
+      setExpenses(exp || []);
+      setExpenseCategories(cat || []);
+    }
+    setFinLoading(false);
+  };
+
+  useEffect(() => {
+    if (user?.role !== 'admin') { setFinLoading(false); return; }
+    loadFinance();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const productMap = useMemo(() => buildProductMap(products), [products]);
@@ -94,6 +106,8 @@ export default function Admin() {
     () => profitLoss(orders, productMap, finRange, expenses, expenseCategories),
     [orders, productMap, finRange, expenses, expenseCategories]
   );
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={() => { load(); loadFinance(); }} />;
 
   if (user?.role !== 'admin') {
     return (

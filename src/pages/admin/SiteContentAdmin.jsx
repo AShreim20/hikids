@@ -7,6 +7,8 @@ import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/lib/AuthContext';
 import { useLanguage } from '@/context/LanguageContext';
 import { useSiteContent } from '@/context/SiteContentContext';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { upsertContent, loadContentRecord } from '@/lib/siteContent';
 import { DEFAULT_FAQ_ITEMS, DEFAULT_ABOUT } from '@/lib/siteDefaults';
 import { translations } from '@/context/translations';
@@ -50,9 +52,21 @@ export default function SiteContentAdmin() {
   const [group, setGroup] = useState(PAGE_GROUPS[0]);
   const [savingText, setSavingText] = useState(false);
 
+  const { failure, guard } = useAdminLoadGuard();
+
+  // The existing overrides are editable data: if they fail to load the page
+  // shows the load-failed screen (no editor, so no save can overwrite them with
+  // an empty set). A record that genuinely doesn't exist yet stays {en:{},ar:{}}.
+  const loadOverrides = async () => {
+    const r = await guard(() => loadContentRecord('i18n_overrides'));
+    if (r === undefined) return;
+    setOv(r?.data ? { en: r.data.en || {}, ar: r.data.ar || {} } : { en: {}, ar: {} });
+  };
+
   useEffect(() => {
-    loadContentRecord('i18n_overrides').then((r) => setOv(r?.data ? { en: r.data.en || {}, ar: r.data.ar || {} } : { en: {}, ar: {} })).catch(() => {});
-  }, []);
+    if (user?.role === 'admin') loadOverrides();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   const groupKeys = useMemo(() => keysForGroup(group), [group]);
   const setOvField = (lang, key, val) => setOv((o) => ({ ...o, [lang]: { ...o[lang], [key]: val } }));
@@ -95,6 +109,8 @@ export default function SiteContentAdmin() {
     catch (e) { toast({ title: e.message, variant: 'destructive' }); }
     setSavingAbout(false);
   };
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={loadOverrides} />;
 
   if (user?.role !== 'admin') {
     return (

@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Lock, Search } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import LoyaltySettingsForm from '@/components/loyalty/LoyaltySettingsForm';
@@ -39,15 +41,13 @@ export default function LoyaltyManagement() {
     redeemRate,
   };
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = async () => {
     setLoading(true);
-    try {
-      setAccounts(await db.LoyaltyAccount.list('-balance', 200));
-    } catch {
-      setAccounts([]);
-    } finally {
-      setLoading(false);
-    }
+    const rows = await guard(() => db.LoyaltyAccount.list('-balance', 200));
+    if (rows) setAccounts(rows);
+    setLoading(false);
   };
 
   useEffect(() => {
@@ -57,6 +57,8 @@ export default function LoyaltyManagement() {
       .then((rows) => { if (rows && rows.length) setRedeemRate(rows[0].value || 0.1); })
       .catch(() => {});
   }, [canView]);
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (!canView) {
     return (

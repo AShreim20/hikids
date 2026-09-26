@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Loader2, Plus, Trash2, X } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { useToast } from '@/components/ui/use-toast';
 import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
@@ -21,14 +23,25 @@ export default function AssistantAdminSettings() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    Promise.all([loadContentRecord(ASSISTANT_CONFIG_KEY).catch(() => null), db.Product.list('-updated_date', 500).catch(() => [])])
-      .then(([rec, prods]) => {
-        setCfg({ ...ASSISTANT_CONFIG_DEFAULT, ...(rec?.data || {}) });
-        setProducts(prods || []);
-      })
-      .finally(() => setLoading(false));
-  }, []);
+  const { failure, guard } = useAdminLoadGuard();
+
+  // The saved config is editable data: a failed load shows the notice instead of
+  // defaults (saving would overwrite it). The product list is only a picker and
+  // stays best-effort.
+  const load = async () => {
+    setLoading(true);
+    const [rec, prods] = await Promise.all([
+      guard(() => loadContentRecord(ASSISTANT_CONFIG_KEY)),
+      db.Product.list('-updated_date', 500).catch(() => []),
+    ]);
+    if (rec !== undefined) {
+      setCfg({ ...ASSISTANT_CONFIG_DEFAULT, ...(rec?.data || {}) });
+      setProducts(prods || []);
+    }
+    setLoading(false);
+  };
+
+  useEffect(() => { load(); }, []);
 
   const byId = useMemo(() => Object.fromEntries(products.map((p) => [p.id, p])), [products]);
   const matches = useMemo(() => {
@@ -59,6 +72,8 @@ export default function AssistantAdminSettings() {
       setSaving(false);
     }
   };
+
+  if (failure) return <AdminLoadFailed inline failure={failure} onRetry={load} />;
 
   if (loading) return <div className="mt-10 grid place-items-center py-16"><Loader2 className="w-8 h-8 animate-spin text-cosmic" /></div>;
 

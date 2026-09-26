@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lock, Search, ChevronRight, ChevronLeft, Inbox } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
@@ -48,24 +50,24 @@ export default function ReturnRequestsAdmin() {
     return id ? { id, name: params.get('name') || id } : null;
   });
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = async () => {
     setLoading(true);
-    try {
-      const [reqs, items, orders] = await Promise.all([
-        db.ReturnRequest.list('-created_date', 500),
-        db.ReturnRequestItem.list('-created_date', 2000),
-        db.Order.list('-created_date', 500),
-      ]);
+    const res = await guard(() => Promise.all([
+      db.ReturnRequest.list('-created_date', 500),
+      db.ReturnRequestItem.list('-created_date', 2000),
+      db.Order.list('-created_date', 500),
+    ]));
+    if (res) {
+      const [reqs, items, orders] = res;
       setRequests(reqs || []);
       const grouped = {};
       for (const it of items || []) (grouped[it.return_request_id] ||= []).push(it);
       setItemsByRequest(grouped);
       setOrdersById(Object.fromEntries((orders || []).map((o) => [o.id, o])));
-    } catch {
-      setRequests([]);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   useEffect(() => { if (allowed) load(); else setLoading(false); }, [allowed]);
@@ -88,6 +90,8 @@ export default function ReturnRequestsAdmin() {
   }, [requests, statusTab, typeFilter, q, ordersById, filterUser]);
 
   const Chevron = ar ? ChevronLeft : ChevronRight;
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (!allowed) {
     return (

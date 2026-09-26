@@ -18,6 +18,8 @@ import { buildProductMap, lineCogs } from '@/lib/reports';
 import { lineItemName } from '@/lib/bilingual';
 import { fetchAllRows, toExcelDate, todayStamp } from '@/lib/excelExportHelpers';
 import ExportExcelButton from '@/components/admin/ExportExcelButton';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 
 const TABS = ['all', ...MAIN_FLOW, 'cancelled', 'returns'];
 
@@ -42,13 +44,18 @@ export default function OrdersManagement() {
   });
 
   const allowed = can('orders.manage');
+  const { failure, guard } = useAdminLoadGuard();
+
+  const loadOrders = () => {
+    setLoading(true);
+    return guard(() => db.Order.list('-created_date', 500))
+      .then((rows) => { if (rows) setOrders(rows); })
+      .finally(() => setLoading(false));
+  };
 
   useEffect(() => {
     if (!allowed) { setLoading(false); return; }
-    db.Order.list('-created_date', 500)
-      .then(setOrders)
-      .catch(() => setOrders([]))
-      .finally(() => setLoading(false));
+    loadOrders();
     const unsubscribe = subscribeOrders((event) => {
       if (event.type === 'create') setOrders((prev) => [event.data, ...prev]);
       if (event.type === 'update') setOrders((prev) => prev.map((o) => (o.id === event.data.id ? event.data : o)));
@@ -201,6 +208,8 @@ export default function OrdersManagement() {
       fileName: `orders_${todayStamp()}.xlsx`,
     };
   };
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={loadOrders} />;
 
   if (!allowed) {
     return (

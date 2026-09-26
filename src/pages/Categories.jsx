@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Loader2, Lock, Search, Tag, X, Upload, ImageIcon, AlertTriangle, FileSpreadsheet } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { useToast } from '@/components/ui/use-toast';
 import { uploadFile } from '@/lib/uploadFile';
 import { Image } from '@/components/ui/image';
@@ -34,15 +36,18 @@ export default function Categories() {
   const [open, setOpen] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
 
+  const { failure, guard } = useAdminLoadGuard();
+
+  const loadProducts = async () => {
+    setLoading(true);
+    const rows = await guard(() => db.Product.list('-updated_date', 500));
+    if (rows) setProducts(rows);
+    setLoading(false);
+  };
+
   useEffect(() => {
-    if (user?.role === 'admin') {
-      db.Product.list('-updated_date', 500)
-        .then(setProducts)
-        .catch(() => setProducts([]))
-        .finally(() => setLoading(false));
-    } else {
-      setLoading(false);
-    }
+    if (user?.role === 'admin') loadProducts();
+    else setLoading(false);
   }, [user]);
 
   const counts = useMemo(() => {
@@ -63,6 +68,8 @@ export default function Categories() {
     if (!term) return null;
     return (c) => String(c.name).toLowerCase().includes(term) || String(c.name_en || '').toLowerCase().includes(term);
   }, [q]);
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={loadProducts} />;
 
   if (user?.role !== 'admin') {
     return (

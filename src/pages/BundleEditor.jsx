@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Loader2, Lock, X, ImagePlus, Trash2, Plus, Minus } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { uploadFile } from '@/lib/uploadFile';
 import { Image } from '@/components/ui/image';
 import Navbar from '@/components/Navbar';
@@ -42,14 +44,16 @@ export default function BundleEditor() {
 
   const set = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
-  useEffect(() => {
-    db.Product.list('-updated_date', 500).then(setProducts).catch(() => setProducts([]));
-    if (isNew) {
-      baselineRef.current = EMPTY;
-      setLoading(false);
-    } else {
-      db.Bundle.get(id)
-        .then((b) => {
+  const { failure, guard } = useAdminLoadGuard();
+
+  // A failed load must not leave the editor on blank defaults (saving would
+  // overwrite the real bundle), so the bundle itself goes through the guard.
+  const loadBundle = () => {
+    setLoading(true);
+    guard(() => db.Bundle.get(id))
+      .then((b) => {
+        if (b === undefined) return;
+        try {
           const next = {
             ...EMPTY,
             ...b,
@@ -60,9 +64,21 @@ export default function BundleEditor() {
           };
           baselineRef.current = next;
           setForm(next);
-        })
-        .catch(() => toast({ title: ar ? 'الحزمة غير موجودة' : 'Bundle not found', variant: 'destructive' }))
-        .finally(() => setLoading(false));
+        } catch {
+          toast({ title: ar ? 'الحزمة غير موجودة' : 'Bundle not found', variant: 'destructive' });
+        }
+      })
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    // The product picker is secondary: an empty picker is not a misleading primary state.
+    db.Product.list('-updated_date', 500).then(setProducts).catch(() => setProducts([]));
+    if (isNew) {
+      baselineRef.current = EMPTY;
+      setLoading(false);
+    } else {
+      loadBundle();
     }
   }, [id, isNew]);
 
@@ -162,6 +178,8 @@ export default function BundleEditor() {
       setSaving(false);
     }
   };
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={loadBundle} />;
 
   if (user?.role !== 'admin') {
     return (

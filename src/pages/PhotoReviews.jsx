@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Lock, Loader2, Check, X, Camera, Star, Settings as SettingsIcon } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { Image } from '@/components/ui/image';
 import Navbar from '@/components/Navbar';
@@ -30,13 +32,17 @@ export default function PhotoReviews() {
   const [savingPoints, setSavingPoints] = useState(false);
   const [busy, setBusy] = useState({});
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = async () => {
     setLoading(true);
     try {
-      const [rows, pts] = await Promise.all([
+      const res = await guard(() => Promise.all([
         db.Review.filter({ status: 'pending' }, '-created_date', 200),
         getSetting(REWARD_KEY, DEFAULT_POINTS),
-      ]);
+      ]));
+      if (!res) return;
+      const [rows, pts] = res;
       const list = (rows || []).filter((r) => !!r.photo_url);
       setPending(list);
       setRewardPoints(Number(pts) || 0);
@@ -57,6 +63,8 @@ export default function PhotoReviews() {
   useEffect(() => { if (user?.role === 'admin' || (user && (user.permissions || []).length)) load(); else setLoading(false); }, [user]);
 
   const canReview = user && (user.role === 'admin' || (user.permissions || []).includes('loyalty.add'));
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (!canReview) {
     return (

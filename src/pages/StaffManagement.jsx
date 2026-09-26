@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Lock, ShieldCheck, Send, Save } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
@@ -24,13 +26,18 @@ export default function StaffManagement() {
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviting, setInviting] = useState(false);
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = async () => {
     setLoading(true);
     try {
-      const [u, l] = await Promise.all([
+      // Profiles are primary; the audit log stays best-effort.
+      const res = await guard(() => Promise.all([
         db.Profile.list('-created_at', 100),
         db.AuditLog.list('-created_date', 50).catch(() => []),
-      ]);
+      ]));
+      if (!res) return;
+      const [u, l] = res;
       setUsers(u);
       setLogs(l);
       const d = {};
@@ -38,9 +45,6 @@ export default function StaffManagement() {
         d[x.id] = { role: x.role, permissions: permsOf(x) };
       });
       setDraft(d);
-    } catch {
-      setUsers([]);
-      setLogs([]);
     } finally {
       setLoading(false);
     }
@@ -50,6 +54,8 @@ export default function StaffManagement() {
     if (isOwner) load();
     else setLoading(false);
   }, [isOwner]);
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (!isOwner) {
     return (

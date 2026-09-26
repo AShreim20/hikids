@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2, Lock, Phone, Mail, Search, Trophy, Ticket, Package, Sparkles } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/lib/AuthContext';
@@ -36,12 +38,13 @@ export default function WheelWinners() {
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = async () => {
     setLoading(true);
-    db.WheelSpin.list('-created_date', 500)
-      .then(setSpins)
-      .catch(() => setSpins([]))
-      .finally(() => setLoading(false));
+    const rows = await guard(() => db.WheelSpin.list('-created_date', 500));
+    if (rows) setSpins(rows);
+    setLoading(false);
   };
   useEffect(() => { if (user?.role === 'admin') load(); else setLoading(false); }, [user]);
 
@@ -92,6 +95,8 @@ export default function WheelWinners() {
       fileName: `wheel-winners_${todayStamp()}.xlsx`,
     };
   };
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (user?.role !== 'admin') {
     return (

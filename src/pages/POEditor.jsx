@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Lock, Save, Send } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
@@ -67,6 +69,26 @@ export default function POEditor() {
     setTxs(tx || []);
   };
 
+  const { failure, guard } = useAdminLoadGuard();
+
+  // A failed load must not leave the editor on blank defaults (saving would
+  // overwrite the real order), so the order itself goes through the guard.
+  const loadOrder = () => {
+    setLoading(true);
+    guard(() => db.PurchaseOrder.get(id))
+      .then((po) => {
+        if (po === undefined) return;
+        try {
+          const next = { ...EMPTY, ...po, paid_amount: po.paid_amount ?? '' };
+          baselineRef.current = next;
+          setForm(next);
+        } catch {
+          toast({ title: ar ? 'الأمر غير موجود' : 'Order not found', variant: 'destructive' });
+        }
+      })
+      .finally(() => setLoading(false));
+  };
+
   useEffect(() => {
     loadMeta();
     if (isNew) {
@@ -80,21 +102,15 @@ export default function POEditor() {
       });
       setLoading(false);
     } else {
-      setLoading(true);
-      db.PurchaseOrder.get(id)
-        .then((po) => {
-          const next = { ...EMPTY, ...po, paid_amount: po.paid_amount ?? '' };
-          baselineRef.current = next;
-          setForm(next);
-        })
-        .catch(() => toast({ title: ar ? 'الأمر غير موجود' : 'Order not found', variant: 'destructive' }))
-        .finally(() => setLoading(false));
+      loadOrder();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isNew]);
 
   const isDirty = useMemo(() => !snapshotsEqual(form, baselineRef.current), [form]);
   const { confirmOpen, stay, leave } = useUnsavedChangesGuard(isDirty);
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={loadOrder} />;
 
   if (user?.role !== 'admin') {
     return (

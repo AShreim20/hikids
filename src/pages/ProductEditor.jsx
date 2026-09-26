@@ -2,6 +2,8 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, Loader2, Lock, Eye } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { invokeFunction } from '@/lib/supabaseFunctions';
 import { useToast } from '@/components/ui/use-toast';
 import Navbar from '@/components/Navbar';
@@ -122,6 +124,8 @@ export default function ProductEditor() {
   // restore silently) from a stale one (someone saved again since).
   const serverUpdatedDateRef = useRef(null);
 
+  const { failure, guard } = useAdminLoadGuard();
+
   useEffect(() => {
     if (isNew) {
       hydratedIdRef.current = 'new';
@@ -133,9 +137,18 @@ export default function ProductEditor() {
       return;
     }
     if (hydratedIdRef.current === id) return;
+    loadProduct();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, isNew]);
+
+  // A failed load must not leave the editor on blank defaults (saving would
+  // overwrite the real product), so the product itself goes through the guard.
+  const loadProduct = () => {
     setLoading(true);
-    db.Product.get(id)
+    guard(() => db.Product.get(id))
       .then((p) => {
+        if (p === undefined) return;
+        try {
         const serverForm = productToForm(p);
         hydratedIdRef.current = id;
         baselineRef.current = serverForm;
@@ -156,11 +169,12 @@ export default function ProductEditor() {
         } else {
           setForm(serverForm);
         }
+        } catch {
+          toast({ title: lang === 'ar' ? 'المنتج غير موجود' : 'Product not found', variant: 'destructive' });
+        }
       })
-      .catch(() => toast({ title: lang === 'ar' ? 'المنتج غير موجود' : 'Product not found', variant: 'destructive' }))
       .finally(() => setLoading(false));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, isNew]);
+  };
 
   const isDirty = useMemo(() => !snapshotsEqual(form, baselineRef.current), [form]);
 
@@ -175,6 +189,8 @@ export default function ProductEditor() {
   }, [form, isDirty, loading, draftId]);
 
   const { confirmOpen, stay, leave } = useUnsavedChangesGuard(isDirty, () => clearDraft('product', draftId));
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={loadProduct} />;
 
   if (user?.role !== 'admin') {
     return (

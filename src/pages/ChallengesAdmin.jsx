@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Plus, Pencil, Trash2, Loader2, Lock, Trophy, X, Check, Image as ImageIcon, FileSpreadsheet } from 'lucide-react';
 import { db } from '@/api/entities';
+import { useAdminLoadGuard } from '@/hooks/useAdminLoadGuard';
+import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { challengesReview } from '@/lib/challengeFunctions';
 import { Image } from '@/components/ui/image';
 import { useToast } from '@/components/ui/use-toast';
@@ -41,22 +43,33 @@ export default function ChallengesAdmin() {
   const [editing, setEditing] = useState(null);
   const [exportOpen, setExportOpen] = useState(false);
 
+  const { failure, guard } = useAdminLoadGuard();
+
   const load = async () => {
     setLoading(true);
-    try {
+    // The challenge list is the primary fetch: if it fails the whole load fails
+    // (expired session / error state). The secondary lists stay best-effort.
+    const res = await guard(async () => {
       const [chs, s, p, h] = await Promise.allSettled([
         db.Challenge.list('-updated_date', 200),
         db.ChallengeSubmission.filter({ status: 'pending' }),
         db.ChallengeProgress.list('-created_date', 500),
         db.RewardHistory.filter({ source: 'challenge' }),
       ]);
-      setChallenges(chs.status === 'fulfilled' ? chs.value || [] : []);
-      setSubs(s.status === 'fulfilled' ? s.value || [] : []);
-      setProgress(p.status === 'fulfilled' ? p.value || [] : []);
-      setHistory(h.status === 'fulfilled' ? h.value || [] : []);
-    } catch {} finally { setLoading(false); }
+      if (chs.status === 'rejected') throw chs.reason;
+      return [chs, s, p, h].map((r) => (r.status === 'fulfilled' ? r.value || [] : []));
+    });
+    if (res) {
+      setChallenges(res[0]);
+      setSubs(res[1]);
+      setProgress(res[2]);
+      setHistory(res[3]);
+    }
+    setLoading(false);
   };
   useEffect(() => { if (user?.role === 'admin') load(); else setLoading(false); }, [user]);
+
+  if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 
   if (user?.role !== 'admin') {
     return (
