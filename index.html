@@ -14,9 +14,12 @@
     <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;500;600;700;800&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet" />
     <!-- Description matches the store's actual current capability — card
          payment is toggled off store-wide right now (see the trust-strip
-         batch's finding), so this no longer claims "pay by card". -->
-    <meta name="description" content="HiKids — a gallery of wonder. Curated premium toys for sophisticated play. Order online, cash on delivery." />
-    <title>HiKids — A Gallery of Wonder</title>
+         batch's finding), so this no longer claims "pay by card". Title and
+         description are bilingual (Latin + Arabic brand name, Palestine) so
+         Arabic searches can match this static shell; the og:/twitter: tags
+         below repeat the same strings. -->
+    <meta name="description" content="HiKids (هاي كيدز) – curated premium toys for kids in Palestine. Order online, cash on delivery. متجر ألعاب أطفال في فلسطين – الدفع عند الاستلام." />
+    <title>HiKids | هاي كيدز – ألعاب أطفال في فلسطين</title>
 
     <!-- Homepage/default social + search metadata, hardcoded to the production
          origin (www is primary; the apex redirects to it). Not Vite's %ENV%
@@ -31,15 +34,31 @@
     <link rel="canonical" href="https://www.hikids-ps.com/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="HiKids" />
-    <meta property="og:title" content="HiKids — A Gallery of Wonder" />
-    <meta property="og:description" content="Curated premium toys for sophisticated play. Order online, cash on delivery." />
+    <meta property="og:title" content="HiKids | هاي كيدز – ألعاب أطفال في فلسطين" />
+    <meta property="og:description" content="HiKids (هاي كيدز) – curated premium toys for kids in Palestine. Order online, cash on delivery. متجر ألعاب أطفال في فلسطين – الدفع عند الاستلام." />
     <meta property="og:image" content="https://media.base44.com/images/public/6a75c91fa5dfe02359c5f127/7971fd204_HiKidsLogo.webp" />
     <meta property="og:url" content="https://www.hikids-ps.com/" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="HiKids — A Gallery of Wonder" />
-    <meta name="twitter:description" content="Curated premium toys for sophisticated play. Order online, cash on delivery." />
+    <meta name="twitter:title" content="HiKids | هاي كيدز – ألعاب أطفال في فلسطين" />
+    <meta name="twitter:description" content="HiKids (هاي كيدز) – curated premium toys for kids in Palestine. Order online, cash on delivery. متجر ألعاب أطفال في فلسطين – الدفع عند الاستلام." />
     <meta name="twitter:image" content="https://media.base44.com/images/public/6a75c91fa5dfe02359c5f127/7971fd204_HiKidsLogo.webp" />
     <meta name="robots" content="index, follow" />
+
+    <!-- Brand entity for search engines: name (Latin + Arabic), logo and the
+         social profiles that identify this store. Static like the tags above
+         (JS-injected markup is read later and less reliably); keep sameAs in
+         step with the social links saved in admin site settings. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Organization",
+        "name": "HiKids",
+        "alternateName": "هاي كيدز",
+        "url": "https://www.hikids-ps.com/",
+        "logo": "https://media.base44.com/images/public/6a75c91fa5dfe02359c5f127/7971fd204_HiKidsLogo.webp",
+        "sameAs": ["https://www.instagram.com/hi_kids.ps/"]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>
