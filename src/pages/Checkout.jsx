@@ -24,6 +24,11 @@ import { useIsMobile } from '@/hooks/use-mobile';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// No real card payment gateway is integrated yet. Card checkout stays hidden and
+// can never be selected or submitted regardless of the admin "Card Payment"
+// setting. Flip this to true only once a gateway confirms charges server-side.
+const CARD_PAYMENT_AVAILABLE = false;
+
 const CARD_TYPES = [
   { key: 'visa', label: 'Visa', badge: 'bg-[#1A1F71]', dot: 'bg-[#1A1F71]' },
   { key: 'mastercard', label: 'Mastercard', badge: 'bg-[#EB001B]', dot: 'bg-[#EB001B]' },
@@ -56,7 +61,7 @@ export default function Checkout() {
   const [form, setForm] = useState({ name: '', email: '', address: '', phone: '' });
   const [phoneCountry, setPhoneCountry] = useState('ps');
   const [giftMessage, setGiftMessage] = useState('');
-  const [payment, setPayment] = useState('card');
+  const [payment, setPayment] = useState(CARD_PAYMENT_AVAILABLE ? 'card' : 'cod');
   const [cardType, setCardType] = useState('visa');
   const [card, setCard] = useState({ name: '', number: '', expiry: '', cvc: '' });
   const [placing, setPlacing] = useState(false);
@@ -75,7 +80,8 @@ export default function Checkout() {
   const [useFreeDelivery, setUseFreeDelivery] = useState(false);
   const [loyaltyBalance, setLoyaltyBalance] = useState(0);
   const [loyaltyRate, setLoyaltyRate] = useState(0.1);
-  const [cardEnabled, setCardEnabled] = useState(true);
+  const [cardSettingOn, setCardSettingOn] = useState(true);
+  const cardEnabled = CARD_PAYMENT_AVAILABLE && cardSettingOn;
   const [confirmOpen, setConfirmOpen] = useState(false);
   // Stable per-checkout key so a retried submit can never spend points twice.
   const [checkoutKey] = useState(() => `co-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`);
@@ -105,7 +111,7 @@ export default function Checkout() {
         .then((r) => setFreeDeliverySpin((r || []).find((x) => !x.expires_at || new Date(x.expires_at) >= new Date()) || null))
         .catch(() => {});
     }
-    getSetting('visa_payment_enabled', 1).then((v) => setCardEnabled(!!v)).catch(() => {});
+    getSetting('visa_payment_enabled', 1).then((v) => setCardSettingOn(!!v)).catch(() => {});
   }, [user]);
 
   // If the selected card type is no longer available, fall back to the first.
@@ -204,6 +210,12 @@ export default function Checkout() {
 
   const placeOrder = async () => {
     if (placing) return; // guard against duplicate submission
+    if (payment === 'card' && !cardEnabled) {
+      setPayment('cod');
+      toast({ title: ar ? 'الدفع بالبطاقة غير متاح حاليًا' : 'Card payment is not available right now', variant: 'destructive' });
+      setConfirmOpen(false);
+      return;
+    }
     if (!validate()) return;
     setPlacing(true);
     let reserved = false;
@@ -291,23 +303,28 @@ export default function Checkout() {
         phone: fullPhone,
         payment_method: payment,
         status: 'new',
-        payment_status: payment === 'card' || payment === 'loyalty' ? 'paid' : 'unpaid',
+        // Only loyalty-point payment is settled at insert time (RLS enforces this);
+        // no card gateway exists, so nothing else may ever be recorded as paid here.
+        payment_status: payment === 'loyalty' ? 'paid' : 'unpaid',
         gift_message: giftMessage.trim() || undefined,
       }, { returning: false });
 
       // Recompute every price/total server-side from the real product, category,
       // delivery, discount and loyalty records so a forged client payload can
-      // never lower what the customer pays. A thrown exception (network
-      // hiccup, dropped response) stays non-blocking, matching commitOrderStock's
-      // retry-friendly resilience below — but an explicit {success:false} is a
-      // deliberate, deterministic rejection (bad bundle, forbidden, order not
-      // found) and must stop checkout, or server-side price verification would
-      // have no effect at all.
+      // never lower what the customer pays. Stock is committed ONLY when
+      // secure_order explicitly confirms success: a thrown error, timeout, or
+      // any other response shape stops checkout (commit_order_stock also
+      // refuses unsecured orders server-side). secure_order is idempotent, so
+      // one retry after a lost response is safe.
       let secureResult = null;
       try {
         secureResult = await secureOrder(orderId);
-      } catch { /* transient failure — non-blocking */ }
-      if (secureResult && secureResult.success === false) {
+      } catch {
+        try {
+          secureResult = await secureOrder(orderId);
+        } catch { secureResult = null; }
+      }
+      if (!secureResult || secureResult.success !== true) {
         if (reserved) {
           await releaseLoyaltyPoints(checkoutKey).catch(() => {});
         }
