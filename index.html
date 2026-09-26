@@ -18,25 +18,23 @@
     <meta name="description" content="HiKids — a gallery of wonder. Curated premium toys for sophisticated play. Order online, cash on delivery." />
     <title>HiKids — A Gallery of Wonder</title>
 
-    <!-- Homepage/default social + search metadata. https://example.com is a
-         placeholder — Vite's %ENV% HTML replacement leaves the literal token
-         in the output when the var is unset at build time (verified), which
-         would be a worse broken canonical than a clearly-fake domain, so
-         this is a plain hardcoded placeholder instead: once the production
-         domain is registered, replace both example.com URLs below (and set
-         VITE_SITE_URL in Vercel, which src/lib/siteUrl.js and the
-         middleware/api functions already read for everything else). This is
-         also what a non-JS crawler (Facebook/WhatsApp/etc.) sees for every
-         route OTHER than /product/:id, which has its own dynamic snapshot
-         from middleware.js — an honest, disclosed limitation for
+    <!-- Homepage/default social + search metadata, hardcoded to the production
+         origin (www is primary; the apex redirects to it). Not Vite's %ENV%
+         HTML replacement: it leaves the literal token in the output when the
+         var is unset at build time, which would be a worse broken canonical.
+         Everything else reads VITE_SITE_URL (src/lib/siteUrl.js, middleware,
+         api/), so keep that set to the same origin in Vercel. This is also
+         what a non-JS crawler (Facebook/WhatsApp/etc.) sees for every route
+         OTHER than /product/:id, which has its own dynamic snapshot from
+         middleware.js — an honest, disclosed limitation for
          Shop/Bundles/FAQ/etc. rather than a per-page dynamic solution. -->
-    <link rel="canonical" href="https://example.com/" />
+    <link rel="canonical" href="https://www.hikids-ps.com/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="HiKids" />
     <meta property="og:title" content="HiKids — A Gallery of Wonder" />
     <meta property="og:description" content="Curated premium toys for sophisticated play. Order online, cash on delivery." />
     <meta property="og:image" content="https://media.base44.com/images/public/6a75c91fa5dfe02359c5f127/7971fd204_HiKidsLogo.webp" />
-    <meta property="og:url" content="https://example.com/" />
+    <meta property="og:url" content="https://www.hikids-ps.com/" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="HiKids — A Gallery of Wonder" />
     <meta name="twitter:description" content="Curated premium toys for sophisticated play. Order online, cash on delivery." />
