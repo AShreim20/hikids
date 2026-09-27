@@ -10,6 +10,8 @@ import { useLanguage } from '@/context/LanguageContext';
 import { useCategories } from '@/context/CategoryContext';
 import { priceInfo } from '@/lib/pricing';
 import { productName } from '@/lib/bilingual';
+import { gaEvent } from '@/lib/ga4';
+import { productToGAItem } from '@/lib/ga4Items';
 import { ageLabels } from '@/lib/ages';
 import { hasVariants, getVariants, isSellable } from '@/lib/variants';
 import SaleBadge from '@/components/SaleBadge';
@@ -78,8 +80,16 @@ export default function ProductCard({ product, large = false, avgRating = 0, rev
     toggle(product);
   };
 
+  // Fires once per genuine click on the card (never on hover, render, or the
+  // wishlist/add-to-cart buttons, which stop propagation before this could
+  // ever run) — the navigation itself is untouched, this only reports it.
+  const handleSelect = () => {
+    const item = productToGAItem(product, lang);
+    if (item) gaEvent('select_item', { items: [item] });
+  };
+
   return (
-    <Link to={`/product/${product.id}`} className="group block float-in">
+    <Link to={`/product/${product.id}`} onClick={handleSelect} className="group block float-in">
       <div
         className={`relative overflow-hidden ${compact ? 'rounded-2xl aspect-square' : `rounded-[2rem] ${large ? 'aspect-[4/5] md:aspect-[4/4.5]' : 'aspect-[4/5]'}`} bg-mist shadow-[0_18px_50px_-20px_rgba(26,26,30,0.25)] ring-1 ring-black/0 transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-[0_30px_70px_-24px_rgba(26,26,30,0.4)] group-hover:ring-black/5`}
       >

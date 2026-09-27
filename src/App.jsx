@@ -10,6 +10,7 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import UserNotRegisteredError from '@/components/UserNotRegisteredError';
 import ScrollToTop from './components/ScrollToTop';
 import RouteMeta from './components/RouteMeta';
+import GAPageView from './components/GAPageView';
 import MobileNav from './components/MobileNav';
 import ChatWidget from './components/ai/ChatWidget';
 import WhatsAppButton from './components/WhatsAppButton';
@@ -95,6 +96,7 @@ function AnimatedRoutes() {
   const routes = (
     <>
     <RouteMeta />
+    <GAPageView />
     <Routes location={location}>
       {/* Add your page Route elements here */}
       <Route path="/" element={<Home />} />

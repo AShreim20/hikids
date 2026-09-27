@@ -17,7 +17,9 @@ import { useCategories } from '@/context/CategoryContext';
 import { useToast } from '@/components/ui/use-toast';
 import { useAuth } from '@/lib/AuthContext';
 import { priceInfo } from '@/lib/pricing';
-import { productName, productDescription, productFeatures } from '@/lib/bilingual';
+import { productName, productDescription, productFeatures, productMaterial } from '@/lib/bilingual';
+import { gaEvent } from '@/lib/ga4';
+import { productToGAItem } from '@/lib/ga4Items';
 import { ageLabelList } from '@/lib/ages';
 import { loadPreviewSnapshot } from '@/lib/sessionDraft';
 import VariantSelector from '@/components/product/VariantSelector';
@@ -129,10 +131,12 @@ export default function ProductDetail({ preview = false }) {
       .then((p) => {
         setProduct(p);
         setSelection(p ? defaultSelection(p) : {});
-        // Base44's platform analytics.track() had no Supabase equivalent and
-        // nothing in the app reads this event back (Insights/Analytics.jsx
-        // uses the separate gaInsights/GA4 integration) — dropped rather than
-        // ported.
+        // Base44's platform analytics.track() had no Supabase equivalent at
+        // the time (Insights/Analytics.jsx is a separate, still-unconnected
+        // Reporting-API dashboard) — this is the GA4 replacement, firing
+        // once per real product load, never in preview mode (a preview may
+        // show unsaved edits or an unpublished draft, never counted).
+        if (p) gaEvent('view_item', { items: [productToGAItem(p, lang)] });
       })
       .catch(() => setProduct(null))
       .finally(() => setLoading(false));
@@ -213,7 +217,7 @@ export default function ProductDetail({ preview = false }) {
   // versa only when the active language's list is empty); an empty result
   // means the section renders nothing at all, never an empty heading/card.
   const features = productFeatures(product, lang);
-  const materialText = (product.material || '').trim();
+  const materialText = productMaterial(product, lang);
 
   // Keeps the selection on a real combination: if the picked value breaks the
   // current one, snap the other options to the first sellable match.

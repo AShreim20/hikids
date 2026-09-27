@@ -25,6 +25,8 @@ import { supabase } from '@/api/supabaseClient';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { SITE_URL } from '@/lib/siteUrl';
 import { parseGenderParam, GENDER_MALE, GENDER_FEMALE } from '@/lib/gender';
+import { gaEvent } from '@/lib/ga4';
+import { productsToGAItems } from '@/lib/ga4Items';
 
 const SORTS = [
   { id: 'featured', label: 'plp.sortFeatured' },
@@ -169,6 +171,18 @@ export default function Shop() {
   });
   const pageData = pageDataRaw || { items: [], total: null, hasMore: false };
 
+  // Fires once per real product list actually shown (a new page, a changed
+  // filter/sort/search all produce a new `pageData.items` reference from
+  // react-query — a plain re-render with the same result does not), never
+  // while still loading and never for an empty result.
+  useEffect(() => {
+    if (loading || pageData.items.length === 0) return;
+    gaEvent('view_item_list', {
+      item_list_name: search ? (ar ? 'نتائج البحث' : 'Search Results') : (ar ? 'المتجر' : 'Shop'),
+      items: productsToGAItems(pageData.items, lang),
+    });
+  }, [pageData.items]);
+
   const priceActive = !!price && (price[0] !== priceBounds[0] || price[1] !== priceBounds[1]);
   const hasActive = cats.length > 0 || ages.length > 0 || !!gender || !!search || priceActive || onSale;
   const activeCount = cats.length + ages.length + (gender ? 1 : 0) + (priceActive ? 1 : 0) + (onSale ? 1 : 0);
@@ -230,6 +244,10 @@ export default function Shop() {
     const id = setTimeout(() => {
       setUrlParam('search', term);
       setPage(1);
+      // A genuine customer search — the debounce above already means this
+      // only fires once typing settles, never per keystroke, and only when
+      // the term actually changed.
+      if (term) gaEvent('search', { search_term: term });
     }, 400);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Minus, Plus, Trash2, ArrowRight, ArrowLeft, Package } from 'lucide-react';
 import { Image } from '@/components/ui/image';
@@ -11,6 +11,8 @@ import { lineItemName } from '@/lib/bilingual';
 import ShareCartButton from '@/components/cart/ShareCartButton';
 import TrustStrip from '@/components/TrustStrip';
 import { resolveCheckoutItems, cartLineTotal } from '@/lib/cartSelection';
+import { gaEvent, GA_CURRENCY } from '@/lib/ga4';
+import { cartLinesToGAItems } from '@/lib/ga4Items';
 import { Checkbox } from '@/components/ui/checkbox';
 import MobileCartView from '@/components/cart/MobileCartView';
 import { useIsMobile } from '@/hooks/use-mobile';
@@ -113,6 +115,21 @@ export default function Cart() {
     setCheckoutSelection(selected.size > 0 ? new Set(selected) : null);
     navigate('/checkout');
   };
+
+  // Fires once per real visit to a non-empty cart page — never on every
+  // qty/selection change while the customer is still on this same visit
+  // (the ref, not `items`, is what guards that; the empty-cart early return
+  // below never gets a real item list to report anyway).
+  const viewedCartRef = useRef(false);
+  useEffect(() => {
+    if (viewedCartRef.current || items.length === 0) return;
+    viewedCartRef.current = true;
+    gaEvent('view_cart', {
+      currency: GA_CURRENCY,
+      value: Math.round(cartLineTotal(items) * 100) / 100,
+      items: cartLinesToGAItems(items, lang),
+    });
+  }, [items]);
 
   // Re-check inventory when the cart opens and adjust any lines that sold out
   // or dropped below the requested quantity while the customer was away.

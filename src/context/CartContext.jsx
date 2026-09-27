@@ -2,11 +2,15 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { db } from '@/api/entities';
 import { supabase } from '@/api/supabaseClient';
 import { variantLabel } from '@/lib/variants';
+import { useLanguage } from '@/context/LanguageContext';
+import { gaEvent, GA_CURRENCY } from '@/lib/ga4';
+import { cartLineToGAItem } from '@/lib/ga4Items';
 
 const CartContext = createContext(null);
 const STORAGE_KEY = 'hikids_cart_v1';
 
 export function CartProvider({ children }) {
+  const { lang } = useLanguage();
   const [items, setItems] = useState(() => {
     try {
       return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
@@ -41,6 +45,17 @@ export function CartProvider({ children }) {
   // cart. Lives in memory only; it is not persisted and clears after the order.
   const [checkoutSelection, setCheckoutSelection] = useState(null);
 
+  // Fires the matching GA4 cart event for ONE real, already-computed quantity
+  // change — never for an unrelated rerender or a call that ended up adding/
+  // removing nothing (every call site below only invokes this with a genuine
+  // qty delta already confirmed > 0).
+  const fireCartEvent = (name, line, qty) => {
+    if (qty <= 0) return;
+    const item = cartLineToGAItem({ ...line, qty }, lang);
+    if (!item) return;
+    gaEvent(name, { currency: GA_CURRENCY, value: Math.round(item.price * qty * 100) / 100, items: [item] });
+  };
+
   // `variant` (optional) is the selected variant combination — its exact
   // details are snapshotted into the cart line so later product edits don't
   // change what was bought.
@@ -74,6 +89,7 @@ export function CartProvider({ children }) {
         {
           lineId,
           id: product.id,
+          product_code: product.product_code || null,
           name: product.name,
           name_en: product.name_en || '',
           price: price != null ? price : (product.sale_price ?? product.price),
@@ -87,7 +103,13 @@ export function CartProvider({ children }) {
         },
       ];
     });
-    return { added: Math.max(0, finalQty - before), available: Number.isFinite(available) ? available : null, requested: qty, capped, finalQty };
+    const added = Math.max(0, finalQty - before);
+    fireCartEvent('add_to_cart', {
+      product_code: product.product_code, id: product.id, name: product.name, name_en: product.name_en,
+      price: price != null ? price : (product.sale_price ?? product.price),
+      variant_label: variant ? variantLabel(variant.attributes) : null,
+    }, added);
+    return { added, available: Number.isFinite(available) ? available : null, requested: qty, capped, finalQty };
   };
 
   // A bundle is one purchasable package from the customer's perspective.
@@ -105,6 +127,7 @@ export function CartProvider({ children }) {
   const addBundle = (bundle, qty = 1, price, components, available = null) => {
     const lineId = `bundle::${bundle.id}`;
     const max = Number.isFinite(available) ? Math.max(0, available) : Infinity;
+    const before = items.find((i) => i.lineId === lineId)?.qty || 0;
     setItems((prev) => {
       const existing = prev.find((i) => i.lineId === lineId);
       if (existing) {
@@ -125,6 +148,7 @@ export function CartProvider({ children }) {
           bundle_id: bundle.id,
           is_bundle: true,
           name: bundle.name,
+          name_en: bundle.name_en,
           price,
           image_url: bundle.image_url,
           qty: finalQty,
@@ -133,17 +157,38 @@ export function CartProvider({ children }) {
         },
       ];
     });
+    const finalQty = Number.isFinite(max) ? Math.min(before + qty, max) : before + qty;
+    fireCartEvent('add_to_cart', {
+      bundle_id: bundle.id, id: bundle.id, name: bundle.name, name_en: bundle.name_en, price, is_bundle: true,
+    }, Math.max(0, finalQty - before));
   };
 
-  const removeItem = (lineId) =>
+  const removeItem = (lineId) => {
+    const line = items.find((i) => (i.lineId || i.id) === lineId);
     setItems((prev) => prev.filter((i) => (i.lineId || i.id) !== lineId));
+    if (line) fireCartEvent('remove_from_cart', line, line.qty);
+  };
 
   // Bulk-remove several cart lines at once (by their lineId). Used by the
   // cart's "Delete Selected" action — lines not in the set are left intact.
-  const removeItems = (lineIds) => {
+  // NOT used for the "order placed" cleanup in Checkout.jsx: those lines were
+  // purchased, not removed, so that call site skips this analytics path (see
+  // the dedicated `purchase` event fired there instead).
+  const removeItems = (lineIds, { trackRemoval = true } = {}) => {
     const set = new Set(lineIds);
     if (set.size === 0) return;
+    const removed = trackRemoval ? items.filter((i) => set.has(i.lineId || i.id)) : [];
     setItems((prev) => prev.filter((i) => !set.has(i.lineId || i.id)));
+    if (trackRemoval && removed.length) {
+      const gaItems = removed.map((line) => cartLineToGAItem(line, lang)).filter(Boolean);
+      if (gaItems.length) {
+        gaEvent('remove_from_cart', {
+          currency: GA_CURRENCY,
+          value: Math.round(gaItems.reduce((s, it) => s + it.price * it.quantity, 0) * 100) / 100,
+          items: gaItems,
+        });
+      }
+    }
   };
 
   const updateQty = (lineId, qty) => {
@@ -156,6 +201,16 @@ export function CartProvider({ children }) {
     setItems((prev) =>
       prev.map((i) => ((i.lineId || i.id) === lineId ? { ...i, qty: finalQty } : i))
     );
+    // A quantity STEP (the cart's +/- stepper) is real cart behavior too —
+    // GA4's own recommendation is add_to_cart for an increase and
+    // remove_from_cart for a decrease, each for just the delta, never the
+    // new total (which would double-count the units already tracked when
+    // the line was first added).
+    if (line) {
+      const delta = finalQty - line.qty;
+      if (delta > 0) fireCartEvent('add_to_cart', line, delta);
+      else if (delta < 0) fireCartEvent('remove_from_cart', line, -delta);
+    }
     return { capped, available: Number.isFinite(max) ? max : null, finalQty };
   };
 

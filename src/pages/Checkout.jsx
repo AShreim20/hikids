@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CreditCard, Banknote, ShieldCheck, Check, Lock, Sparkles } from 'lucide-react';
 import { db } from '@/api/entities';
@@ -19,9 +19,11 @@ import { secureOrder, commitOrderStock, redeemDiscount } from '@/lib/orderFuncti
 import { getLoyaltyBalance, redeemLoyaltyPoints, releaseLoyaltyPoints, awardLoyaltyPoints } from '@/lib/loyaltyFunctions';
 import { finalizeWheelRewards } from '@/lib/wheelFunctions';
 import { getSetting } from '@/lib/storeSettings';
-import { lineItemName } from '@/lib/bilingual';
+import { lineItemName, deliveryCityName } from '@/lib/bilingual';
 import { resolveCheckoutItems, cartLineTotal } from '@/lib/cartSelection';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { gaEvent, gaPurchaseOnce, GA_CURRENCY } from '@/lib/ga4';
+import { cartLinesToGAItems } from '@/lib/ga4Items';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -58,6 +60,23 @@ export default function Checkout() {
     [cartItems, checkoutSelection]
   );
   const total = cartLineTotal(items);
+
+  // Fires once per real arrival at checkout with a real (non-empty) item
+  // set — the ref (not just a `[]` dependency) is what keeps this from
+  // re-firing if `items` is recomputed later for an unrelated reason (e.g.
+  // a stock revalidation adjusts a line) while still on this same visit.
+  const beganCheckoutRef = useRef(false);
+  useEffect(() => {
+    if (beganCheckoutRef.current || items.length === 0) return;
+    beganCheckoutRef.current = true;
+    const gaItems = cartLinesToGAItems(items, lang);
+    gaEvent('begin_checkout', {
+      currency: GA_CURRENCY,
+      value: Math.round(total * 100) / 100,
+      ...(appliedDiscount?.code ? { coupon: appliedDiscount.code } : {}),
+      items: gaItems,
+    });
+  }, [items]);
 
   const [form, setForm] = useState({ name: '', email: '', address: '', phone: '' });
   const [phoneCountry, setPhoneCountry] = useState('ps');
@@ -206,6 +225,26 @@ export default function Checkout() {
       toast({ title: t('checkout.insufficientPoints'), variant: 'destructive' });
       return;
     }
+    // Genuine funnel steps: the customer has just passed shipping validation
+    // (a real city + address + phone) and explicitly chosen a payment method,
+    // both required to reach this exact point — never fired earlier from a
+    // field edit or a still-incomplete form. No address/city/name text is
+    // sent, only the standard ecommerce item/value shape.
+    const gaItems = cartLinesToGAItems(items, lang);
+    const shippingValue = Math.round((grandTotal) * 100) / 100;
+    gaEvent('add_shipping_info', {
+      currency: GA_CURRENCY,
+      value: shippingValue,
+      ...(appliedDiscount?.code ? { coupon: appliedDiscount.code } : {}),
+      items: gaItems,
+    });
+    gaEvent('add_payment_info', {
+      currency: GA_CURRENCY,
+      value: shippingValue,
+      payment_type: payment,
+      ...(appliedDiscount?.code ? { coupon: appliedDiscount.code } : {}),
+      items: gaItems,
+    });
     setConfirmOpen(true);
   };
 
@@ -401,8 +440,27 @@ export default function Checkout() {
       }
       setConfirmOpen(false);
       setOrderId(orderId);
-      // Remove only what was actually purchased; keep any unselected cart lines.
-      removeItems(items.map(lineIdOf));
+      // purchase fires exactly here — the one point secure_order AND
+      // commit_order_stock have both already confirmed success (never at
+      // page open, never before that confirmation, never on a stock/secure
+      // failure, all of which return earlier above). gaPurchaseOnce's own
+      // sessionStorage guard (keyed on this orderId, a fresh crypto.randomUUID()
+      // generated once above) is the second, independent layer against a
+      // duplicate fire — this call itself is also a plain one-shot statement
+      // inside this async function body, never inside a useEffect reacting to
+      // `orderId`/`done` state, so a re-render or a StrictMode double-invoke
+      // of an effect can't trigger it again either.
+      gaPurchaseOnce(orderId, {
+        transaction_id: orderId,
+        value: Math.round((total + deliveryCost - discountAmount - loyaltyAmount) * 100) / 100,
+        shipping: Math.round(deliveryCost * 100) / 100,
+        ...(appliedDiscount?.code ? { coupon: appliedDiscount.code } : {}),
+        items: cartLinesToGAItems(items, lang),
+      });
+      // Remove only what was actually purchased; keep any unselected cart
+      // lines. trackRemoval: false — these items were bought, not abandoned,
+      // so this cleanup must never also fire remove_from_cart for them.
+      removeItems(items.map(lineIdOf), { trackRemoval: false });
       setCheckoutSelection(null);
       setDone(true);
       // Order confirmation email is deferred — Base44's onOrderPlaced sent it
@@ -540,7 +598,7 @@ export default function Checkout() {
                 {selectedCity && (
                   <div className="md:hidden sm:col-span-2 rounded-2xl bg-mist px-4 py-3 text-sm">
                     <div className="flex justify-between gap-3">
-                      <span className="text-muted-foreground">{selectedCity.name} · {t('common.delivery')}</span>
+                      <span className="text-muted-foreground">{deliveryCityName(selectedCity, lang)} · {t('common.delivery')}</span>
                       <span className="font-heading font-bold text-cosmic">{deliveryCost === 0 ? t('common.free') : formatPrice(deliveryCost)}</span>
                     </div>
                     <p className="mt-1 text-xs text-muted-foreground">{ar ? 'التوصيل المتوقع: 1–3 أيام عمل' : 'Estimated delivery: 1–3 working days'}</p>
@@ -795,7 +853,7 @@ export default function Checkout() {
         deliveryCost={deliveryCost}
         grandTotal={grandTotal}
         form={{ ...form, phone: fullPhone }}
-        cityName={selectedCity?.name}
+        cityName={selectedCity ? deliveryCityName(selectedCity, lang) : undefined}
         paymentLabel={paymentLabel}
       />
 
