@@ -5,6 +5,7 @@ import { db } from '@/api/entities';
 import { cancelReturnRequest, respondToInformationRequest } from '@/lib/returnFunctions';
 import { uploadFile } from '@/lib/uploadFile';
 import { useToast } from '@/components/ui/use-toast';
+import ConfirmDialog from '@/components/ui/confirm-dialog';
 import PageHeader from '@/components/PageHeader';
 import Footer from '@/components/Footer';
 import { useLanguage } from '@/context/LanguageContext';
@@ -35,6 +36,7 @@ export default function ReturnRequestDetail() {
   const [refund, setRefund] = useState(null);
   const [loading, setLoading] = useState(true);
   const [cancelling, setCancelling] = useState(false);
+  const [confirmCancelOpen, setConfirmCancelOpen] = useState(false);
   const [payingDifference, setPayingDifference] = useState(false);
 
   const load = () => {
@@ -108,7 +110,6 @@ export default function ReturnRequestDetail() {
   };
 
   const cancel = async () => {
-    if (!window.confirm(t('returns.cancelConfirm'))) return;
     setCancelling(true);
     try {
       const res = await cancelReturnRequest(request.id);
@@ -117,6 +118,7 @@ export default function ReturnRequestDetail() {
         return;
       }
       toast({ title: t('returns.cancelled') });
+      setConfirmCancelOpen(false);
       load();
     } catch (err) {
       toast({ title: err.message || t('returns.error'), variant: 'destructive' });
@@ -341,7 +343,7 @@ export default function ReturnRequestDetail() {
           </Link>
           {canCancel && (
             <button
-              onClick={cancel}
+              onClick={() => setConfirmCancelOpen(true)}
               disabled={cancelling}
               className="h-12 px-6 rounded-full bg-destructive/10 text-destructive font-heading font-bold inline-flex items-center gap-2 disabled:opacity-60"
             >
@@ -349,6 +351,14 @@ export default function ReturnRequestDetail() {
             </button>
           )}
         </div>
+        <ConfirmDialog
+          open={confirmCancelOpen}
+          onOpenChange={setConfirmCancelOpen}
+          title={t('returns.cancelRequest')}
+          description={t('returns.cancelConfirm')}
+          onConfirm={cancel}
+          busy={cancelling}
+        />
       </div>
       <Footer />
     </div>

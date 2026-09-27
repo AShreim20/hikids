@@ -11,23 +11,28 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useLanguage } from '@/context/LanguageContext';
 import { lineItemName } from '@/lib/bilingual';
+import { resolveCheckoutItems, cartLineTotal } from '@/lib/cartSelection';
 
 const lineIdOf = (i) => i.lineId || i.id;
 // Invisible extension of the tappable area to >=48px while the icon stays compact.
 const TAP = "relative after:absolute after:-inset-2 after:content-['']";
 
 // Mobile (<768px) cart. All state/handlers live in Cart.jsx (same selection,
-// stock and checkout logic); every total here is computed from SELECTED,
-// purchasable lines only, so it updates immediately with selection/quantity.
+// stock and checkout logic). `chosen`/`total` use the exact same
+// resolveCheckoutItems() rule Cart.jsx's desktop summary and Checkout.jsx
+// both use ("none selected = checkout the whole cart") so mobile can never
+// disagree with desktop about what a customer is about to pay.
 export default function MobileCartView({ items, selected, allSelected, availIds, toggleOne, toggleAll, inc, dec, removeItem, clearCart, goCheckout }) {
   const { t, lang, formatPrice } = useLanguage();
   const ar = lang === 'ar';
   const [pendingDelete, setPendingDelete] = useState(null);
   const [clearOpen, setClearOpen] = useState(false);
 
-  const chosen = items.filter((i) => !i.unavailable && selected.has(lineIdOf(i)));
-  const total = chosen.reduce((s, i) => s + i.qty * i.price, 0);
-  const canCheckout = chosen.length > 0;
+  const chosen = resolveCheckoutItems(items, selected);
+  const total = cartLineTotal(chosen);
+  // Matches Cart.jsx's own goCheckout guard: gated on there being anything
+  // purchasable at all, never on the checkbox selection itself.
+  const canCheckout = availIds.length > 0;
 
   const stockText = (i) => {
     if (i.unavailable) return ar ? 'غير متوفر' : 'Out of stock';

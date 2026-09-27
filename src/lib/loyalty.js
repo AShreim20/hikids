@@ -1,8 +1,12 @@
 // Client-side mirrors of the server loyalty core (base44/shared/loyalty.ts).
 // Used only for display / optimistic preview — the server is always the source
 // of truth for balances and limits.
-export const EARN_RATE = 1;     // points earned per ₪ spent
-export const REDEEM_RATE = 0.1; // ₪ value per point redeemed (10 points = ₪1)
+export const EARN_RATE = 1;      // points earned per ₪ spent
+// ₪ value per point redeemed — authoritative rule: 1000 points = ₪50 (20
+// points = ₪1). Only a fallback for the rare case a caller doesn't have the
+// real server-fetched wallet.redeem_rate yet; every real screen (checkout's
+// LoyaltyRedeem, WalletCard) already passes that live value explicitly.
+export const REDEEM_RATE = 0.05;
 
 export const pointsToValue = (points, rate = REDEEM_RATE) =>
   Math.round((Number(points) || 0) * rate * 100) / 100;

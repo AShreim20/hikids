@@ -34,6 +34,7 @@ export default function Admin() {
   // null | 'delete' | 'unpublish' — which bulk-action confirmation dialog
   // (if any) is open.
   const [confirmAction, setConfirmAction] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
   const [q, setQ] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [exportOpen, setExportOpen] = useState(false);
@@ -179,8 +180,16 @@ export default function Admin() {
   const ar = lang === 'ar';
   const exportFilterFn = (p) => matches(p) && matchesStatus(p);
 
-  const remove = async (p) => {
-    if (!window.confirm(t('admin.confirmDelete'))) return;
+  // Opens the shared confirm modal below (same one bulk delete/unpublish
+  // already use) instead of window.confirm — clearly names the product and
+  // disables the confirm button while the delete is in flight.
+  const askRemove = (p) => { setDeleteTarget(p); setConfirmAction('delete-one'); };
+  const closeConfirm = () => { setConfirmAction(null); setDeleteTarget(null); };
+
+  const remove = async () => {
+    if (!deleteTarget || busy) return;
+    const p = deleteTarget;
+    setBusy(true);
     try {
       await db.Product.delete(p.id);
       await invokeFunction('logAuditActivity', {
@@ -188,9 +197,13 @@ export default function Admin() {
         details: `Deleted product "${p.name}"`,
       });
       toast({ title: lang === 'ar' ? 'تم الحذف' : 'Deleted' });
+      setConfirmAction(null);
+      setDeleteTarget(null);
       load();
     } catch (err) {
       toast({ title: err.message, variant: 'destructive' });
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -523,7 +536,7 @@ export default function Admin() {
                           <Link2 className="w-4 h-4" />
                         </button>
                         <button
-                          onClick={() => remove(p)}
+                          onClick={() => askRemove(p)}
                           className="squish grid place-items-center w-10 h-10 rounded-full bg-destructive/10 text-destructive hover:bg-destructive hover:text-white transition-colors"
                           aria-label={t('admin.delete')}
                         >
@@ -542,27 +555,31 @@ export default function Admin() {
 
       {confirmAction && (
         <div className="fixed inset-0 z-50 grid place-items-center p-5">
-          <div className="absolute inset-0 bg-black/40" onClick={() => !busy && setConfirmAction(null)} />
+          <div className="absolute inset-0 bg-black/40" onClick={() => !busy && closeConfirm()} />
           <div className="relative w-full max-w-md rounded-3xl bg-card p-6 shadow-2xl">
-            <h2 className={`font-heading font-extrabold text-2xl ${confirmAction === 'delete' ? 'text-destructive' : ''}`}>
-              {confirmAction === 'delete' ? t('admin.confirmDeleteBulkTitle') : t('admin.confirmUnpublishBulkTitle')}
+            <h2 className={`font-heading font-extrabold text-2xl ${confirmAction !== 'unpublish' ? 'text-destructive' : ''}`}>
+              {confirmAction === 'delete' ? t('admin.confirmDeleteBulkTitle')
+                : confirmAction === 'delete-one' ? (ar ? 'حذف هذا المنتج؟' : 'Delete this product?')
+                : t('admin.confirmUnpublishBulkTitle')}
             </h2>
             <p className="mt-3 text-muted-foreground">
-              {(confirmAction === 'delete' ? t('admin.confirmDeleteBulkBody') : t('admin.confirmUnpublishBulkBody')).replace('{n}', selected.size)}
+              {confirmAction === 'delete-one'
+                ? (ar ? `سيتم حذف "${deleteTarget?.name}" نهائيًا. لا يمكن التراجع عن هذا.` : `"${deleteTarget?.name}" will be permanently deleted. This cannot be undone.`)
+                : (confirmAction === 'delete' ? t('admin.confirmDeleteBulkBody') : t('admin.confirmUnpublishBulkBody')).replace('{n}', selected.size)}
             </p>
             <div className="mt-6 flex gap-3">
               <button
-                onClick={confirmAction === 'delete' ? deleteSelected : unpublishSelected}
+                onClick={confirmAction === 'delete' ? deleteSelected : confirmAction === 'delete-one' ? remove : unpublishSelected}
                 disabled={busy}
                 className={`flex-1 h-12 rounded-full font-heading font-bold inline-flex items-center justify-center gap-2 disabled:opacity-60 ${
-                  confirmAction === 'delete' ? 'bg-destructive text-white' : 'bg-accent text-white'
+                  confirmAction !== 'unpublish' ? 'bg-destructive text-white' : 'bg-accent text-white'
                 }`}
               >
                 {busy && <Loader2 className="w-4 h-4 animate-spin" />}
-                {confirmAction === 'delete' ? t('admin.deleteSelected') : t('admin.bulkUnpublish')}
+                {confirmAction === 'delete' ? t('admin.deleteSelected') : confirmAction === 'delete-one' ? t('admin.delete') : t('admin.bulkUnpublish')}
               </button>
               <button
-                onClick={() => setConfirmAction(null)}
+                onClick={closeConfirm}
                 disabled={busy}
                 className="h-12 px-6 rounded-full bg-mist font-heading font-bold disabled:opacity-60"
               >

@@ -26,14 +26,14 @@ export default function SearchBar({ className = '', autoFocus = false, onSubmitt
       } ${className}`}
       role="search"
     >
-      <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+      <Search className="absolute start-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
       <input
         type="text"
         value={q}
         autoFocus={autoFocus}
         onChange={(e) => setQ(e.target.value)}
         placeholder={t('nav.search')}
-        className={`w-full h-11 pl-11 pr-4 rounded-full bg-mist text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-cosmic/40 ${
+        className={`w-full h-11 ps-11 pe-4 rounded-full bg-mist text-foreground placeholder:text-muted-foreground text-sm focus:outline-none focus:ring-2 focus:ring-cosmic/40 ${
           collapsible ? 'opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity duration-300' : ''
         }`}
       />

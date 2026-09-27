@@ -62,7 +62,7 @@ export default function PhotoReviews() {
   };
   useEffect(() => { if (user?.role === 'admin' || (user && (user.permissions || []).length)) load(); else setLoading(false); }, [user]);
 
-  const canReview = user && (user.role === 'admin' || (user.permissions || []).includes('loyalty.add'));
+  const canReview = user && (user.role === 'admin' || (user.permissions || []).includes('reviews.moderate'));
 
   if (failure) return <AdminLoadFailed failure={failure} onRetry={load} />;
 

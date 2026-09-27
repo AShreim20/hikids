@@ -31,7 +31,7 @@ Deno.serve(async (req) => {
       .select('role, permissions')
       .eq('id', user.id)
       .maybeSingle();
-    const canReview = profile?.role === 'admin' || (profile?.permissions || []).includes('loyalty.add');
+    const canReview = profile?.role === 'admin' || (profile?.permissions || []).includes('reviews.moderate');
     if (!canReview) return json({ success: false, message: 'Forbidden' }, { status: 403 });
 
     const body = await req.json().catch(() => ({}));

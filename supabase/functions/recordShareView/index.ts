@@ -7,8 +7,38 @@ import { handlePreflight, json } from '../_shared/cors.ts';
 // can't count twice, and the sharer can't count themselves. We can't prove a
 // message was actually delivered on an external platform — but we can prove a
 // distinct visitor opened the link, which is the verifiable action here.
+//
+// Hardening (P3): this feeds real challenge-reward eligibility (recipients
+// reaching challenge.target.share_count lets the sharer claim a reward via
+// challenges_claim), so a spoofable fingerprint has real economic value, not
+// just an analytics number. Two fixes, reusing existing patterns already used
+// elsewhere in this project rather than new device fingerprinting:
+//  1. IP extraction now uses the same trusted-proxy convention as trackOrder/
+//     chatAssistant (the platform-appended, rightmost X-Forwarded-For entry —
+//     the client cannot forge this position, unlike the leftmost one this
+//     used before).
+//  2. A lightweight per-real-IP rate limit (assistant_rate_check, the
+//     project's existing limiter) stops one visitor from rapid-cycling fake
+//     "distinct recipient" credits even with a real, unspoofed IP.
+const LIMITS = [
+  { scope: 'share_ip10m', windowSeconds: 600, limit: 20 },
+] as const;
+
+function clientAddress(req: Request) {
+  const cf = req.headers.get('cf-connecting-ip');
+  if (cf) return cf.trim();
+  const real = req.headers.get('x-real-ip');
+  if (real) return real.trim();
+  const xff = req.headers.get('x-forwarded-for');
+  if (xff) {
+    const parts = xff.split(',').map((s) => s.trim()).filter(Boolean);
+    if (parts.length) return parts[parts.length - 1];
+  }
+  return 'unknown';
+}
+
 async function fingerprint(req: Request) {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('cf-connecting-ip') || '0';
+  const ip = clientAddress(req);
   const ua = req.headers.get('user-agent') || '';
   const data = new TextEncoder().encode(`${ip}|${ua}`);
   const buf = await crypto.subtle.digest('SHA-256', data);
@@ -27,6 +57,22 @@ Deno.serve(async (req) => {
     }
 
     const service = serviceRoleClient();
+
+    const ipHash = (await fingerprint(req)).slice(0, 32);
+    const { data: rl, error: rlError } = await service.rpc('assistant_rate_check', {
+      p_scope: LIMITS[0].scope,
+      p_id: ipHash,
+      p_limit: LIMITS[0].limit,
+      p_window_seconds: LIMITS[0].windowSeconds,
+    });
+    if (rlError || !rl) {
+      console.error('recordShareView rate limiter failure', rlError?.message);
+      return json({ success: false, message: 'Please try again in a moment.' }, { status: 503 });
+    }
+    if (!rl.allowed) {
+      return json({ success: false, message: 'Too many attempts.', retry_after: rl.retry_after }, { status: 429 });
+    }
+
     const { data: challenge } = await service.from('challenges').select('*').eq('id', challengeId).maybeSingle();
     if (!challenge || challenge.type !== 'share') {
       return json({ success: false, message: 'Invalid challenge' });

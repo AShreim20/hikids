@@ -6,6 +6,8 @@ import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet';
 import { useAuth } from '@/lib/AuthContext';
 import { publishActionItems, useActionItems } from '@/lib/actionRequiredStore';
 import { useLanguage } from '@/context/LanguageContext';
+import { useFloatingOffset } from '@/hooks/useFloatingOffset';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 // One site-wide "Action Required" entry, opened either from its own floating
 // button or from an admin nav "action" item (openActionRequired() dispatches
@@ -29,6 +31,17 @@ export default function ActionRequiredCenter() {
   const ar = lang === 'ar';
   const items = useActionItems();
   const [open, setOpen] = useState(false);
+  // Mobile only: same shared stacking/offset logic as the WhatsApp/assistant
+  // buttons (useFloatingOffset). Clears MobileNav, respects
+  // safe-area-inset-bottom, and — unlike the previous hardcoded bottom-24 —
+  // also clears whatever sticky purchase bar the current page renders
+  // (Cart/Checkout/ProductDetail), so this button is never buried behind it.
+  // Own column (start-4, opposite side from the chat/WhatsApp end-4 column),
+  // so slot 0 is correct. Desktop keeps its existing fixed position (the
+  // AdminSidebar already has its own always-visible "Action Required" row,
+  // so this floating button is a secondary affordance there).
+  const isMobile = useIsMobile();
+  const { bottom } = useFloatingOffset(0);
 
   const load = useCallback(() => {
     if (!user) { publishActionItems([]); return; }
@@ -68,7 +81,11 @@ export default function ActionRequiredCenter() {
       {/* Floating trigger -- hidden while items.length is 0 unless something
           else (the admin sidebar/menu) already asked for the panel to open. */}
       {items.length > 0 && (
-        <div className="fixed z-50 bottom-24 start-4 md:start-auto md:end-6 md:bottom-44" dir={ar ? 'rtl' : 'ltr'}>
+        <div
+          className="fixed z-50 start-4 md:start-auto md:end-6 md:bottom-44"
+          style={isMobile ? { bottom } : undefined}
+          dir={ar ? 'rtl' : 'ltr'}
+        >
           <button
             onClick={() => setOpen((v) => !v)}
             className={`relative grid place-items-center w-12 h-12 rounded-full text-white shadow-xl ${urgent ? 'bg-destructive' : 'bg-cosmic'}`}

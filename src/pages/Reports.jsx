@@ -15,7 +15,7 @@ import PaymentsPanel from '@/components/reports/PaymentsPanel';
 import PurchasesPanel from '@/components/reports/PurchasesPanel';
 import ExpensesPanel from '@/components/reports/ExpensesPanel';
 import { periodRange, salesReport, paymentsReport, purchasesReport, profitLoss, expensesReport, buildProductMap } from '@/lib/reports';
-import { rangeStamp } from '@/lib/excelExportHelpers';
+import { fetchAllRows, rangeStamp } from '@/lib/excelExportHelpers';
 import ExportExcelButton from '@/components/admin/ExportExcelButton';
 
 const TABS = [
@@ -48,12 +48,15 @@ export default function Reports() {
     // Every list feeds a displayed financial number (sales, COGS, payments,
     // purchases, expenses), so all are required: any failure fails the whole
     // load (expired session / error state) instead of a silently wrong report.
+    // fetchAllRows (not a flat .list(sort, 500)) so a store with more than 500
+    // orders/expenses/etc. never silently drops records past that cap from
+    // either the on-screen numbers or the export built from the same `data`.
     const res = await guard(() => Promise.all([
-      db.Order.list('-created_date', 500),
-      db.Product.list('-updated_date', 500),
-      db.PurchaseOrder.list('-created_date', 500),
-      db.SupplierTransaction.list('-created_date', 500),
-      db.Expense.list('-expense_date', 500),
+      fetchAllRows(db.Order, '-created_date'),
+      fetchAllRows(db.Product, '-updated_date'),
+      fetchAllRows(db.PurchaseOrder, '-created_date'),
+      fetchAllRows(db.SupplierTransaction, '-created_date'),
+      fetchAllRows(db.Expense, '-expense_date'),
       db.ExpenseCategory.list('sort_order', 200),
     ]));
     if (res) {

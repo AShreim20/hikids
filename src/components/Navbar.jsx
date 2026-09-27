@@ -1,6 +1,6 @@
 import React, { useLayoutEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { ShoppingBag, Heart, Settings as SettingsIcon, MapPin } from 'lucide-react';
+import { ShoppingBag, Heart, Settings as SettingsIcon, MapPin, User as UserIcon } from 'lucide-react';
 import SearchBar from '@/components/SearchBar';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
@@ -100,6 +100,15 @@ export default function Navbar() {
             <div className="flex items-center gap-2 lg:gap-2.5 ms-auto">
               <span className="hidden md:inline-flex"><LanguageToggle /></span>
               <HeaderLoyaltyBalance />
+              {user && (
+                <button
+                  onClick={() => navigate('/account')}
+                  className="hidden md:grid squish place-items-center w-11 h-11 rounded-2xl bg-white/15 text-white hover:bg-accent hover:text-white transition-colors"
+                  aria-label={t('mnav.account')}
+                >
+                  <UserIcon className="w-5 h-5" />
+                </button>
+              )}
               {user && (
                 <button
                   onClick={() => navigate('/addresses')}
