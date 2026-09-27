@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { heroSlideTitle, heroSlideSubtitle, heroSlideCta } from '@/lib/bilingual';
 
 // Mobile hero copy: short headline, short description and ONE primary CTA,
 // shown beneath the artwork (never over it). A CTA saved as an absolute
@@ -15,18 +16,21 @@ export function toInternalPath(url) {
   return url;
 }
 
-export default function HeroSlideTextCompact({ slide, exploreCtaLabel }) {
+export default function HeroSlideTextCompact({ slide, exploreCtaLabel, lang }) {
   const link = toInternalPath(slide.cta_link);
   const internal = (link || '').startsWith('/');
   const Tag = internal ? Link : 'a';
   const dest = internal ? { to: link } : { href: link };
+  const title = heroSlideTitle(slide, lang);
+  const subtitle = heroSlideSubtitle(slide, lang);
+  const ctaLabel = heroSlideCta(slide, lang);
   return (
     <div className="mt-3 px-1">
-      {slide.title && <h1 className="font-heading font-extrabold text-xl leading-tight line-clamp-2 whitespace-pre-line">{slide.title}</h1>}
-      {slide.subtitle && <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{slide.subtitle}</p>}
+      {title && <h1 className="font-heading font-extrabold text-xl leading-tight line-clamp-2 whitespace-pre-line">{title}</h1>}
+      {subtitle && <p className="mt-1 text-sm text-muted-foreground line-clamp-2">{subtitle}</p>}
       {link && (
         <Tag {...dest} className="squish mt-3 inline-flex items-center gap-2 h-11 px-6 rounded-full bg-cosmic text-white font-heading font-bold text-sm">
-          {slide.cta_label || exploreCtaLabel} <ArrowRight className="w-4 h-4 rtl:rotate-180" />
+          {ctaLabel || exploreCtaLabel} <ArrowRight className="w-4 h-4 rtl:rotate-180" />
         </Tag>
       )}
     </div>

@@ -71,3 +71,23 @@ export const submissionChallengeName = (s, lang) =>
 
 // Cart / order line items snapshot both names.
 export const lineItemName = (i, lang) => pickName(i?.name, i?.name_en, lang);
+
+// Hero slide text — Arabic is mandatory, English optional per field (a slide
+// can have an English title but no English subtitle, etc.).
+export const heroSlideTitle = (s, lang) => pickName(s?.title, s?.title_en, lang);
+export const heroSlideSubtitle = (s, lang) => pickName(s?.subtitle, s?.subtitle_en, lang);
+export const heroSlideCta = (s, lang) => pickName(s?.cta_label, s?.cta_label_en, lang);
+export const heroSlideSecondaryCta = (s, lang) => pickName(s?.secondary_cta_label, s?.secondary_cta_label_en, lang);
+
+// Bundle name/description follow the same rule as product name/description.
+export const bundleName = (b, lang) => pickName(b?.name, b?.name_en, lang);
+export const bundleDescription = (b, lang) => pickName(b?.description, b?.description_en, lang);
+
+// Challenge description (name already covered by challengeName above).
+export const challengeDescription = (c, lang) => pickName(c?.description, c?.description_en, lang);
+
+// Delivery city name shown at checkout.
+export const deliveryCityName = (c, lang) => pickName(c?.name, c?.name_en, lang);
+
+// Product material spec shown on the product detail page.
+export const productMaterial = (p, lang) => pickName(p?.material, p?.material_en, lang);

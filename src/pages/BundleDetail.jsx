@@ -16,13 +16,14 @@ import {
 } from '@/lib/bundles';
 import { useDocumentMeta } from '@/hooks/useDocumentMeta';
 import { SITE_URL } from '@/lib/siteUrl';
+import { bundleName, bundleDescription, lineItemName } from '@/lib/bilingual';
 
 export default function BundleDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addItem, addBundle } = useCart();
   const { flyToCart } = useCartFly();
-  const { t, formatPrice } = useLanguage();
+  const { t, lang, formatPrice } = useLanguage();
   const { toast } = useToast();
   const [bundle, setBundle] = useState(null);
   const [products, setProducts] = useState([]);
@@ -63,8 +64,8 @@ export default function BundleDetail() {
   // to products only); this covers the browser tab title and Googlebot's own
   // JS renderer, an intentionally lighter treatment than ProductDetail's.
   useDocumentMeta({
-    title: bundle ? `${bundle.name} | HiKids` : undefined,
-    description: bundle?.description || undefined,
+    title: bundle ? `${bundleName(bundle, lang)} | HiKids` : undefined,
+    description: bundle ? (bundleDescription(bundle, lang) || undefined) : undefined,
     canonical: bundle ? `${SITE_URL}/bundles/${bundle.id}` : undefined,
     image: bundle?.image_url || undefined,
     noindex: !bundle,
@@ -101,6 +102,8 @@ export default function BundleDetail() {
 
   const productMap = {};
   for (const p of products) productMap[p.id] = p;
+  const name = bundleName(bundle, lang);
+  const description = bundleDescription(bundle, lang);
 
   const addToCart = (originEl) => {
     if (out) return;
@@ -108,6 +111,7 @@ export default function BundleDetail() {
     addBundle(bundle, qty, sell, (bundle.items || []).map((it) => ({
       product_id: it.product_id,
       name: it.name,
+      name_en: it.name_en || null,
       sku: it.sku || null,
       quantity: it.quantity,
       unit_price: it.unit_price,
@@ -119,7 +123,7 @@ export default function BundleDetail() {
 
   return (
     <div className="min-h-screen bg-background">
-      <PageHeader title={bundle.name} />
+      <PageHeader title={name} />
 
       <div className="max-w-7xl mx-auto px-5 sm:px-8 pt-8">
         <Link to="/shop" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground">
@@ -130,7 +134,7 @@ export default function BundleDetail() {
       <div className="max-w-7xl mx-auto px-5 sm:px-8 py-10 grid lg:grid-cols-2 gap-10 lg:gap-16">
         <div className="float-in">
           <div className="relative overflow-hidden rounded-[2rem] bg-mist aspect-[4/5] shadow-[0_18px_50px_-20px_rgba(26,26,30,0.25)]">
-            <Image src={bundle.image_url} alt={bundle.name} fittingType="fill" className="w-full h-full object-cover" />
+            <Image src={bundle.image_url} alt={name} fittingType="fill" className="w-full h-full object-cover" />
             <span className="absolute top-4 left-4 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-cosmic text-white text-[11px] font-heading font-bold shadow-lg">
               <Package className="w-3.5 h-3.5" /> {ar ? 'حزمة' : 'Bundle'}
             </span>
@@ -138,9 +142,9 @@ export default function BundleDetail() {
         </div>
 
         <div className="float-in">
-          <h1 className="font-display font-semibold text-4xl md:text-5xl leading-tight">{bundle.name}</h1>
-          {bundle.description && (
-            <p className="mt-6 text-lg text-muted-foreground leading-relaxed">{bundle.description}</p>
+          <h1 className="font-display font-semibold text-4xl md:text-5xl leading-tight">{name}</h1>
+          {description && (
+            <p className="mt-6 text-lg text-muted-foreground leading-relaxed">{description}</p>
           )}
 
           <div className="mt-8 flex items-center gap-4">
@@ -191,10 +195,10 @@ export default function BundleDetail() {
                 return (
                   <div key={it.product_id} className="flex items-center gap-4 p-3 rounded-2xl bg-card border border-border/60">
                     <Link to={`/product/${it.product_id}`} className="shrink-0 w-16 h-16 rounded-xl overflow-hidden bg-mist">
-                      <Image src={it.image_url || p?.image_url} alt={it.name} fittingType="fill" className="w-full h-full object-cover" />
+                      <Image src={it.image_url || p?.image_url} alt={lineItemName(it, lang)} fittingType="fill" className="w-full h-full object-cover" />
                     </Link>
                     <div className="flex-1 min-w-0">
-                      <Link to={`/product/${it.product_id}`} className="font-heading font-bold hover:text-cosmic truncate block">{it.name}</Link>
+                      <Link to={`/product/${it.product_id}`} className="font-heading font-bold hover:text-cosmic truncate block">{lineItemName(it, lang)}</Link>
                       <p className="text-sm text-muted-foreground">{formatPrice(it.unit_price || (p ? p.sale_price ?? p.price : 0))} × {it.quantity}</p>
                     </div>
                     <span className={`text-xs font-heading font-bold shrink-0 ${enough ? 'text-emerald-600' : 'text-destructive'}`}>
@@ -211,7 +215,7 @@ export default function BundleDetail() {
       <div className="sticky bottom-0 z-40 border-t border-border/60 bg-background/90 backdrop-blur-xl safe-bottom">
         <div className="max-w-7xl mx-auto px-5 sm:px-8 py-4 flex items-center justify-between gap-4">
           <div className="hidden sm:block">
-            <p className="font-heading font-bold">{bundle.name}</p>
+            <p className="font-heading font-bold">{name}</p>
             <p className="text-sm text-muted-foreground">{formatPrice(sell)} · {qty}</p>
           </div>
           <div className="flex flex-1 sm:flex-initial gap-3">

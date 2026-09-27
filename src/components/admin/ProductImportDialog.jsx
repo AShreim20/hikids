@@ -36,6 +36,7 @@ function currentValue(product, key) {
     case 'features_ar': return Array.isArray(product.features_ar) ? product.features_ar : [];
     case 'features_en': return Array.isArray(product.features_en) ? product.features_en : [];
     case 'material': return product.material || '';
+    case 'material_en': return product.material_en || '';
     case 'tags': return Array.isArray(product.tags) ? product.tags : [];
     case 'gender': return product.gender || null;
     case 'status': return product.status === 'draft' ? 'draft' : 'published';

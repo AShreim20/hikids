@@ -15,8 +15,8 @@ import { slideStatus } from '@/lib/heroVisibility';
 const QUICK_DURATIONS = [3, 5, 7, 10];
 
 const EMPTY = {
-  title: '', subtitle: '', cta_label: '', cta_link: '',
-  secondary_cta_label: '', secondary_cta_link: '',
+  title: '', title_en: '', subtitle: '', subtitle_en: '', cta_label: '', cta_label_en: '', cta_link: '',
+  secondary_cta_label: '', secondary_cta_label_en: '', secondary_cta_link: '',
   image_url: '', media_type: 'image',
   mobile_image_url: '', mobile_media_type: null,
   focal_position: 'center',
@@ -41,9 +41,9 @@ const fromInputValue = (v) => (v ? new Date(v).toISOString() : null);
 
 function slideToForm(s) {
   return {
-    title: s.title || '', subtitle: s.subtitle || '',
-    cta_label: s.cta_label || '', cta_link: s.cta_link || '',
-    secondary_cta_label: s.secondary_cta_label || '', secondary_cta_link: s.secondary_cta_link || '',
+    title: s.title || '', title_en: s.title_en || '', subtitle: s.subtitle || '', subtitle_en: s.subtitle_en || '',
+    cta_label: s.cta_label || '', cta_label_en: s.cta_label_en || '', cta_link: s.cta_link || '',
+    secondary_cta_label: s.secondary_cta_label || '', secondary_cta_label_en: s.secondary_cta_label_en || '', secondary_cta_link: s.secondary_cta_link || '',
     image_url: s.image_url || '', media_type: s.media_type || 'image',
     mobile_image_url: s.mobile_image_url || '', mobile_media_type: s.mobile_media_type || null,
     focal_position: s.focal_position || 'center',
@@ -196,10 +196,14 @@ export default function HeroSlideForm({ initial, onSaved, onCancel }) {
     const durationNum = Math.min(30, Math.max(2, Math.round(Number(form.duration_seconds)) || 5));
     return {
       title: form.title || null,
+      title_en: form.title_en || null,
       subtitle: form.subtitle || null,
+      subtitle_en: form.subtitle_en || null,
       cta_label: form.cta_label || null,
+      cta_label_en: form.cta_label_en || null,
       cta_link: form.cta_link || null,
       secondary_cta_label: form.secondary_cta_label || null,
+      secondary_cta_label_en: form.secondary_cta_label_en || null,
       secondary_cta_link: form.secondary_cta_link || null,
       image_url: form.image_url,
       media_type: form.media_type,
@@ -286,14 +290,25 @@ export default function HeroSlideForm({ initial, onSaved, onCancel }) {
       </div>
 
       <Section title={ar ? 'المحتوى' : 'Content'}>
-        <FormInput label={ar ? 'العنوان' : 'Title'} value={form.title} onChange={(e) => set('title', e.target.value)} />
-        <FormInput label={ar ? 'الوصف المختصر' : 'Short description'} value={form.subtitle} onChange={(e) => set('subtitle', e.target.value)} textarea />
         <div className="grid sm:grid-cols-2 gap-4">
-          <FormInput label={ar ? 'نص الزر الرئيسي' : 'Primary CTA text'} value={form.cta_label} onChange={(e) => set('cta_label', e.target.value)} placeholder={ar ? 'تسوق الآن' : 'Shop Now'} />
-          <FormInput label={ar ? 'رابط الزر الرئيسي' : 'Primary CTA destination'} value={form.cta_link} onChange={(e) => set('cta_link', e.target.value)} placeholder="/shop" dir="ltr" />
-          <FormInput label={ar ? 'نص الزر الثانوي (اختياري)' : 'Secondary CTA text (optional)'} value={form.secondary_cta_label} onChange={(e) => set('secondary_cta_label', e.target.value)} />
-          <FormInput label={ar ? 'رابط الزر الثانوي (اختياري)' : 'Secondary CTA destination (optional)'} value={form.secondary_cta_link} onChange={(e) => set('secondary_cta_link', e.target.value)} placeholder="/shop" dir="ltr" />
+          <FormInput label={ar ? 'العنوان (عربي)' : 'Title (Arabic)'} value={form.title} onChange={(e) => set('title', e.target.value)} />
+          <FormInput label="Title (English)" value={form.title_en} onChange={(e) => set('title_en', e.target.value)} dir="ltr" />
         </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <FormInput label={ar ? 'الوصف المختصر (عربي)' : 'Short description (Arabic)'} value={form.subtitle} onChange={(e) => set('subtitle', e.target.value)} textarea />
+          <FormInput label="Short description (English)" value={form.subtitle_en} onChange={(e) => set('subtitle_en', e.target.value)} textarea dir="ltr" />
+        </div>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <FormInput label={ar ? 'نص الزر الرئيسي (عربي)' : 'Primary CTA text (Arabic)'} value={form.cta_label} onChange={(e) => set('cta_label', e.target.value)} placeholder={ar ? 'تسوق الآن' : 'Shop Now'} />
+          <FormInput label="Primary CTA text (English)" value={form.cta_label_en} onChange={(e) => set('cta_label_en', e.target.value)} placeholder="Shop Now" dir="ltr" />
+          <FormInput label={ar ? 'رابط الزر الرئيسي' : 'Primary CTA destination'} value={form.cta_link} onChange={(e) => set('cta_link', e.target.value)} placeholder="/shop" dir="ltr" className="sm:col-span-2" />
+          <FormInput label={ar ? 'نص الزر الثانوي (عربي، اختياري)' : 'Secondary CTA text (Arabic, optional)'} value={form.secondary_cta_label} onChange={(e) => set('secondary_cta_label', e.target.value)} />
+          <FormInput label="Secondary CTA text (English, optional)" value={form.secondary_cta_label_en} onChange={(e) => set('secondary_cta_label_en', e.target.value)} dir="ltr" />
+          <FormInput label={ar ? 'رابط الزر الثانوي (اختياري)' : 'Secondary CTA destination (optional)'} value={form.secondary_cta_link} onChange={(e) => set('secondary_cta_link', e.target.value)} placeholder="/shop" dir="ltr" className="sm:col-span-2" />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {ar ? 'اترك حقل الإنجليزية فارغًا لعرض النص العربي تلقائيًا للزوار الذين يستخدمون الموقع بالإنجليزية.' : 'Leave an English field empty to automatically show the Arabic text to visitors browsing in English.'}
+        </p>
       </Section>
 
       <Section title={ar ? 'الوسائط' : 'Media'}>

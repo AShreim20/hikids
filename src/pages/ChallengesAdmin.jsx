@@ -28,7 +28,7 @@ const TYPES = [
 const REWARD_TYPES = ['points', 'discount_percent', 'discount_fixed', 'free_delivery', 'product', 'credit'];
 const FREQ = ['once', 'daily', 'weekly', 'monthly', 'unlimited', 'custom'];
 
-const empty = { name: '', name_en: '', description: '', type: 'spend_amount', target: { amount: 200 }, reward_type: 'points', reward_value: 50, reward_label: '', reward_label_en: '', product_id: '', start_date: '', end_date: '', active: true, frequency: 'once', limit_count: 1, requires_review: false, reward_code_prefix: 'CHL' };
+const empty = { name: '', name_en: '', description: '', description_en: '', type: 'spend_amount', target: { amount: 200 }, reward_type: 'points', reward_value: 50, reward_label: '', reward_label_en: '', product_id: '', start_date: '', end_date: '', active: true, frequency: 'once', limit_count: 1, requires_review: false, reward_code_prefix: 'CHL' };
 
 export default function ChallengesAdmin() {
   const { user } = useAuth();
@@ -199,7 +199,8 @@ function ChallengeDialog({ value, onChange, onClose, onSave, ar }) {
         <div className="mt-4 space-y-3">
           <L label={ar ? 'الاسم (عربي) — مطلوب' : 'Name (Arabic) — required'}><input className={input} value={value.name} onChange={(e) => set('name', e.target.value)} /></L>
           <L label={ar ? 'الاسم (إنجليزي) — اختياري' : 'Name (English) — optional'}><input className={input} dir="ltr" value={value.name_en || ''} onChange={(e) => set('name_en', e.target.value)} /></L>
-          <L label={ar ? 'الوصف' : 'Description'}><textarea className={input} rows={2} value={value.description} onChange={(e) => set('description', e.target.value)} /></L>
+          <L label={ar ? 'الوصف (عربي)' : 'Description (Arabic)'}><textarea className={input} rows={2} value={value.description} onChange={(e) => set('description', e.target.value)} /></L>
+          <L label={ar ? 'الوصف (إنجليزي) — اختياري' : 'Description (English) — optional'}><textarea className={input} dir="ltr" rows={2} value={value.description_en || ''} onChange={(e) => set('description_en', e.target.value)} /></L>
           <L label={ar ? 'النوع' : 'Type'}><select className={input} value={value.type} onChange={(e) => set('type', e.target.value)}>{TYPES.map((x) => <option key={x.key} value={x.key}>{x.label[ar ? 'ar' : 'en']}</option>)}</select></L>
           {value.type === 'product_purchase' && (
             <L label={ar ? 'المنتج المطلوب' : 'Required product'}>

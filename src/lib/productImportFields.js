@@ -164,6 +164,7 @@ export const PRODUCT_IMPORT_FIELDS = [
     return { value: splitFeatureLines(t) };
   } },
   { key: 'material', required: false, parse: (v) => (rawCellText(v) ? { value: rawCellText(v) } : { empty: true }) },
+  { key: 'material_en', required: false, parse: (v) => (rawCellText(v) ? { value: rawCellText(v) } : { empty: true }) },
   { key: 'tags', required: false, parse: (v) => {
     const t = rawCellText(v);
     if (!t) return { empty: true };

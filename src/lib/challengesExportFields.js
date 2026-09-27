@@ -30,7 +30,8 @@ function targetSummary(c, lang) {
 export const CHALLENGE_EXPORT_FIELDS = [
   { key: 'name', group: 'basic', type: 'text', width: 24, label: { ar: 'الاسم (عربي)', en: 'Arabic Name' }, getValue: (c) => c.name || '' },
   { key: 'name_en', group: 'basic', type: 'text', width: 24, label: { ar: 'الاسم (إنجليزي)', en: 'English Name' }, getValue: (c) => c.name_en || '' },
-  { key: 'description', group: 'basic', type: 'text', width: 30, wrap: true, label: { ar: 'الوصف', en: 'Description' }, getValue: (c) => c.description || '' },
+  { key: 'description', group: 'basic', type: 'text', width: 30, wrap: true, label: { ar: 'الوصف (عربي)', en: 'Arabic Description' }, getValue: (c) => c.description || '' },
+  { key: 'description_en', group: 'basic', type: 'text', width: 30, wrap: true, label: { ar: 'الوصف (إنجليزي)', en: 'English Description' }, getValue: (c) => c.description_en || '' },
   { key: 'type', group: 'basic', type: 'text', width: 20, label: { ar: 'النوع', en: 'Type' }, getValue: (c, { lang }) => TYPE_LABEL[c.type]?.[lang] || c.type || '' },
   { key: 'target', group: 'basic', type: 'text', width: 20, label: { ar: 'الهدف', en: 'Target' }, getValue: (c, { lang }) => targetSummary(c, lang) },
   { key: 'reward_type', group: 'reward', type: 'text', width: 16, label: { ar: 'نوع المكافأة', en: 'Reward Type' }, getValue: (c) => c.reward_type || '' },

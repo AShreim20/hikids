@@ -1,6 +1,6 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Save, Plus, Trash2, ArrowUp, ArrowDown, Lock, Type, HelpCircle, BookOpen, Tag, Bot } from 'lucide-react';
+import { Loader2, Save, Plus, Trash2, ArrowUp, ArrowDown, Lock, Type, HelpCircle, BookOpen, Tag, Bot, Search, ChevronDown } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useToast } from '@/components/ui/use-toast';
@@ -12,22 +12,13 @@ import AdminLoadFailed from '@/components/admin/AdminLoadFailed';
 import { upsertContent, loadContentRecord } from '@/lib/siteContent';
 import { DEFAULT_FAQ_ITEMS, DEFAULT_ABOUT } from '@/lib/siteDefaults';
 import { translations } from '@/context/translations';
+import { GROUPS, TEXT_FIELD_META } from '@/lib/siteContentMeta';
+import { diffCount, snapshotsEqual } from '@/lib/formDirty';
+import { useUnsavedChangesGuard } from '@/hooks/useUnsavedChangesGuard';
+import UnsavedChangesDialog from '@/components/admin/UnsavedChangesDialog';
 import StickySaveBar from '@/components/admin/StickySaveBar';
 import HomepageDealsAdminSettings from '@/components/admin/HomepageDealsAdminSettings';
 import AssistantAdminSettings from '@/components/admin/AssistantAdminSettings';
-
-// Group translation keys into friendly pages for the override editor.
-const PAGE_GROUPS = [
-  { id: 'home', label: 'Home', prefixes: ['hero.', 'cats.', 'cat.', 'promise.', 'rec.', 'nl.', 'deals.'] },
-  { id: 'about', label: 'About', prefixes: ['aboutPage.', 'about.'] },
-  { id: 'faq', label: 'FAQ', prefixes: ['faq.'] },
-  { id: 'contact', label: 'Contact', prefixes: ['contact.'] },
-  { id: 'footer', label: 'Footer', prefixes: ['footer.'] },
-  { id: 'nav', label: 'Navigation', prefixes: ['nav.'] },
-  { id: 'common', label: 'Buttons / Common', prefixes: ['common.'] },
-];
-
-const keysForGroup = (g) => Object.keys(translations.en).filter((k) => g.prefixes.some((p) => k.startsWith(p)));
 
 const TABS = [
   { id: 'text', label: 'Page Text', icon: Type },
@@ -40,17 +31,121 @@ const TABS = [
 const input = 'w-full h-11 px-3 rounded-2xl bg-mist border border-border/70 outline-none focus:border-cosmic';
 const area = 'w-full min-h-[80px] p-3 rounded-2xl bg-mist border border-border/70 outline-none focus:border-cosmic font-body';
 
+// How many distinct translation keys differ between the working i18n-overrides
+// value and its last-saved baseline — counts a key once even if BOTH its
+// AR and EN value changed, matching how one field reads to the admin.
+function ovDiffCount(a, b) {
+  const keys = new Set([...Object.keys(a?.en || {}), ...Object.keys(a?.ar || {}), ...Object.keys(b?.en || {}), ...Object.keys(b?.ar || {})]);
+  let n = 0;
+  for (const k of keys) {
+    if ((a?.en?.[k] ?? '') !== (b?.en?.[k] ?? '') || (a?.ar?.[k] ?? '') !== (b?.ar?.[k] ?? '')) n += 1;
+  }
+  return n;
+}
+
+function matchesSearch(meta, ov, q) {
+  if (!q) return true;
+  const hay = [
+    meta.label_ar, meta.label_en, meta.location_ar, meta.location_en, meta.key,
+    ov.ar[meta.key] ?? translations.ar[meta.key] ?? '',
+    ov.en[meta.key] ?? translations.en[meta.key] ?? '',
+  ].join(' ').toLowerCase();
+  return hay.includes(q);
+}
+
+// One field's paired AR/EN editor, with its human label + "appears in" hint
+// instead of the raw translation key as the primary thing the admin reads.
+function TextField({ meta, ov, setOvField }) {
+  const Ctl = meta.type === 'textarea' ? 'textarea' : 'input';
+  const cls = meta.type === 'textarea' ? area : input;
+  return (
+    <div className="rounded-3xl bg-card border border-border/60 p-4">
+      <p className="font-heading font-bold text-sm">{meta.label_ar}</p>
+      <p className="text-xs text-muted-foreground">{meta.label_en}</p>
+      <p className="mt-1 text-[11px] text-cosmic/80">
+        {meta.location_ar} · {meta.location_en}
+      </p>
+      <div className="mt-3 grid sm:grid-cols-2 gap-3">
+        <div>
+          <label className="text-xs font-heading font-bold text-cosmic">العربية</label>
+          <Ctl
+            value={ov.ar[meta.key] ?? translations.ar[meta.key] ?? ''}
+            onChange={(e) => setOvField('ar', meta.key, e.target.value)}
+            className={`mt-1 ${cls}`}
+            dir="rtl"
+          />
+        </div>
+        <div>
+          <label className="text-xs font-heading font-bold text-cosmic">English</label>
+          <Ctl
+            value={ov.en[meta.key] ?? translations.en[meta.key] ?? ''}
+            onChange={(e) => setOvField('en', meta.key, e.target.value)}
+            className={`mt-1 ${cls}`}
+            dir="ltr"
+          />
+        </div>
+      </div>
+      <p className="mt-1.5 text-[10px] font-mono text-muted-foreground/60">{meta.key}</p>
+    </div>
+  );
+}
+
+// One collapsible group — only rendered at all when it has at least one
+// field matching the current search (so filtering never leaves an empty
+// accordion header sitting on screen).
+function GroupSection({ group, fields, ov, setOvField, open, onToggle }) {
+  // Fields inside a group are shown under their own small sub-heading
+  // (e.g. Homepage's Hero vs. Newsletter block) whenever consecutive fields
+  // share a `section`, so a 50-field group never reads as one flat wall.
+  let lastSection = null;
+  return (
+    <div className="rounded-3xl bg-card border border-border/60 overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center justify-between gap-3 px-5 py-4 text-start"
+      >
+        <span className="font-heading font-extrabold">{group.label_ar} <span className="text-muted-foreground font-normal">/ {group.label_en}</span></span>
+        <span className="flex items-center gap-2 shrink-0">
+          <span className="text-xs text-muted-foreground">{fields.length}</span>
+          <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </span>
+      </button>
+      {open && (
+        <div className="px-4 sm:px-5 pb-5 space-y-3">
+          {fields.map((meta) => {
+            const showHeading = meta.section && meta.section !== lastSection;
+            lastSection = meta.section;
+            return (
+              <React.Fragment key={meta.key}>
+                {showHeading && (
+                  <p className="pt-2 text-xs font-heading font-bold uppercase tracking-wide text-muted-foreground">{meta.section}</p>
+                )}
+                <TextField meta={meta} ov={ov} setOvField={setOvField} />
+              </React.Fragment>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function SiteContentAdmin() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const ar = lang === 'ar';
   const { toast } = useToast();
   const { faqItems: liveFaq, about: liveAbout } = useSiteContent();
   const [tab, setTab] = useState('text');
 
   // --- Page Text (i18n overrides) ---
   const [ov, setOv] = useState({ en: {}, ar: {} });
-  const [group, setGroup] = useState(PAGE_GROUPS[0]);
+  const ovBaselineRef = useRef({ en: {}, ar: {} });
   const [savingText, setSavingText] = useState(false);
+  const [search, setSearch] = useState('');
+  const [groupFilter, setGroupFilter] = useState('all');
+  const [openGroups, setOpenGroups] = useState(() => new Set());
 
   const { failure, guard } = useAdminLoadGuard();
 
@@ -60,7 +155,9 @@ export default function SiteContentAdmin() {
   const loadOverrides = async () => {
     const r = await guard(() => loadContentRecord('i18n_overrides'));
     if (r === undefined) return;
-    setOv(r?.data ? { en: r.data.en || {}, ar: r.data.ar || {} } : { en: {}, ar: {} });
+    const next = r?.data ? { en: r.data.en || {}, ar: r.data.ar || {} } : { en: {}, ar: {} };
+    setOv(next);
+    ovBaselineRef.current = next;
   };
 
   useEffect(() => {
@@ -68,22 +165,57 @@ export default function SiteContentAdmin() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const groupKeys = useMemo(() => keysForGroup(group), [group]);
-  const setOvField = (lang, key, val) => setOv((o) => ({ ...o, [lang]: { ...o[lang], [key]: val } }));
+  const setOvField = (langKey, key, val) => setOv((o) => ({ ...o, [langKey]: { ...o[langKey], [key]: val } }));
 
   const saveText = async () => {
     setSavingText(true);
     try {
       await upsertContent('i18n_overrides', ov);
+      ovBaselineRef.current = ov;
       toast({ title: t('settings.saved') });
     } catch (e) { toast({ title: e.message, variant: 'destructive' }); }
     setSavingText(false);
   };
+  const cancelText = () => setOv(ovBaselineRef.current);
+  const textDirty = ovDiffCount(ov, ovBaselineRef.current);
+
+  // Groups + fields the current search/filter combination actually matches —
+  // an unmatched group is left out entirely rather than shown empty.
+  const q = search.trim().toLowerCase();
+  const visibleGroups = useMemo(() => {
+    return GROUPS
+      .filter((g) => groupFilter === 'all' || groupFilter === g.id)
+      .map((g) => ({ group: g, fields: TEXT_FIELD_META.filter((m) => m.group === g.id && matchesSearch(m, ov, q)) }))
+      .filter((g) => g.fields.length > 0);
+  }, [groupFilter, q, ov]);
+
+  // A search match auto-expands its group (otherwise the admin would have to
+  // guess which collapsed section to open); typing a search also implies
+  // "show me everything that matches" rather than only what was already open.
+  useEffect(() => {
+    if (!q) return;
+    setOpenGroups((prev) => {
+      const next = new Set(prev);
+      visibleGroups.forEach((g) => next.add(g.group.id));
+      return next;
+    });
+  }, [q, visibleGroups]);
+
+  const toggleGroup = (id) => setOpenGroups((prev) => {
+    const next = new Set(prev);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    return next;
+  });
 
   // --- FAQ items ---
   const [items, setItems] = useState([]);
+  const faqBaselineRef = useRef([]);
   const [savingFaq, setSavingFaq] = useState(false);
-  useEffect(() => { setItems((liveFaq && liveFaq.length ? liveFaq : DEFAULT_FAQ_ITEMS).map((it) => ({ ...it }))); }, [liveFaq]);
+  useEffect(() => {
+    const next = (liveFaq && liveFaq.length ? liveFaq : DEFAULT_FAQ_ITEMS).map((it) => ({ ...it }));
+    setItems(next);
+    faqBaselineRef.current = next;
+  }, [liveFaq]);
   const updateItem = (i, field, val) => setItems((arr) => arr.map((it, idx) => idx === i ? { ...it, [field]: val } : it));
   const addItem = () => setItems((arr) => [...arr, { q_ar: '', q_en: '', a_ar: '', a_en: '' }]);
   const removeItem = (i) => setItems((arr) => arr.filter((_, idx) => idx !== i));
@@ -93,22 +225,43 @@ export default function SiteContentAdmin() {
   });
   const saveFaq = async () => {
     setSavingFaq(true);
-    try { await upsertContent('faq_items', { items }); toast({ title: t('settings.saved') }); }
-    catch (e) { toast({ title: e.message, variant: 'destructive' }); }
+    try {
+      await upsertContent('faq_items', { items });
+      faqBaselineRef.current = items;
+      toast({ title: t('settings.saved') });
+    } catch (e) { toast({ title: e.message, variant: 'destructive' }); }
     setSavingFaq(false);
   };
+  const cancelFaq = () => setItems(faqBaselineRef.current);
+  const faqDirty = snapshotsEqual(items, faqBaselineRef.current) ? 0 : 1;
 
   // --- About content ---
   const [about, setAbout] = useState(DEFAULT_ABOUT);
+  const aboutBaselineRef = useRef(DEFAULT_ABOUT);
   const [savingAbout, setSavingAbout] = useState(false);
-  useEffect(() => { setAbout({ ...DEFAULT_ABOUT, ...(liveAbout || {}) }); }, [liveAbout]);
+  useEffect(() => {
+    const next = { ...DEFAULT_ABOUT, ...(liveAbout || {}) };
+    setAbout(next);
+    aboutBaselineRef.current = next;
+  }, [liveAbout]);
   const setAboutField = (k, v) => setAbout((a) => ({ ...a, [k]: v }));
   const saveAbout = async () => {
     setSavingAbout(true);
-    try { await upsertContent('about', about); toast({ title: t('settings.saved') }); }
-    catch (e) { toast({ title: e.message, variant: 'destructive' }); }
+    try {
+      await upsertContent('about', about);
+      aboutBaselineRef.current = about;
+      toast({ title: t('settings.saved') });
+    } catch (e) { toast({ title: e.message, variant: 'destructive' }); }
     setSavingAbout(false);
   };
+  const cancelAbout = () => setAbout(aboutBaselineRef.current);
+  const aboutDirty = diffCount(about, aboutBaselineRef.current);
+
+  // One navigation guard covering whichever tab currently has unsaved edits —
+  // reuses the same architecture every other admin editor uses, rather than
+  // inventing a second one for this page.
+  const anyDirty = textDirty > 0 || faqDirty > 0 || aboutDirty > 0;
+  const { confirmOpen, stay, leave } = useUnsavedChangesGuard(anyDirty);
 
   if (failure) return <AdminLoadFailed failure={failure} onRetry={loadOverrides} />;
 
@@ -151,24 +304,44 @@ export default function SiteContentAdmin() {
         {/* Page Text */}
         {tab === 'text' && (
           <div className="mt-6">
-            <div className="flex flex-wrap gap-2">
-              {PAGE_GROUPS.map((g) => (
-                <button key={g.id} onClick={() => setGroup(g)} className={`h-9 px-3 rounded-full text-xs font-heading font-bold transition-colors ${group.id === g.id ? 'bg-cosmic text-white' : 'bg-card border border-border/60 text-foreground/70'}`}>{g.label}</button>
+            <div className="relative">
+              <Search className="absolute top-1/2 -translate-y-1/2 start-3 w-4 h-4 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={ar ? 'ابحث عن نص، مثال: الشحن' : 'Search text, e.g. shipping'}
+                className="w-full h-11 ps-9 pe-3 rounded-2xl bg-mist border border-border/70 text-sm"
+              />
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button onClick={() => setGroupFilter('all')} className={`h-9 px-3 rounded-full text-xs font-heading font-bold transition-colors ${groupFilter === 'all' ? 'bg-cosmic text-white' : 'bg-card border border-border/60 text-foreground/70'}`}>
+                {ar ? 'الكل' : 'All'}
+              </button>
+              {GROUPS.map((g) => (
+                <button key={g.id} onClick={() => setGroupFilter(g.id)} className={`h-9 px-3 rounded-full text-xs font-heading font-bold transition-colors ${groupFilter === g.id ? 'bg-cosmic text-white' : 'bg-card border border-border/60 text-foreground/70'}`}>
+                  {ar ? g.label_ar : g.label_en}
+                </button>
               ))}
             </div>
-            <p className="mt-3 text-sm text-muted-foreground">Edit the {group.label} page text. Leave a field empty to keep the original wording.</p>
-            <div className="mt-4 space-y-4">
-              {groupKeys.map((key) => (
-                <div key={key} className="rounded-3xl bg-card border border-border/60 p-4">
-                  <p className="text-xs font-mono text-muted-foreground mb-2">{key}</p>
-                  <label className="text-xs font-heading font-bold text-cosmic">English</label>
-                  <textarea value={ov.en[key] ?? translations.en[key] ?? ''} onChange={(e) => setOvField('en', key, e.target.value)} className={`mt-1 mb-3 ${area}`} />
-                  <label className="text-xs font-heading font-bold text-cosmic">العربية</label>
-                  <textarea value={ov.ar[key] ?? translations.ar[key] ?? ''} onChange={(e) => setOvField('ar', key, e.target.value)} className={`mt-1 ${area}`} dir="rtl" />
-                </div>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {ar ? 'اترك حقل لغة فارغًا لإبقاء النص الأصلي لتلك اللغة.' : 'Leave a language field empty to keep that language’s original wording.'}
+            </p>
+            <div className="mt-4 space-y-3">
+              {visibleGroups.length === 0 ? (
+                <p className="text-sm text-muted-foreground py-10 text-center">{ar ? 'لا نتائج مطابقة' : 'No matching content'}</p>
+              ) : visibleGroups.map(({ group, fields }) => (
+                <GroupSection
+                  key={group.id}
+                  group={group}
+                  fields={fields}
+                  ov={ov}
+                  setOvField={setOvField}
+                  open={openGroups.has(group.id) || groupFilter === group.id}
+                  onToggle={() => toggleGroup(group.id)}
+                />
               ))}
             </div>
-            <StickySaveBar>
+            <StickySaveBar dirtyCount={textDirty} onCancel={cancelText} ar={ar}>
               <button onClick={saveText} disabled={savingText} className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold disabled:opacity-60">
                 {savingText ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {t('settings.save')}
               </button>
@@ -213,7 +386,7 @@ export default function SiteContentAdmin() {
               ))}
             </div>
             <button onClick={addItem} className="mt-4 squish inline-flex items-center gap-2 h-11 px-5 rounded-full bg-mist font-heading font-bold"><Plus className="w-5 h-5" /> Add question</button>
-            <StickySaveBar>
+            <StickySaveBar dirtyCount={faqDirty} onCancel={cancelFaq} ar={ar}>
               <button onClick={saveFaq} disabled={savingFaq} className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold disabled:opacity-60">
                 {savingFaq ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {t('settings.save')}
               </button>
@@ -264,7 +437,7 @@ export default function SiteContentAdmin() {
                 <div><label className="text-xs font-heading font-bold text-cosmic">CTA button (EN)</label><input value={about.ctaBtnEn || ''} onChange={(e) => setAboutField('ctaBtnEn', e.target.value)} className={`mt-1 ${input}`} dir="ltr" /></div>
               </div>
             </div>
-            <StickySaveBar>
+            <StickySaveBar dirtyCount={aboutDirty} onCancel={cancelAbout} ar={ar}>
               <button onClick={saveAbout} disabled={savingAbout} className="squish inline-flex items-center gap-2 h-12 px-6 rounded-full bg-cosmic text-white font-heading font-bold disabled:opacity-60">
                 {savingAbout ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />} {t('settings.save')}
               </button>
@@ -277,6 +450,7 @@ export default function SiteContentAdmin() {
         {tab === 'assistant' && <AssistantAdminSettings />}
       </div>
       <Footer />
+      <UnsavedChangesDialog open={confirmOpen} onStay={stay} onLeave={leave} />
     </div>
   );
 }

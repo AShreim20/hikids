@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
+import { heroSlideTitle, heroSlideSubtitle, heroSlideCta, heroSlideSecondaryCta } from '@/lib/bilingual';
 
 // Content Position / Vertical Position are a property of the SLIDE's media
 // composition (where the product sits in the photo), never of the page's
@@ -41,9 +42,14 @@ function contentBoxStyle(hPos, vPos) {
 // an admin override for a slide whose art direction calls for it.
 const textColorClass = (v) => (v === 'dark' ? 'text-foreground' : 'text-white');
 
-export default function HeroSlideContent({ slide, exploreCtaLabel }) {
+export default function HeroSlideContent({ slide, exploreCtaLabel, lang }) {
   const hPos = slide.content_position || 'center';
   const vPos = slide.vertical_position || 'center';
+
+  const title = heroSlideTitle(slide, lang);
+  const subtitle = heroSlideSubtitle(slide, lang);
+  const ctaLabel = heroSlideCta(slide, lang);
+  const secondaryCtaLabel = heroSlideSecondaryCta(slide, lang);
 
   const primaryInternal = (slide.cta_link || '').startsWith('/');
   const PrimaryTag = primaryInternal ? Link : 'a';
@@ -51,31 +57,31 @@ export default function HeroSlideContent({ slide, exploreCtaLabel }) {
   const secondaryInternal = (slide.secondary_cta_link || '').startsWith('/');
   const SecondaryTag = secondaryInternal ? Link : 'a';
   const secondaryDest = secondaryInternal ? { to: slide.secondary_cta_link } : { href: slide.secondary_cta_link };
-  const hasSecondary = !!(slide.secondary_cta_link && slide.secondary_cta_label);
+  const hasSecondary = !!(slide.secondary_cta_link && secondaryCtaLabel);
 
   return (
     <>
       <div className="absolute inset-0 pointer-events-none" style={{ background: overlayGradient(hPos, slide.overlay_strength) }} />
       <div style={contentBoxStyle(hPos, vPos)} className={textColorClass(slide.text_color)}>
-        {slide.title && (
+        {title && (
           <h1 className="font-heading font-extrabold text-2xl sm:text-4xl md:text-5xl leading-[1.12] text-balance drop-shadow-lg whitespace-pre-line">
-            {slide.title}
+            {title}
           </h1>
         )}
-        {slide.subtitle && (
-          <p className="mt-2.5 sm:mt-3 text-sm sm:text-base md:text-lg opacity-90 line-clamp-2 md:line-clamp-3">{slide.subtitle}</p>
+        {subtitle && (
+          <p className="mt-2.5 sm:mt-3 text-sm sm:text-base md:text-lg opacity-90 line-clamp-2 md:line-clamp-3">{subtitle}</p>
         )}
         {(slide.cta_link || hasSecondary) && (
           <div className="mt-4 sm:mt-6 md:mt-7" style={{ textAlign: 'inherit' }}>
             <div className="inline-flex flex-wrap gap-3" style={{ textAlign: 'initial' }}>
               {slide.cta_link && (
                 <PrimaryTag {...primaryDest} className="squish inline-flex items-center gap-2 h-11 sm:h-12 px-5 sm:px-7 rounded-full bg-cosmic text-white font-heading font-bold shadow-lg shadow-cosmic/30 whitespace-nowrap text-sm sm:text-base">
-                  {slide.cta_label || exploreCtaLabel} <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 rtl:rotate-180" />
+                  {ctaLabel || exploreCtaLabel} <ArrowRight className="w-4 h-4 sm:w-5 sm:h-5 rtl:rotate-180" />
                 </PrimaryTag>
               )}
               {hasSecondary && (
                 <SecondaryTag {...secondaryDest} className="squish inline-flex items-center h-11 sm:h-12 px-5 sm:px-7 rounded-full bg-white/15 backdrop-blur border border-white/30 text-white font-heading font-bold hover:bg-white hover:text-foreground transition-colors whitespace-nowrap text-sm sm:text-base">
-                  {slide.secondary_cta_label}
+                  {secondaryCtaLabel}
                 </SecondaryTag>
               )}
             </div>

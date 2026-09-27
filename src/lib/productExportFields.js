@@ -139,6 +139,14 @@ export const PRODUCT_EXPORT_FIELDS = [
     getValue: (p) => p.material || '',
   },
   {
+    // New sibling column, same pattern as description/description_en — the
+    // existing 'material' key/label is left untouched so an already-exported
+    // file's header still auto-matches back to it on re-import.
+    key: 'material_en', group: 'info', type: 'text', width: 16,
+    label: { ar: 'الخامة (إنجليزي)', en: 'Material (English)' },
+    getValue: (p) => p.material_en || '',
+  },
+  {
     key: 'tags', group: 'info', type: 'text', width: 22, wrap: true,
     label: { ar: 'الوسوم', en: 'Tags' },
     getValue: (p) => (Array.isArray(p.tags) ? p.tags.join(' | ') : ''),

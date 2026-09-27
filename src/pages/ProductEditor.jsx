@@ -28,7 +28,7 @@ const EMPTY = {
   category_ids: [],
   gender: null,
   features_ar: [], features_en: [],
-  image_url: '', images: [], video_url: '', material: '', rating: '', stock: '',
+  image_url: '', images: [], video_url: '', material: '', material_en: '', rating: '', stock: '',
   featured: false, loyalty_exempt: false, tags: [], options: [], variants: [],
   // Only meaningful once hydrated from the DB — a never-saved product has no
   // status yet, its first Save picks one via whichever button is pressed.
@@ -67,6 +67,7 @@ function productToForm(p) {
     images: Array.isArray(p.images) ? p.images : [],
     video_url: p.video_url || '',
     material: p.material || '',
+    material_en: p.material_en || '',
     rating: p.rating ?? '',
     stock: p.stock ?? '',
     featured: !!p.featured,
@@ -256,6 +257,7 @@ export default function ProductEditor() {
       images: form.images || [],
       video_url: form.video_url || '',
       material: form.material || '',
+      material_en: form.material_en || '',
       rating: form.rating ? Number(form.rating) : 0,
       stock: form.stock !== '' ? Number(form.stock) : 0,
       tags: form.tags || [],
@@ -357,6 +359,7 @@ export default function ProductEditor() {
       images: form.images || [],
       video_url: form.video_url || null,
       material: form.material,
+      material_en: form.material_en || null,
       rating: form.rating ? Number(form.rating) : 0,
       stock: form.stock !== '' ? Number(form.stock) : 0,
       featured: !!form.featured,

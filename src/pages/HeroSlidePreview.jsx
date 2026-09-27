@@ -80,7 +80,7 @@ export default function HeroSlidePreview() {
         <div className="px-2 sm:px-3 md:px-4 mt-3 sm:mt-4 md:mt-6">
           <div className="relative h-[380px] sm:h-[440px] md:h-[clamp(460px,58vh,620px)] rounded-[1.75rem] sm:rounded-[2rem] overflow-hidden bg-mist">
             <HeroSlideMedia slide={slide} isMobileViewport={isMobileViewportNow()} eager />
-            <HeroSlideContent slide={slide} exploreCtaLabel={t('hero.exploreCta')} />
+            <HeroSlideContent slide={slide} exploreCtaLabel={t('hero.exploreCta')} lang={lang} />
           </div>
         </div>
       )}

@@ -8,6 +8,7 @@ import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import HeroSlideMedia from '@/components/HeroSlideMedia';
 import HeroSlideContent from '@/components/HeroSlideContent';
 import HeroSlideTextCompact from '@/components/HeroSlideTextCompact';
+import { productName, productDescription } from '@/lib/bilingual';
 
 // Large framed Hero carousel. Reuses the existing hero_slides table/entity —
 // no second slide system — and the existing "no active slides → fall back to
@@ -76,8 +77,8 @@ export default function HeroCarousel({ compact = false }) {
         setFallbackSlides(picks.map((p) => ({
           ...FALLBACK_SLIDE_DEFAULTS,
           id: p.id,
-          title: p.name,
-          subtitle: p.description,
+          title: productName(p, lang),
+          subtitle: productDescription(p, lang),
           image_url: p.image_url,
           cta_label: t('hero.exploreCta'),
           cta_link: `/product/${p.id}`,
@@ -189,7 +190,7 @@ export default function HeroCarousel({ compact = false }) {
             </div>
           )}
         </div>
-        <HeroSlideTextCompact slide={s} exploreCtaLabel={t('hero.exploreCta')} />
+        <HeroSlideTextCompact slide={s} exploreCtaLabel={t('hero.exploreCta')} lang={lang} />
       </section>
     );
   }
@@ -248,7 +249,7 @@ export default function HeroCarousel({ compact = false }) {
               eager={index === 0}
               onVideoEnded={isAutoVideo ? next : undefined}
             />
-            <HeroSlideContent slide={s} exploreCtaLabel={t('hero.exploreCta')} />
+            <HeroSlideContent slide={s} exploreCtaLabel={t('hero.exploreCta')} lang={lang} />
           </motion.div>
         </AnimatePresence>
 

@@ -10,16 +10,18 @@ import {
   bundleOriginalPrice, bundleSellingPrice, bundleDiscountPercent,
   bundleAvailability,
 } from '@/lib/bundles';
+import { bundleName } from '@/lib/bilingual';
 
 // Storefront card for a product bundle. Renders as one purchasable package —
 // the original combined price is struck through and the bundle price shown
 // alongside the discount badge and live availability.
 export default function BundleCard({ bundle, products }) {
-  const { t, formatPrice } = useLanguage();
+  const { t, lang, formatPrice } = useLanguage();
   const { addBundle } = useCart();
   const { flyToCart } = useCartFly();
   const { toast } = useToast();
   const ar = t('common.addToCart') !== 'Add to cart';
+  const name = bundleName(bundle, lang);
 
   const original = bundleOriginalPrice(bundle);
   const sell = bundleSellingPrice(bundle);
@@ -36,6 +38,7 @@ export default function BundleCard({ bundle, products }) {
     addBundle(bundle, 1, sell, (bundle.items || []).map((it) => ({
       product_id: it.product_id,
       name: it.name,
+      name_en: it.name_en || null,
       sku: it.sku || null,
       quantity: it.quantity,
       unit_price: it.unit_price,
@@ -48,7 +51,7 @@ export default function BundleCard({ bundle, products }) {
       <div className="relative overflow-hidden rounded-[2rem] bg-mist aspect-[4/5] shadow-[0_18px_50px_-20px_rgba(26,26,30,0.25)] ring-1 ring-black/0 transition-all duration-500 group-hover:-translate-y-2 group-hover:shadow-[0_30px_70px_-24px_rgba(26,26,30,0.4)] group-hover:ring-black/5">
         <Image
           src={bundle.image_url}
-          alt={bundle.name}
+          alt={name}
           fittingType="fill"
           className="w-full h-full object-cover transition-transform duration-[900ms] ease-out group-hover:scale-[1.07]"
         />
@@ -84,7 +87,7 @@ export default function BundleCard({ bundle, products }) {
           {ar ? `${count} منتجات` : `${count} products`}
         </p>
         <h3 className="mt-1 font-display font-semibold text-xl leading-tight tracking-tight">
-          {bundle.name}
+          {name}
         </h3>
         <p className="mt-2 font-heading font-extrabold text-xl">
           {formatPrice(sell)}

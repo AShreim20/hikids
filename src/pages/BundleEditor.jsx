@@ -21,7 +21,7 @@ import UnsavedChangesDialog from '@/components/admin/UnsavedChangesDialog';
 import { snapshotsEqual } from '@/lib/formDirty';
 
 const EMPTY = {
-  name: '', description: '', image_url: '', items: [],
+  name: '', name_en: '', description: '', description_en: '', image_url: '', items: [],
   bundle_price: '', discount_percent: 0, start_date: '', end_date: '', active: true, sort_order: 0,
 };
 
@@ -92,7 +92,7 @@ export default function BundleEditor() {
       set('items', form.items.map((i) => i.product_id === p.id ? { ...i, quantity: i.quantity + 1 } : i));
     } else {
       set('items', [...form.items, {
-        product_id: p.id, name: p.name, sku: productSku(p),
+        product_id: p.id, name: p.name, name_en: p.name_en || null, sku: productSku(p),
         image_url: p.image_url, unit_price: p.sale_price ?? p.price, quantity: 1,
       }]);
     }
@@ -153,10 +153,12 @@ export default function BundleEditor() {
     try {
       const payload = {
         name: form.name.trim(),
+        name_en: form.name_en.trim() || null,
         description: form.description,
+        description_en: form.description_en || null,
         image_url: form.image_url,
         items: form.items.map((i) => ({
-          product_id: i.product_id, name: i.name, sku: i.sku || '',
+          product_id: i.product_id, name: i.name, name_en: i.name_en || null, sku: i.sku || '',
           image_url: i.image_url, unit_price: Number(i.unit_price) || 0,
           quantity: Math.max(1, Math.floor(Number(i.quantity) || 1)),
         })),
@@ -215,14 +217,27 @@ export default function BundleEditor() {
         <form onSubmit={submit} className="mt-8 grid gap-6">
           {/* Basics */}
           <div className="rounded-3xl bg-card border border-border/60 p-6 grid gap-4">
-            <label className="block">
-              <span className="text-sm font-medium text-foreground/80">{ar ? 'الاسم' : 'Name'}<span className="text-accent"> *</span></span>
-              <input value={form.name} onChange={(e) => set('name', e.target.value)} required className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
-            </label>
-            <label className="block">
-              <span className="text-sm font-medium text-foreground/80">{ar ? 'الوصف' : 'Description'}</span>
-              <textarea value={form.description} onChange={(e) => set('description', e.target.value)} rows={3} className="mt-1.5 w-full p-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic resize-none" />
-            </label>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <label className="block">
+                <span className="text-sm font-medium text-foreground/80">{ar ? 'الاسم (عربي)' : 'Name (Arabic)'}<span className="text-accent"> *</span></span>
+                <input value={form.name} onChange={(e) => set('name', e.target.value)} required className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium text-foreground/80">Name (English)</span>
+                <input value={form.name_en} onChange={(e) => set('name_en', e.target.value)} dir="ltr" className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium text-foreground/80">{ar ? 'الوصف (عربي)' : 'Description (Arabic)'}</span>
+                <textarea value={form.description} onChange={(e) => set('description', e.target.value)} rows={3} className="mt-1.5 w-full p-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic resize-none" />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium text-foreground/80">Description (English)</span>
+                <textarea value={form.description_en} onChange={(e) => set('description_en', e.target.value)} dir="ltr" rows={3} className="mt-1.5 w-full p-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic resize-none" />
+              </label>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {ar ? 'اترك حقل الإنجليزية فارغًا لعرض النص العربي تلقائيًا للزوار الذين يستخدمون الموقع بالإنجليزية.' : 'Leave an English field empty to automatically show the Arabic text to visitors browsing in English.'}
+            </p>
             <div className="flex items-center gap-4">
               <span className="text-sm font-medium text-foreground/80 shrink-0">{ar ? 'الصورة' : 'Image'}</span>
               <div className="w-20 h-20 rounded-2xl overflow-hidden bg-mist shrink-0">

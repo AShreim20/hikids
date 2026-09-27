@@ -12,13 +12,14 @@ import { useLanguage } from '@/context/LanguageContext';
 import { usePermissions } from '@/lib/permissions';
 
 export default function DeliveryManagement() {
-  const { t, formatPrice } = useLanguage();
+  const { t, lang, formatPrice } = useLanguage();
+  const ar = lang === 'ar';
   const { toast } = useToast();
   const { isOwner } = usePermissions();
   const [cities, setCities] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(null);
-  const [form, setForm] = useState({ name: '', price: '', estimated_days: 1, active: true });
+  const [form, setForm] = useState({ name: '', name_en: '', price: '', estimated_days: 1, active: true });
   const [saving, setSaving] = useState(false);
   const [q, setQ] = useState('');
 
@@ -60,11 +61,11 @@ export default function DeliveryManagement() {
   const filtered = cities.filter((c) => c.name.toLowerCase().includes(q.trim().toLowerCase()));
 
   const openNew = () => {
-    setForm({ name: '', price: '', estimated_days: 1, active: true });
+    setForm({ name: '', name_en: '', price: '', estimated_days: 1, active: true });
     setEditing('new');
   };
   const openEdit = (c) => {
-    setForm({ name: c.name, price: String(c.price), estimated_days: c.estimated_days, active: c.active });
+    setForm({ name: c.name, name_en: c.name_en || '', price: String(c.price), estimated_days: c.estimated_days, active: c.active });
     setEditing(c.id);
   };
   const close = () => setEditing(null);
@@ -76,6 +77,7 @@ export default function DeliveryManagement() {
     try {
       const payload = {
         name: form.name.trim(),
+        name_en: form.name_en.trim() || null,
         price: Number(form.price) || 0,
         estimated_days: Number(form.estimated_days) || 1,
         active: !!form.active,
@@ -157,6 +159,7 @@ export default function DeliveryManagement() {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="font-heading font-bold text-lg">{c.name}</p>
+                    {c.name_en && <p className="text-xs text-muted-foreground" dir="ltr">{c.name_en}</p>}
                     <p className="text-sm text-muted-foreground">
                       {formatPrice(c.price)} · {c.estimated_days} {t('common.days')}
                     </p>
@@ -192,8 +195,12 @@ export default function DeliveryManagement() {
             </div>
             <div className="mt-5 space-y-4">
               <label className="block">
-                <span className="text-sm font-medium text-foreground/80">{t('delivery.name')}</span>
+                <span className="text-sm font-medium text-foreground/80">{ar ? 'اسم المدينة (عربي)' : 'City name (Arabic)'}</span>
                 <input required value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
+              </label>
+              <label className="block">
+                <span className="text-sm font-medium text-foreground/80">{ar ? 'اسم المدينة (إنجليزي) — اختياري' : 'City name (English) — optional'}</span>
+                <input value={form.name_en} onChange={(e) => setForm((f) => ({ ...f, name_en: e.target.value }))} dir="ltr" className="mt-1.5 w-full h-12 px-4 rounded-2xl bg-mist border border-border focus:outline-none focus:ring-2 focus:ring-cosmic/40 focus:border-cosmic" />
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <label className="block">

@@ -224,7 +224,8 @@ export default function ProductFormFields({ form, set, isNew }) {
           </p>
         )}
       </div>
-      <FormInput label={t('admin.material')} value={form.material} onChange={(e) => set('material', e.target.value)} className="sm:col-span-2" />
+      <FormInput label={ar ? `${t('admin.material')} (عربي)` : `${t('admin.material')} (Arabic)`} value={form.material} onChange={(e) => set('material', e.target.value)} />
+      <FormInput label={ar ? `${t('admin.material')} (إنجليزي)` : `${t('admin.material')} (English)`} value={form.material_en} onChange={(e) => set('material_en', e.target.value)} dir="ltr" />
       <FormInput label={t('admin.rating')} type="number" value={form.rating} onChange={(e) => set('rating', e.target.value)} />
       <FormInput label={t('admin.stock')} type="number" value={form.stock} onChange={(e) => set('stock', e.target.value)} />
 
