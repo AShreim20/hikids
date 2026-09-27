@@ -402,6 +402,11 @@ export default function ProductEditor() {
     } catch (err) {
       if (err.code === '23505' && String(err.message || '').includes('product_code')) {
         toast({ title: t('admin.productCodeInUse'), variant: 'destructive' });
+      } else if (err.code === '23505' && String(err.message || '').includes('barcode')) {
+        // The validateBarcode pre-check above already catches the common case;
+        // this is the database's own authority for a conflict that slipped
+        // past it (e.g. another save that committed in between).
+        toast({ title: t('admin.barcodeInUse'), variant: 'destructive' });
       } else {
         toast({ title: lang === 'ar' ? 'خطأ' : 'Error', description: err.message, variant: 'destructive' });
       }

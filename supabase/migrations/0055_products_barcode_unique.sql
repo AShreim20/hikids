@@ -1,0 +1,15 @@
+-- Database-level uniqueness for products.barcode.
+--
+-- Uniqueness was previously enforced only in application code (the
+-- validateBarcode Edge Function and bulk_import_products' exists() check),
+-- both a plain SELECT-then-write with no row lock on the conflicting rows —
+-- two concurrent writes (or any direct API write that skips the check
+-- entirely) could both pass and leave two products with the same barcode.
+--
+-- A plain (non-partial) unique index is all that's needed: Postgres treats
+-- every NULL as distinct from every other NULL in a unique index, so any
+-- number of products may still have no barcode — exactly today's behavior
+-- (all 42 current products have barcode IS NULL). No WHERE clause, no
+-- case-folding, no trimming: the exact stored value is compared, unchanged
+-- from current semantics. No existing data is modified.
+create unique index if not exists products_barcode_idx on public.products (barcode);
