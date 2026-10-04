@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, Gift, Camera, Share2, Check, Trophy, Link2, ArrowUpRight, Lock } from 'lucide-react';
+import { Loader2, Gift, Camera, Share2, Check, Trophy, Link2, ArrowUpRight } from 'lucide-react';
 import { db } from '@/api/entities';
 import { challengesClaim, challengesSubmitPhoto } from '@/lib/challengeFunctions';
 import { uploadFile } from '@/lib/uploadFile';
@@ -12,6 +12,7 @@ import { useToast } from '@/components/ui/use-toast';
 import { rewardLabel } from '@/lib/rewards';
 import { challengeName, challengeDescription } from '@/lib/bilingual';
 import RewardsAuthGate from '@/components/RewardsAuthGate';
+import { gaEvent } from '@/lib/ga4';
 
 export default function Challenges() {
   const { t, lang, formatPrice } = useLanguage();
@@ -51,6 +52,7 @@ export default function Challenges() {
     try {
       const res = await challengesClaim(c.id);
       if (res.success) {
+        gaEvent('challenge_claimed', { challenge_id: c.id, challenge_type: c.type, reward_type: c.reward_type });
         toast({ title: ar ? 'تم استلام المكافأة! 🎉' : 'Reward earned! 🎉', description: rewardLabel(c, ar, formatPrice) });
       } else {
         toast({ title: res.message || (ar ? 'لم يكتمل بعد' : 'Not completed yet'), variant: 'destructive' });
@@ -106,7 +108,22 @@ export default function Challenges() {
             {challenges.map((c) => {
               const prog = progFor(c);
               const claimed = (prog && prog.rewarded_count) || 0;
-              const valid = (orders || []).filter((o) => !['cancelled', 'returned', 'return_approved', 'failed_delivery'].includes(o.status));
+              // Same rules the server enforces (challenge_qualifying_orders):
+              // only orders placed from the challenge's eligibility start up to
+              // the END OF its end date count, and only once the order's
+              // rewards are released (3 days after delivery, no active return —
+              // the same rule the wheel uses). This only drives the progress
+              // display — the server decides whether a claim actually
+              // qualifies. No starts_at means nothing counts, like the server.
+              const windowStart = c.starts_at ? new Date(c.starts_at).getTime() : Infinity;
+              const windowEnd = c.end_date ? Date.parse(`${c.end_date}T00:00:00Z`) + 86400000 : Infinity;
+              const inWindow = (orders || []).filter((o) => {
+                const placed = new Date(o.created_date).getTime();
+                return !['cancelled', 'returned', 'return_approved', 'failed_delivery'].includes(o.status)
+                  && placed >= windowStart && placed < windowEnd;
+              });
+              const valid = inWindow.filter((o) => !o.rewards_managed || o.rewards_released_at);
+              const waiting = inWindow.length - valid.length;
               const t = c.target || {};
               let done = false; let current = 0; let target = 0;
               if (c.type === 'product_purchase') { done = valid.some((o) => (o.items || []).some((it) => it.id === t.product_id)); current = done ? 1 : 0; target = 1; }
@@ -135,6 +152,25 @@ export default function Challenges() {
                         <span>{current} / {target}</span>
                       </div>
                       <div className="h-2 rounded-full bg-mist overflow-hidden"><div className="h-full bg-cosmic rounded-full transition-all" style={{ width: `${pct}%` }} /></div>
+                    </div>
+                  )}
+
+                  {['product_purchase', 'spend_amount', 'purchase_count'].includes(c.type) && (
+                    <div className="mt-3 space-y-1 text-xs text-muted-foreground">
+                      {c.starts_at && (
+                        <p>
+                          {ar
+                            ? `يُحتسب فقط الطلبات التي تمت من ${new Date(c.starts_at).toLocaleDateString('ar')} وما بعد.`
+                            : `Only orders placed from ${new Date(c.starts_at).toLocaleDateString('en-GB')} onward count.`}
+                        </p>
+                      )}
+                      {waiting > 0 && (
+                        <p className="text-amber-600">
+                          {ar
+                            ? `لديك ${waiting} طلب بانتظار انتهاء فترة الإرجاع (3 أيام بعد التسليم) قبل أن يُحتسب.`
+                            : `${waiting} of your order${waiting > 1 ? 's are' : ' is'} waiting for the 3-day return period after delivery before counting.`}
+                        </p>
+                      )}
                     </div>
                   )}
 

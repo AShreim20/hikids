@@ -87,8 +87,13 @@ export default function ChallengesAdmin() {
     const c = editing;
     if (!c.name) { toast({ title: ar ? 'الاسم مطلوب' : 'Name required', variant: 'destructive' }); return; }
     try {
-      if (c.id) await db.Challenge.update(c.id, c);
-      else await db.Challenge.create({ ...c, created_by_email: user.email });
+      // starts_at (when customer activity starts counting) is owned by the
+      // database — it is set on first activation and never moves on an edit —
+      // so it is never sent back from this form.
+      const payload = { ...c };
+      delete payload.starts_at;
+      if (c.id) await db.Challenge.update(c.id, payload);
+      else await db.Challenge.create({ ...payload, created_by_email: user.email });
       toast({ title: ar ? 'تم الحفظ' : 'Saved' });
       setEditing(null);
       load();
@@ -225,6 +230,21 @@ function ChallengeDialog({ value, onChange, onClose, onSave, ar }) {
             <L label={ar ? 'تاريخ البداية' : 'Start date'}><input type="date" className={input} value={value.start_date || ''} onChange={(e) => set('start_date', e.target.value)} /></L>
             <L label={ar ? 'تاريخ النهاية' : 'End date'}><input type="date" className={input} value={value.end_date || ''} onChange={(e) => set('end_date', e.target.value)} /></L>
           </div>
+          {/* Read-only: when customer activity starts counting toward this
+              challenge. Purchases/actions from before this moment never count. */}
+          <p className="text-xs text-muted-foreground rounded-2xl bg-mist px-3 py-2">
+            {value.starts_at
+              ? (ar
+                ? `يبدأ احتساب نشاط العملاء من: ${new Date(value.starts_at).toLocaleString('ar')} — لا تُحتسب أي مشتريات أو أفعال سابقة لهذا الوقت.`
+                : `Customer activity counts from: ${new Date(value.starts_at).toLocaleString()} — anything done before then never counts.`)
+              : (ar
+                ? 'يبدأ احتساب نشاط العملاء لحظة تفعيل التحدي — لا تُحتسب أي مشتريات أو أفعال سابقة.'
+                : 'Customer activity starts counting the moment the challenge is activated — earlier purchases or actions never count.')}
+            {' '}
+            {ar
+              ? 'يوم النهاية محسوب كاملًا. وطلبات الشراء تُحتسب بعد انتهاء فترة الإرجاع (3 أيام من التسليم)، كما في العجلة.'
+              : 'The end date counts as a full day. Purchases count once their return period ends (3 days after delivery), the same rule the wheel uses.'}
+          </p>
           <div className="grid grid-cols-2 gap-3">
             <L label={ar ? 'التكرار' : 'Frequency'}><select className={input} value={value.frequency} onChange={(e) => set('frequency', e.target.value)}>{FREQ.map((f) => <option key={f} value={f}>{f}</option>)}</select></L>
             {value.frequency === 'custom' && <L label={ar ? 'الحد' : 'Limit'}><input type="number" className={input} value={value.limit_count} onChange={(e) => set('limit_count', Number(e.target.value))} /></L>}
