@@ -17,6 +17,21 @@ export async function wheelSpin() {
   return data;
 }
 
+// Admin: atomically saves the WHOLE reward list. The database refuses it
+// unless the active rewards' probabilities total exactly 100%.
+export async function saveWheelRewards(rewards) {
+  const { data, error } = await supabase.rpc('save_wheel_rewards', { p_rewards: rewards });
+  if (error) throw error;
+  return data;
+}
+
+// Admin: how many times each reward was won (all time and today).
+export async function wheelRewardUsage() {
+  const { data, error } = await supabase.rpc('wheel_reward_usage');
+  if (error) throw error;
+  return data;
+}
+
 export async function wheelGrantFirstSpin() {
   const { data, error } = await supabase.rpc('wheel_grant_first_spin');
   if (error) throw error;

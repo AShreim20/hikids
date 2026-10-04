@@ -123,7 +123,7 @@ export default function MysteryWheel() {
             )}
 
             {/* Wheel */}
-            <div className="mt-6 rounded-3xl bg-mist/40 border border-border/60 p-8">
+            <div className="mt-6 rounded-3xl bg-mist/40 border border-border/60 p-4 sm:p-8">
               <MysteryWheelChart rewards={state.rewards || []} available={state.available} onSpin={handleSpin} ar={ar} />
             </div>
 
