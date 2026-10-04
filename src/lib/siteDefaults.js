@@ -5,9 +5,9 @@
 export const DEFAULT_SETTINGS = {
   storeName: 'HiKids',
   logoUrl: '',
-  phone: '+970 59 900 0000',
-  phoneTel: '+970599000000',
-  whatsapp: '970599000000',
+  phone: '+970 59 921 8400',
+  phoneTel: '+970599218400',
+  whatsapp: '970599218400',
   email: 'hello@hikids.ps',
   instagram: 'https://www.instagram.com/hi_kids.ps/?hl=en',
   facebook: 'https://www.facebook.com/share/gBAGEMdhAwMobxRD/?mibextid=qi2Omg',
