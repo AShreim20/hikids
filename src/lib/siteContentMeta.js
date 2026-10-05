@@ -44,7 +44,6 @@ export const TEXT_FIELD_META = [
   // Homepage — World of Play / Categories
   home('cats.curateBy', 'World of Play', 'input', 'تسمية "افرز حسب"', '"Curate by" label', 'قسم عوالم اللعب', 'World of Play section'),
   home('cats.title', 'World of Play', 'input', 'عنوان قسم عوالم اللعب', 'World of Play section title', 'قسم عوالم اللعب', 'World of Play section'),
-  home('cats.titleTag', 'World of Play', 'input', 'وسم العنوان (نسخة بديلة)', 'Title tag (alt copy)', 'قسم عوالم اللعب', 'World of Play section'),
   home('cats.subtitle', 'World of Play', 'textarea', 'الوصف تحت العنوان', 'Description under the title', 'قسم عوالم اللعب', 'World of Play section'),
   home('cat.build', 'World of Play', 'input', 'اسم فئة "بناء وتركيب"', '"Build & Create" category name', 'قسم عوالم اللعب', 'World of Play section'),
   home('cat.buildDesc', 'World of Play', 'input', 'وصف فئة "بناء وتركيب"', '"Build & Create" category tagline', 'قسم عوالم اللعب', 'World of Play section'),

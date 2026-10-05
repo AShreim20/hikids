@@ -13,7 +13,6 @@ import CategoryCard from '@/components/home/CategoryCard';
 // for either path.
 export default function WorldOfPlay() {
   const { t, lang } = useLanguage();
-  const ar = lang === 'ar';
   const { categories } = useCategories();
   const { content } = useSiteContent();
   const [products, setProducts] = useState([]);
@@ -66,10 +65,7 @@ export default function WorldOfPlay() {
     >
       <div className="mb-6 md:mb-8 max-w-2xl">
         <p className="text-sm uppercase tracking-widest text-muted-foreground font-medium">{t('cats.curateBy')}</p>
-        <div className="mt-1.5 flex items-baseline gap-2 flex-wrap">
-          <h2 className="font-heading font-extrabold text-3xl md:text-4xl">{t('cats.title')}</h2>
-          {ar && <span className="text-sm md:text-base text-muted-foreground font-medium">{t('cats.titleTag')}</span>}
-        </div>
+        <h2 className="mt-1.5 font-heading font-extrabold text-3xl md:text-4xl">{t('cats.title')}</h2>
         <p className="mt-2 text-sm md:text-base text-muted-foreground">{t('cats.subtitle')}</p>
       </div>
 

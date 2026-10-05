@@ -220,7 +220,6 @@ export const translations = {
 
     'cats.curateBy': 'Curate by',
     'cats.title': 'World of Play',
-    'cats.titleTag': 'World of Play',
     'cats.subtitle': 'Discover the world of play that fits your child, from learning and creativity to adventure and fun.',
     'cat.build': 'Build & Create',
     'cat.buildDesc': 'Engineers of tomorrow',
@@ -1240,7 +1239,6 @@ export const translations = {
 
     'cats.curateBy': 'اختر حسب',
     'cats.title': 'عوالم اللعب',
-    'cats.titleTag': 'World of Play',
     'cats.subtitle': 'اكتشف عالم اللعب الذي يناسب طفلك، من التعلم والإبداع إلى المغامرة والمرح.',
     'cat.build': 'ابنِ وأبدع',
     'cat.buildDesc': 'مهندسو الغد',
