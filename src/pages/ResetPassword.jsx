@@ -6,8 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Lock, Loader2, AlertTriangle } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
+import { authErrorMessage } from "@/lib/authErrors";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function ResetPassword() {
+  const { t, lang } = useLanguage();
   // Supabase's recovery link redirects here with the session tokens in the
   // URL hash; supabase-js auto-detects and establishes the session before
   // this component's effects run. No token to read from query params.
@@ -37,7 +40,7 @@ export default function ResetPassword() {
     e.preventDefault();
     setError("");
     if (newPassword !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("auth.err.mismatch"));
       return;
     }
     setLoading(true);
@@ -46,7 +49,7 @@ export default function ResetPassword() {
       if (authError) throw authError;
       window.location.href = "/login";
     } catch (err) {
-      setError(err.message || "Failed to reset password");
+      setError(authErrorMessage(err, { t, lang }, "auth.err.reset"));
     } finally {
       setLoading(false);
     }
@@ -54,7 +57,7 @@ export default function ResetPassword() {
 
   if (checking) {
     return (
-      <AuthLayout icon={Lock} title="New password" subtitle="Checking your reset link...">
+      <AuthLayout icon={Lock} title={t("auth.newPasswordTitle")} subtitle={t("auth.checkingLink")}>
         <div className="flex justify-center py-4">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
         </div>
@@ -66,16 +69,16 @@ export default function ResetPassword() {
     return (
       <AuthLayout
         icon={AlertTriangle}
-        title="Invalid reset link"
-        subtitle="This password reset link is missing, invalid, or expired"
+        title={t("auth.invalidLinkTitle")}
+        subtitle={t("auth.invalidLinkSubtitle")}
         footer={
           <Link to="/forgot-password" className="text-primary font-medium hover:underline">
-            Request a new link
+            {t("auth.requestNewLink")}
           </Link>
         }
       >
         <p className="text-sm text-foreground text-center">
-          The link you used appears to be incomplete or has expired. Please request a new password reset email.
+          {t("auth.invalidLinkBody")}
         </p>
       </AuthLayout>
     );
@@ -84,8 +87,8 @@ export default function ResetPassword() {
   return (
     <AuthLayout
       icon={Lock}
-      title="New password"
-      subtitle="Enter your new password below"
+      title={t("auth.newPasswordTitle")}
+      subtitle={t("auth.enterNewPassword")}
     >
       {error && (
         <div className="mb-4 p-3 rounded-lg bg-destructive/10 text-destructive text-sm">
@@ -94,12 +97,13 @@ export default function ResetPassword() {
       )}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="password">New Password</Label>
+          <Label htmlFor="password">{t("auth.newPassword")}</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               id="password"
               type="password"
+              dir="ltr"
               autoComplete="new-password"
               autoFocus
               placeholder="••••••••"
@@ -111,12 +115,13 @@ export default function ResetPassword() {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirm">Confirm Password</Label>
+          <Label htmlFor="confirm">{t("auth.confirmPassword")}</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               id="confirm"
               type="password"
+              dir="ltr"
               autoComplete="new-password"
               placeholder="••••••••"
               value={confirmPassword}
@@ -129,11 +134,11 @@ export default function ResetPassword() {
         <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
           {loading ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Resetting...
+              <Loader2 className="w-4 h-4 me-2 animate-spin" />
+              {t("auth.resetting")}
             </>
           ) : (
-            "Reset password"
+            t("auth.resetPassword")
           )}
         </Button>
       </form>

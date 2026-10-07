@@ -8,8 +8,11 @@ import { LogIn, Mail, Lock, Loader2 } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { authErrorMessage } from "@/lib/authErrors";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Login() {
+  const { t, lang } = useLanguage();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -27,7 +30,7 @@ export default function Login() {
       if (authError) throw authError;
       window.location.href = returnTo;
     } catch (err) {
-      setError(err.message || "Invalid email or password");
+      setError(authErrorMessage(err, { t, lang }, "auth.err.login"));
     } finally {
       setLoading(false);
     }
@@ -43,16 +46,16 @@ export default function Login() {
   return (
     <AuthLayout
       icon={LogIn}
-      title="Welcome back"
-      subtitle="Log in to your account"
+      title={t("auth.welcomeBack")}
+      subtitle={t("auth.loginSubtitle")}
       footer={
         <>
-          Don't have an account?{" "}
+          {t("auth.noAccount")}{" "}
           <Link
             to={"/register" + (returnTo !== "/" ? "?returnTo=" + encodeURIComponent(returnTo) : "")}
             className="text-primary font-medium hover:underline"
           >
-            Create one
+            {t("auth.createOne")}
           </Link>
         </>
       }
@@ -62,8 +65,8 @@ export default function Login() {
         className="w-full h-12 text-sm font-medium mb-6"
         onClick={handleGoogle}
       >
-        <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
+        <GoogleIcon className="w-5 h-5 me-2" />
+        {t("auth.continueGoogle")}
       </Button>
 
       <div className="relative mb-6">
@@ -71,7 +74,7 @@ export default function Login() {
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">or</span>
+          <span className="bg-card px-3 text-muted-foreground">{t("auth.or")}</span>
         </div>
       </div>
 
@@ -83,12 +86,13 @@ export default function Login() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("auth.email")}</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               id="email"
               type="email"
+              dir="ltr"
               autoComplete="email"
               autoFocus
               placeholder="you@example.com"
@@ -101,9 +105,9 @@ export default function Login() {
         </div>
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{t("auth.password")}</Label>
             <Link to="/forgot-password" className="text-xs text-primary hover:underline">
-              Forgot password?
+              {t("auth.forgotPassword")}
             </Link>
           </div>
           <div className="relative">
@@ -111,6 +115,7 @@ export default function Login() {
             <Input
               id="password"
               type="password"
+              dir="ltr"
               autoComplete="current-password"
               placeholder="••••••••"
               value={password}
@@ -123,11 +128,11 @@ export default function Login() {
         <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
           {loading ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Logging in...
+              <Loader2 className="w-4 h-4 me-2 animate-spin" />
+              {t("auth.loggingIn")}
             </>
           ) : (
-            "Log in"
+            t("auth.login")
           )}
         </Button>
       </form>

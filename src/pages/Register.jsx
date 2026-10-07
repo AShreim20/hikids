@@ -9,8 +9,11 @@ import AuthLayout from "@/components/AuthLayout";
 import GoogleIcon from "@/components/GoogleIcon";
 import { toast } from "@/components/ui/use-toast";
 import { safeReturnTo } from "@/lib/authReturnTo";
+import { authErrorMessage } from "@/lib/authErrors";
+import { useLanguage } from "@/context/LanguageContext";
 
 export default function Register() {
+  const { t, lang } = useLanguage();
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
@@ -26,7 +29,7 @@ export default function Register() {
     e.preventDefault();
     setError("");
     if (password !== confirmPassword) {
-      setError("Passwords do not match");
+      setError(t("auth.err.mismatch"));
       return;
     }
     setLoading(true);
@@ -42,7 +45,7 @@ export default function Register() {
       if (authError) throw authError;
       setSent(true);
     } catch (err) {
-      setError(err.message || "Registration failed");
+      setError(authErrorMessage(err, { t, lang }, "auth.err.register"));
     } finally {
       setLoading(false);
     }
@@ -54,11 +57,11 @@ export default function Register() {
       const { error: authError } = await supabase.auth.resend({ type: "signup", email });
       if (authError) throw authError;
       toast({
-        title: "Email sent",
-        description: "Check your inbox for the confirmation link.",
+        title: t("auth.emailSent"),
+        description: t("auth.checkInbox"),
       });
     } catch (err) {
-      setError(err.message || "Failed to resend email");
+      setError(authErrorMessage(err, { t, lang }, "auth.err.resend"));
     }
   };
 
@@ -73,11 +76,11 @@ export default function Register() {
     return (
       <AuthLayout
         icon={Mail}
-        title="Check your email"
-        subtitle={`We sent a confirmation link to ${email}`}
+        title={t("auth.checkEmail")}
+        subtitle={<>{t("auth.sentLinkTo")} <bdi dir="ltr">{email}</bdi></>}
         footer={
           <Link to="/login" className="text-primary font-medium hover:underline">
-            Back to log in
+            {t("auth.backToLogin")}
           </Link>
         }
       >
@@ -87,12 +90,12 @@ export default function Register() {
           </div>
         )}
         <p className="text-center text-sm text-muted-foreground">
-          Click the link in the email to activate your account.
+          {t("auth.clickLink")}
         </p>
         <p className="text-center text-sm text-muted-foreground mt-4">
-          Didn't receive it?{" "}
+          {t("auth.didntReceive")}{" "}
           <button onClick={handleResend} className="text-primary font-medium hover:underline">
-            Resend
+            {t("auth.resend")}
           </button>
         </p>
       </AuthLayout>
@@ -102,16 +105,16 @@ export default function Register() {
   return (
     <AuthLayout
       icon={UserPlus}
-      title="Create your account"
-      subtitle="Sign up to get started"
+      title={t("auth.createTitle")}
+      subtitle={t("auth.createSubtitle")}
       footer={
         <>
-          Already have an account?{" "}
+          {t("auth.haveAccount")}{" "}
           <Link
             to={"/login" + (returnTo !== "/" ? "?returnTo=" + encodeURIComponent(returnTo) : "")}
             className="text-primary font-medium hover:underline"
           >
-            Log in
+            {t("auth.login")}
           </Link>
         </>
       }
@@ -121,8 +124,8 @@ export default function Register() {
         className="w-full h-12 text-sm font-medium mb-6"
         onClick={handleGoogle}
       >
-        <GoogleIcon className="w-5 h-5 mr-2" />
-        Continue with Google
+        <GoogleIcon className="w-5 h-5 me-2" />
+        {t("auth.continueGoogle")}
       </Button>
 
       <div className="relative mb-6">
@@ -130,7 +133,7 @@ export default function Register() {
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center text-xs uppercase">
-          <span className="bg-card px-3 text-muted-foreground">or</span>
+          <span className="bg-card px-3 text-muted-foreground">{t("auth.or")}</span>
         </div>
       </div>
 
@@ -142,12 +145,13 @@ export default function Register() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-2">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email">{t("auth.email")}</Label>
           <div className="relative">
             <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               id="email"
               type="email"
+              dir="ltr"
               autoComplete="email"
               autoFocus
               placeholder="you@example.com"
@@ -159,12 +163,13 @@ export default function Register() {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone</Label>
+          <Label htmlFor="phone">{t("auth.phone")}</Label>
           <div className="relative">
             <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               id="phone"
               type="tel"
+              dir="ltr"
               autoComplete="tel"
               placeholder="05X XXX XXXX"
               value={phone}
@@ -175,12 +180,13 @@ export default function Register() {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password">{t("auth.password")}</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               id="password"
               type="password"
+              dir="ltr"
               autoComplete="new-password"
               placeholder="••••••••"
               value={password}
@@ -191,12 +197,13 @@ export default function Register() {
           </div>
         </div>
         <div className="space-y-2">
-          <Label htmlFor="confirm">Confirm Password</Label>
+          <Label htmlFor="confirm">{t("auth.confirmPassword")}</Label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" aria-hidden="true" />
             <Input
               id="confirm"
               type="password"
+              dir="ltr"
               autoComplete="new-password"
               placeholder="••••••••"
               value={confirmPassword}
@@ -209,11 +216,11 @@ export default function Register() {
         <Button type="submit" className="w-full h-12 font-medium" disabled={loading}>
           {loading ? (
             <>
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              Creating account...
+              <Loader2 className="w-4 h-4 me-2 animate-spin" />
+              {t("auth.creating")}
             </>
           ) : (
-            "Create account"
+            t("auth.createAccount")
           )}
         </Button>
       </form>
