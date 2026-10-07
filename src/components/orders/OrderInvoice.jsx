@@ -7,9 +7,9 @@ import { lineItemName } from '@/lib/bilingual';
 
 const STORE = {
   name: 'HiKids',
-  tagline: 'Gallery of Wonder',
+  tagline: 'Fun, Learning, Adventure',
   instagram: '@hi_kids.ps',
-  website: 'hikids.base44.app',
+  website: 'www.hikids-ps.com',
   logoUrl:
     'https://media.base44.com/images/public/6a75c91fa5dfe02359c5f127/d7ed46244_1000016311-removebg-preview.png',
 };
@@ -179,12 +179,12 @@ export function printInvoice(order, { lang = 'en' } = {}) {
           <div class="bt">
             <h1>${STORE.name}</h1>
             <div class="tag">${STORE.tagline}</div>
-            <div class="contact">${BUSINESS_PHONE_DISPLAY}<br>${STORE.website}</div>
+            <div class="contact"><bdi dir="ltr">${BUSINESS_PHONE_DISPLAY}</bdi><br>${STORE.website}</div>
           </div>
         </div>
         <div class="doc">
           <span class="badge">${ar ? 'فاتورة مبيعات' : 'Sales Invoice'}</span>
-          <div class="ref">#${orderRef(order)}</div>
+          <div class="ref"><bdi dir="ltr">#${orderRef(order)}</bdi></div>
           <div class="when">${dateStr}${timeStr ? ` · ${timeStr}` : ''}</div>
         </div>
       </div>
@@ -201,7 +201,7 @@ export function printInvoice(order, { lang = 'en' } = {}) {
         <div class="panel">
           <h3>${ar ? 'بيانات العميل' : 'Bill to'}</h3>
           <div class="row"><span class="k">${ar ? 'الاسم' : 'Name'}</span><span class="v">${esc(order.customer_name || '—')}</span></div>
-          <div class="row"><span class="k">${ar ? 'الهاتف' : 'Phone'}</span><span class="v">${esc(order.phone || '—')}</span></div>
+          <div class="row"><span class="k">${ar ? 'الهاتف' : 'Phone'}</span><span class="v"><bdi dir="ltr">${esc(order.phone || '—')}</bdi></span></div>
           ${order.customer_email ? `<div class="row"><span class="k">${ar ? 'البريد' : 'Email'}</span><span class="v">${esc(order.customer_email)}</span></div>` : ''}
           ${order.city ? `<div class="row"><span class="k">${ar ? 'المدينة' : 'City'}</span><span class="v">${esc(order.city)}</span></div>` : ''}
           ${order.address ? `<div class="row"><span class="k">${ar ? 'العنوان' : 'Address'}</span><span class="v">${esc(order.address)}</span></div>` : ''}
@@ -240,8 +240,8 @@ export function printInvoice(order, { lang = 'en' } = {}) {
 
       <div class="foot">
         <div class="thanks">${ar ? 'شكراً لتسوقكم من HiKids' : 'Thank you for shopping at HiKids'}</div>
-        <div class="info">${BUSINESS_PHONE_DISPLAY} · ${ar ? 'تواصل معنا للاستفسار والدعم' : 'Contact us for inquiries and support'}</div>
-        <div class="social">${STORE.instagram} · ${STORE.website}</div>
+        <div class="info"><bdi dir="ltr">${BUSINESS_PHONE_DISPLAY}</bdi> · ${ar ? 'تواصل معنا للاستفسار والدعم' : 'Contact us for inquiries and support'}</div>
+        <div class="social"><bdi dir="ltr">${STORE.instagram} · ${STORE.website}</bdi></div>
       </div>
     </div>
   </div>
