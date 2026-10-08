@@ -12,8 +12,8 @@ const STORAGE_KEY = 'hikids-lang';
 
 export function LanguageProvider({ children }) {
   const [lang, setLangState] = useState(() => {
-    if (typeof window === 'undefined') return 'en';
-    return localStorage.getItem(STORAGE_KEY) || 'en';
+    if (typeof window === 'undefined') return 'ar';
+    return localStorage.getItem(STORAGE_KEY) || 'ar';
   });
 
   const dir = lang === 'ar' ? 'rtl' : 'ltr';
