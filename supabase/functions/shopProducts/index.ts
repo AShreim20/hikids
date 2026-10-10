@@ -1,5 +1,6 @@
 import { serviceRoleClient } from '../_shared/client.ts';
 import { handlePreflight, json } from '../_shared/cors.ts';
+import { parseQuery, indexProduct, scoreProduct } from '../_shared/search.ts';
 
 // Server-side paginated product listing for the All Toys page. Public — no
 // auth required. Pushes category + search filtering and (featured/newest)
@@ -125,8 +126,8 @@ function applyCommonFilters(query, { cats, catIds, gender, search }) {
   // "both", per the explicit fix for products silently appearing in every
   // gender filter.
   if (gender) query = query.or(`gender.eq.${gender},gender.eq.both`);
-  const s = sanitizeSearch(search);
-  if (s) query = query.or(`name.ilike.%${s}%,name_en.ilike.%${s}%,category.ilike.%${s}%`);
+  // Free-text search is NOT applied here any more: it is done in memory (bilingual,
+  // synonym- and plural-aware, see _shared/search.ts) after the rows are fetched.
   return query;
 }
 
@@ -183,8 +184,10 @@ Deno.serve(async (req) => {
     // matched set pulled into memory (age_range is a legacy free-text
     // string, and effective price/discount depend on the category's live
     // discount, which isn't expressible as a single-column DB filter).
+    const searchGroups = sanitizeSearch(search) ? parseQuery(sanitizeSearch(search)) : [];
+    const searching = searchGroups.length > 0;
     const inMemoryNeeded =
-      priceActive || onSale || ages.length > 0 || sort === 'priceLow' || sort === 'priceHigh' || sort === 'discount';
+      searching || priceActive || onSale || ages.length > 0 || sort === 'priceLow' || sort === 'priceHigh' || sort === 'discount';
 
     let items = [];
     let total = null;
@@ -205,7 +208,17 @@ Deno.serve(async (req) => {
       let query = applyCommonFilters(service.from('products').select('*'), { cats, catIds, gender, search });
       query = query.order('created_date', { ascending: false }).limit(MATCH_CAP);
       const { data } = await query;
-      const matched = data || [];
+      let matched = data || [];
+      const scoreOf = new Map<string, number>();
+      if (searching) {
+        const catById = new Map<string, any>(categories.map((c: any) => [c.id, c]));
+        const catByNameMap = new Map<string, any>(categories.map((c: any) => [c.name, c]));
+        matched = matched.filter((p: any) => {
+          const sc = scoreProduct(indexProduct(p, catById, catByNameMap), searchGroups);
+          if (sc > 0) scoreOf.set(p.id, sc);
+          return sc > 0;
+        });
+      }
 
       const selectedAges = AGE_OPTIONS.filter((g) => ages.includes(g.id));
       const filtered = matched.filter((p) => {
@@ -231,6 +244,10 @@ Deno.serve(async (req) => {
         if (sort === 'priceHigh') return effectivePrice(b, catPctFor(b.category)) - effectivePrice(a, catPctFor(a.category));
         if (sort === 'discount') return discountPercent(b, catPctFor(b.category)) - discountPercent(a, catPctFor(a.category));
         if (sort === 'newest') return new Date(b.created_date) - new Date(a.created_date);
+        if (searching) {
+          const d = (scoreOf.get(b.id) || 0) - (scoreOf.get(a.id) || 0);
+          if (d) return d;
+        }
         return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
       });
       total = filtered.length;
