@@ -47,6 +47,9 @@ export function inRange(date, range) {
 }
 
 const num = (n) => Number(n) || 0;
+// Delivery is a pass-through charge, not part of the sale and not profit: reports measure the goods only.
+// total = goods (after discounts) + delivery_cost, so goods revenue = total - delivery_cost (never negative).
+export const goodsRevenue = (o) => Math.max(0, num(o?.total) - num(o?.delivery_cost));
 // Order line items are stored as {id, name, price, qty, ...} (see
 // src/pages/Checkout.jsx / secure_order in 0008_orders_phase5.sql) — NOT
 // {product_id, quantity}. A bundle line is the one exception: it carries its
@@ -95,9 +98,9 @@ export function salesReport(orders, productMap, range) {
   for (const o of active) {
     gross += num(o.subtotal);
     discounts += num(o.discount_amount) + num(o.loyalty_discount);
-    net += num(o.total);
+    net += goodsRevenue(o);
     const day = (o.created_date || '').slice(0, 10);
-    byDate[day] = (byDate[day] || 0) + num(o.total);
+    byDate[day] = (byDate[day] || 0) + goodsRevenue(o);
     for (const it of o.items || []) {
       const rev = itemRevenue(it);
       cogs += lineCogs(it, productMap);
@@ -111,7 +114,7 @@ export function salesReport(orders, productMap, range) {
       if (cat) byCategory[cat] = (byCategory[cat] || 0) + rev;
     }
   }
-  const returnsTotal = returns.reduce((s, o) => s + num(o.total), 0);
+  const returnsTotal = returns.reduce((s, o) => s + goodsRevenue(o), 0);
 
   return {
     orderCount: active.length,
@@ -231,7 +234,7 @@ export function profitLoss(orders, productMap, range, expenseRows = [], expenseC
   for (const o of inR) {
     grossSales += num(o.subtotal);
     discounts += num(o.discount_amount) + num(o.loyalty_discount);
-    revenue += num(o.total); // "Net Sales" — post-discount, matches salesReport's `net`.
+    revenue += goodsRevenue(o); // "Net Sales" — post-discount, delivery excluded; matches salesReport's `net`.
     for (const it of o.items || []) {
       cogs += lineCogs(it, productMap);
     }

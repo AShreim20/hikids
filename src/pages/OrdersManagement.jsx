@@ -14,7 +14,7 @@ import { useLanguage } from '@/context/LanguageContext';
 import {
   MAIN_FLOW, RETURN_STATUSES, normalizeStatus, statusLabel, orderRef,
 } from '@/lib/orderStatus';
-import { buildProductMap, lineCogs } from '@/lib/reports';
+import { buildProductMap, lineCogs, goodsRevenue } from '@/lib/reports';
 import { lineItemName } from '@/lib/bilingual';
 import { fetchAllRows, toExcelDate, todayStamp } from '@/lib/excelExportHelpers';
 import ExportExcelButton from '@/components/admin/ExportExcelButton';
@@ -168,7 +168,8 @@ export default function OrdersManagement() {
       delivery_fee: Number(o.delivery_cost) || 0,
       total,
       cost,
-      profit: total - cost,
+      // Profit is on the goods only: the delivery fee is not part of the sale (it stays visible in its own column).
+      profit: goodsRevenue(o) - cost,
     };
   };
   const buildItemRows = (o, productMap) =>
